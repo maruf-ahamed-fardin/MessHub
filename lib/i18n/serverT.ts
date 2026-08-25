@@ -1,7 +1,5 @@
 import { cookies } from "next/headers";
-import { getT } from "@/lib/i18n/useT";
-
-type Language = "bn" | "en";
+import { getT, Language } from "@/lib/i18n/translator";
 
 /**
  * Server-side translation helper.
