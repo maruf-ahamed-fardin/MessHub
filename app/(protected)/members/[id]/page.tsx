@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { notFound } from "next/navigation";
 import { MemberManageForm } from "@/components/members/MemberManageForm";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Manage Member" };
 
@@ -32,6 +33,7 @@ export default async function ManageMemberPage({ params }: { params: Promise<{ i
     getAvailableSeats(),
   ]);
 
+  const T = await getServerT();
   const initials = (member.user.name ?? "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
@@ -65,20 +67,20 @@ export default async function ManageMemberPage({ params }: { params: Promise<{ i
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Room / Seat</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.common.room} / {T.common.seat}</p>
           <p className="font-semibold">{member.seat ? `${member.seat.room?.name} - ${member.seat.label}` : "None"}</p>
         </div>
         <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Seat Rent</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.common.seatRent}</p>
           <p className="font-semibold">{formatCurrency(Number(member.seatRent))}</p>
         </div>
         <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Meals (This Month)</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.profile.mealsMonth}</p>
           <p className="font-semibold">{totalMeals}</p>
         </div>
-        <div className={`stat-card ${balance >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Current Balance</p>
-          <p className={`font-semibold ${balance >= 0 ? "text-green-700" : "text-red-700"}`}>
+        <div className={`stat-card ${balance >= 0 ? "bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-800/60" : "bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800/60"}`}>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.common.currentBalance}</p>
+          <p className={`font-semibold ${balance >= 0 ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}>
             {balance >= 0 ? "+" : ""}{formatCurrency(Math.abs(balance))}
           </p>
         </div>

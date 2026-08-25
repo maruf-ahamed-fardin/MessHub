@@ -7,6 +7,7 @@ import { getCurrentMonthYear } from "@/lib/utils/date";
 import { formatCurrency } from "@/lib/utils/currency";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "My Profile" };
 
@@ -50,11 +51,12 @@ export default async function MyProfilePage() {
     }
   } catch {}
 
+  const T = await getServerT();
   const initials = (member.user.name ?? "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="max-w-2xl space-y-6">
-      <PageHeader title="My Profile" />
+      <PageHeader title={T.profile.title} />
 
       <div className="stat-card flex items-center gap-4">
         <Avatar className="h-16 w-16">
@@ -72,12 +74,12 @@ export default async function MyProfilePage() {
 
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "Room", value: member.seat?.room?.name ?? "—" },
-          { label: "Seat", value: member.seat?.label ?? "Unassigned" },
-          { label: "Seat Rent", value: formatCurrency(Number(member.seatRent)) },
-          { label: "Joined", value: new Date(member.joinedAt).toLocaleDateString("en-US", { year: "numeric", month: "long" }) },
-          { label: "This Month Meals", value: String(totalMeals) },
-          { label: "Food Cost", value: formatCurrency(foodCost) },
+          { label: T.common.room,           value: member.seat?.room?.name ?? "—" },
+          { label: T.common.seat,           value: member.seat?.label ?? "Unassigned" },
+          { label: T.common.seatRent,       value: formatCurrency(Number(member.seatRent)) },
+          { label: T.common.joined,         value: new Date(member.joinedAt).toLocaleDateString("en-US", { year: "numeric", month: "long" }) },
+          { label: T.common.thisMonthMeals, value: String(totalMeals) },
+          { label: T.common.foodCost,       value: formatCurrency(foodCost) },
         ].map(({ label, value }) => (
           <div key={label} className="stat-card">
             <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{label}</p>
@@ -86,13 +88,13 @@ export default async function MyProfilePage() {
         ))}
       </div>
 
-      <div className={`stat-card ${balance >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-        <p className="text-xs font-medium mb-1 text-[hsl(var(--muted-foreground))]">Current Balance</p>
-        <p className={`text-2xl font-bold ${balance >= 0 ? "text-green-700" : "text-red-700"}`}>
+      <div className={`stat-card ${balance >= 0 ? "bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-800/60" : "bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800/60"}`}>
+        <p className="text-xs font-medium mb-1 text-[hsl(var(--muted-foreground))]">{T.common.currentBalance}</p>
+        <p className={`text-2xl font-bold ${balance >= 0 ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}>
           {balance >= 0 ? "+" : ""}{formatCurrency(Math.abs(balance))}
         </p>
         <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-          {balance >= 0 ? "You have credit" : "You owe this amount"}
+          {balance >= 0 ? T.common.youHaveCredit : T.common.youOwe}
         </p>
       </div>
     </div>

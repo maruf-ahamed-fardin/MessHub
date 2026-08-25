@@ -36,6 +36,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       const savedLang = localStorage.getItem("messhub_lang") as Language | null;
       if (savedLang === "bn" || savedLang === "en") {
         setLanguageState(savedLang);
+        document.cookie = `messhub_lang=${savedLang}; path=/; max-age=31536000; SameSite=Lax`;
       }
     } catch {
       // Ignore localStorage errors
@@ -69,6 +70,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     setLanguageState(newLang);
     try {
       localStorage.setItem("messhub_lang", newLang);
+      // Also save to cookie so server components can read it
+      document.cookie = `messhub_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {}
   };
 

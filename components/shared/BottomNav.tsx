@@ -3,18 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
+import { useT } from "@/lib/i18n/useT";
 import {
-  UtensilsCrossed, CreditCard, MessageSquare, LayoutGrid, Home,
+  UtensilsCrossed, CreditCard, MessageSquare, Home, User,
 } from "lucide-react";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const T = useT();
 
   const isHomeActive = pathname === "/dashboard";
   const isMealsActive = pathname === "/meals" || pathname.startsWith("/meals/");
   const isMoneyActive = pathname === "/payments" || pathname.startsWith("/payments/");
   const isCommunityActive = pathname === "/community" || pathname.startsWith("/community/");
-  const isMoreActive = pathname === "/more" || pathname.startsWith("/more/");
+  const isProfileActive = pathname === "/members/me" || pathname.startsWith("/members/me");
 
   return (
     <nav
@@ -42,7 +44,7 @@ export function BottomNav() {
             isMealsActive ? "text-amber-700 font-extrabold" : "text-gray-500 font-semibold"
           )}
         >
-          Meals
+          {T.nav.meals}
         </span>
       </Link>
 
@@ -67,7 +69,7 @@ export function BottomNav() {
             isMoneyActive ? "text-emerald-700 font-extrabold" : "text-gray-500 font-semibold"
           )}
         >
-          Money
+          {T.nav.money}
         </span>
       </Link>
 
@@ -93,7 +95,7 @@ export function BottomNav() {
             isHomeActive ? "text-indigo-600 font-extrabold" : "text-gray-500 font-semibold"
           )}
         >
-          Home
+          {T.nav.home}
         </span>
       </Link>
 
@@ -118,34 +120,35 @@ export function BottomNav() {
             isCommunityActive ? "text-purple-700 font-extrabold" : "text-gray-500 font-semibold"
           )}
         >
-          Feed
+          {T.nav.feed}
         </span>
       </Link>
 
-      {/* 5. More (Rose / Pink) */}
+      {/* 5. Profile (Violet / Slate) */}
       <Link
-        href="/more"
+        href="/members/me"
         className="flex-1 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 py-1"
       >
         <div
           className={cn(
             "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 shadow-2xs",
-            isMoreActive
-              ? "bg-gradient-to-tr from-rose-500 to-pink-600 text-white shadow-rose-500/30 scale-105"
-              : "bg-rose-50 text-rose-600 border border-rose-200/80 hover:bg-rose-100"
+            isProfileActive
+              ? "bg-gradient-to-tr from-violet-500 to-purple-600 text-white shadow-violet-500/30 scale-105"
+              : "bg-violet-50 text-violet-600 border border-violet-200/80 hover:bg-violet-100"
           )}
         >
-          <LayoutGrid size={17} strokeWidth={2.3} />
+          <User size={17} strokeWidth={2.3} />
         </div>
         <span
           className={cn(
             "text-[10px] leading-none transition-colors",
-            isMoreActive ? "text-rose-700 font-extrabold" : "text-gray-500 font-semibold"
+            isProfileActive ? "text-violet-700 font-extrabold" : "text-gray-500 font-semibold"
           )}
         >
-          More
+          {T.nav.profile}
         </span>
       </Link>
     </nav>
   );
 }
+
