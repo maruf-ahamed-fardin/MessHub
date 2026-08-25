@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth/config";
+import { requireAuth, assertCanModifyMember } from "@/backend/permissions/permission.service";
 import { upsertMeal } from "@/backend/meals/meal.repository";
 import { createGuestMeal, deleteGuestMeal } from "@/backend/guest-meals/guest-meal.repository";
 import { prisma } from "@/lib/db/prisma";
@@ -14,6 +15,9 @@ export async function updateMealAction(formData: {
   dinner: boolean;
 }) {
   try {
+    const session = await requireAuth();
+    assertCanModifyMember(session, formData.memberId);
+
     const [y, m, d] = formData.date.split("-").map(Number);
     const dateObj = new Date(Date.UTC(y, m - 1, d));
 
@@ -39,6 +43,9 @@ export async function toggleMealAction(
   value: boolean
 ) {
   try {
+    const session = await requireAuth();
+    assertCanModifyMember(session, memberId);
+
     const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
     const existing = await prisma.meal.findUnique({
       where: { memberId_date: { memberId, date: d } },
@@ -72,8 +79,10 @@ export async function createGuestMealAction(data: {
   note?: string;
 }) {
   try {
-    const session = await auth();
-    const memberId = session?.user?.memberId ?? "admin-member-1";
+    const session = await requireAuth();
+    assertCanModifyMember(session, data.memberId);
+    const memberId = session.user.memberId ?? data.memberId;
+
     const [y, m, d] = data.date.split("-").map(Number);
     const dateObj = new Date(Date.UTC(y, m - 1, d));
 
@@ -92,6 +101,13 @@ export async function createGuestMealAction(data: {
 
 export async function deleteGuestMealAction(id: string) {
   try {
+    const session = await requireAuth();
+    if (session.user.role !== "ADMIN") {
+      const gm = await prisma.guestMeal.findUnique({ where: { id } });
+      if (gm && gm.memberId !== session.user.memberId && gm.addedById !== session.user.memberId) {
+        throw new Error("Unauthorized to delete this guest meal.");
+      }
+    }
     await deleteGuestMeal(id);
   } catch (err) {
     console.error("Error in deleteGuestMealAction:", err);

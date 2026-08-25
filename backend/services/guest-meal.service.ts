@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { toNumber, roundMoney } from "./meal-calculation.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 /**
  * Get total guest meal cost for a member in a month.
@@ -11,8 +12,7 @@ export async function calculateGuestMealCost(
   year: number,
   mealRate: number
 ): Promise<{ guestMealCost: number; totalGuestMeals: number }> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const settings = await prisma.messSettings.findUnique({
     where: { id: "singleton" },
@@ -43,8 +43,7 @@ export async function calculateGuestMealCost(
  * Get total guest meals for all members in a month.
  */
 export async function getTotalGuestMeals(month: number, year: number): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const result = await prisma.guestMeal.aggregate({
     where: { date: { gte: startDate, lte: endDate } },

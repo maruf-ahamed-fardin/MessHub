@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import { toNumber, roundMoney, calculateMealRate, calculateMemberFoodCost } from "./meal-calculation.service";
 import { calculateMemberExpenseShare } from "./expense-calculation.service";
 import { calculateUtilityShare } from "./utility.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 /**
  * Get total payments made by a member in a given month.
@@ -11,8 +12,7 @@ export async function getMemberTotalPayments(
   month: number,
   year: number
 ): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const result = await prisma.payment.aggregate({
     where: {

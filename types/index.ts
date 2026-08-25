@@ -95,6 +95,7 @@ export interface SettlementSummary {
   mealRate: number;
   totalFoodExpense: number;
   totalNormalMeals: number;
+  totalGuestMeals: number;
   totalUtility: number;
   totalOtherExpense: number;
   activeMembers: number;

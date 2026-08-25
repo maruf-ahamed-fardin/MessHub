@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
 import { isMonthFinalized } from "@/backend/services/settlement.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 export async function getExpenses(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
   return prisma.expense.findMany({
     where: { date: { gte: startDate, lte: endDate } },
     include: { paidBy: { include: { user: { select: { name: true, image: true } } } } },

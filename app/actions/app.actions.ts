@@ -167,6 +167,12 @@ export async function deletePostAction(id: string) {
   try {
     const session = await auth();
     if (!session?.user) throw new Error("Unauthorized");
+    if (session.user.role !== "ADMIN") {
+      const post = await prisma.communityPost.findUnique({ where: { id } });
+      if (post && post.authorId !== session.user.id) {
+        throw new Error("Unauthorized to delete this post.");
+      }
+    }
     await deletePost(id);
   } catch (err) {
     console.warn("DB offline (demo mode deletePost):", err);
@@ -236,7 +242,7 @@ export async function createCleaningTaskAction(data: unknown) {
     const schema = z.object({
       title: z.string().min(1),
       location: z.string().min(1),
-      assignedMemberId: z.string().cuid(),
+      assignedMemberId: z.string().min(1),
       dueDate: z.coerce.date(),
       recurrence: z.string().optional(),
       recurrenceInterval: z.coerce.number().optional(),
@@ -343,6 +349,14 @@ export async function purchaseShoppingItemAction(id: string, cost?: number) {
 
 export async function deleteShoppingItemAction(id: string) {
   try {
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
+    if (session.user.role !== "ADMIN") {
+      const item = await prisma.shoppingItem.findUnique({ where: { id } });
+      if (item && item.addedById !== session.user.memberId) {
+        throw new Error("Unauthorized to delete this shopping item.");
+      }
+    }
     await deleteShoppingItem(id);
   } catch (err) {
     console.warn("DB offline (demo mode deleteShoppingItem):", err);

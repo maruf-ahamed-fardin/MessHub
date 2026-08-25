@@ -55,6 +55,15 @@ export function getCurrentMonthYear(): { month: number; year: number } {
 }
 
 /**
+ * Get start of month (00:00:00.000) and end of month (23:59:59.999) Date objects
+ */
+export function getMonthRange(month: number, year: number): { startDate: Date; endDate: Date } {
+  const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+  return { startDate, endDate };
+}
+
+/**
  * Format a date as "YYYY-MM-DD" for database storage
  */
 export function toDateString(date: Date): string {

@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@prisma/client";
+import { getMonthRange } from "@/lib/utils/date";
 
 /**
  * Get total bazar (food) expense for a given month/year.
  * Only counts bazar entries in that month.
  */
 export async function getTotalFoodExpense(month: number, year: number): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0); // last day of month
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const result = await prisma.bazar.aggregate({
     where: {
@@ -25,8 +25,7 @@ export async function getTotalFoodExpense(month: number, year: number): Promise<
  * Guest meals are NOT included.
  */
 export async function getTotalNormalMeals(month: number, year: number): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const meals = await prisma.meal.findMany({
     where: {
@@ -68,8 +67,7 @@ export async function getMemberTotalMeals(
   month: number,
   year: number
 ): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const meals = await prisma.meal.findMany({
     where: {

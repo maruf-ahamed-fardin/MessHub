@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
-import { toNumber, roundMoney } from "./meal-calculation.service";
+import { toNumber, roundMoney, getMemberTotalMeals, getTotalNormalMeals } from "./meal-calculation.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 /**
   * Calculate a member's share of other (non-utility, non-bazar) expenses for a month.
@@ -10,8 +11,7 @@ export async function calculateMemberExpenseShare(
   year: number,
   totalMembers: number
 ): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const [expenses, houseExpenses] = await Promise.all([
     prisma.expense.findMany({
@@ -36,7 +36,12 @@ export async function calculateMemberExpenseShare(
         memberShare += amount / (count || 1);
       }
     } else if (expense.sharingMethod === "MEAL_BASED") {
-      memberShare += amount / (totalMembers || 1);
+      const [memberMeals, totalMeals] = await Promise.all([
+        getMemberTotalMeals(memberId, month, year),
+        getTotalNormalMeals(month, year),
+      ]);
+      const ratio = totalMeals > 0 ? memberMeals / totalMeals : 1 / (totalMembers || 1);
+      memberShare += amount * ratio;
     }
   }
 
@@ -56,8 +61,7 @@ export async function getMonthlyHouseExpense(month: number, year: number): Promi
   maintenanceCost: number;
   shoppingCost: number;
 }> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const [maintResult, shopResult] = await Promise.all([
     prisma.maintenanceReport.aggregate({
@@ -89,8 +93,7 @@ export async function getMonthlyHouseExpense(month: number, year: number): Promi
  * Get total expenses for a month (non-utility, non-bazar).
  */
 export async function getTotalOtherExpense(month: number, year: number): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const [result, house] = await Promise.all([
     prisma.expense.aggregate({

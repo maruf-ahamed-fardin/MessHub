@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { isMonthFinalized } from "@/backend/services/settlement.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 export async function getMealForDate(memberId: string, date: Date) {
   return prisma.meal.findUnique({
@@ -8,8 +9,7 @@ export async function getMealForDate(memberId: string, date: Date) {
 }
 
 export async function getMealsForMonth(memberId: string, month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   return prisma.meal.findMany({
     where: { memberId, date: { gte: startDate, lte: endDate } },
@@ -63,8 +63,7 @@ export async function upsertMeal(data: {
 }
 
 export async function getMealsCalendar(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const meals = await prisma.meal.findMany({
     where: { date: { gte: startDate, lte: endDate } },

@@ -22,6 +22,7 @@ export default async function SettlementPage() {
     mealRate: 65.5,
     totalFoodExpense: 15720,
     totalNormalMeals: 240,
+    totalGuestMeals: 0,
     totalUtility: 3200,
     totalOtherExpense: 800,
     activeMembers: 4,

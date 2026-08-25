@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db/prisma";
 import { isMonthFinalized } from "@/backend/services/settlement.service";
 import { roundMoney } from "@/backend/services/meal-calculation.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 export async function getBazarList(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
   return prisma.bazar.findMany({
     where: { date: { gte: startDate, lte: endDate } },
     include: {
@@ -110,8 +110,7 @@ export async function createProduct(data: { name: string; unit: string }) {
 }
 
 export async function getProductReport(month: number, year: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const { startDate, endDate } = getMonthRange(month, year);
 
   const items = await prisma.bazarItem.findMany({
     where: { bazar: { date: { gte: startDate, lte: endDate } } },

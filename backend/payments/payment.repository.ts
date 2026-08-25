@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db/prisma";
 import { isMonthFinalized } from "@/backend/services/settlement.service";
+import { getMonthRange } from "@/lib/utils/date";
 
 export async function getPayments(memberId?: string, month?: number, year?: number) {
   const where: any = {};
   if (memberId) where.memberId = memberId;
   if (month && year) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+    const { startDate, endDate } = getMonthRange(month, year);
     where.date = { gte: startDate, lte: endDate };
   }
 
