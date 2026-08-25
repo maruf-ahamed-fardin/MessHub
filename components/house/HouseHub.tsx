@@ -229,12 +229,12 @@ export function HouseHub({
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold shrink-0">
-              <Brush size={18} />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-600 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
+              <Brush size={17} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 truncate">ক্লিনিং ডিউটি</p>
-              <p className="text-base font-bold text-gray-900">{pendingCleaningCount} <span className="text-xs font-normal text-gray-400">বাকি</span></p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">ক্লিনিং ডিউটি</p>
+              <p className="text-base font-bold text-gray-900 dark:text-white">{pendingCleaningCount} <span className="text-xs font-normal text-gray-400">বাকি</span></p>
             </div>
           </div>
         </button>
@@ -248,12 +248,12 @@ export function HouseHub({
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
-              <Wrench size={18} />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
+              <Wrench size={17} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 truncate">মেরামত ও সমস্যা</p>
-              <p className="text-base font-bold text-gray-900">{pendingMaintCount} <span className="text-xs font-normal text-gray-400">ওপেন</span></p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">মেরামত ও সমস্যা</p>
+              <p className="text-base font-bold text-gray-900 dark:text-white">{pendingMaintCount} <span className="text-xs font-normal text-gray-400">ওপেন</span></p>
             </div>
           </div>
         </button>
@@ -267,24 +267,24 @@ export function HouseHub({
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-              <ShoppingCart size={18} />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
+              <ShoppingCart size={17} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 truncate">শপিং লিস্ট</p>
-              <p className="text-base font-bold text-gray-900">{pendingShopCount} <span className="text-xs font-normal text-gray-400">আইটেম</span></p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">শপিং লিস্ট</p>
+              <p className="text-base font-bold text-gray-900 dark:text-white">{pendingShopCount} <span className="text-xs font-normal text-gray-400">আইটেম</span></p>
             </div>
           </div>
         </button>
 
         {/* 💰 Real Expense Card (Flows to Dashboard & Settlement) */}
-        <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/70 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shrink-0">
-            <Coins size={18} />
+        <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
+            <Coins size={17} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-emerald-800 truncate">হাউজ খরচ (Dashboard)</p>
-            <p className="text-base font-bold text-emerald-950 truncate">
+            <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 truncate">হাউজ খরচ (Dashboard)</p>
+            <p className="text-base font-bold text-emerald-950 dark:text-emerald-100 truncate">
               {formatCurrency(totalHouseSpent)}
             </p>
           </div>

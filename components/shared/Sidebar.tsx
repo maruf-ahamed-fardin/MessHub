@@ -89,7 +89,7 @@ export function Sidebar({ className }: SidebarProps) {
                   <item.icon size={16} />
                   <span className="flex-1">{item.label}</span>
                   {"badge" in item && item.badge && (
-                    <span className="text-[9px] font-extrabold bg-rose-500 text-white px-1.5 py-0.2 rounded-full ring-1 ring-rose-400">
+                    <span className="text-[10px] font-black bg-gradient-to-r from-rose-500 to-red-600 text-white px-1.5 py-0.5 rounded-full shadow-2xs leading-none">
                       {item.badge}
                     </span>
                   )}

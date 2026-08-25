@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   TrendingUp, TrendingDown, UtensilsCrossed, ShoppingBasket,
   Brush, Users, CreditCard, ArrowRight, BedDouble, Receipt,
-  Plus, Check, Sparkles, AlertCircle, Clock,
+  Plus, Check, Sparkles, AlertCircle, Clock, Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { MealTrendChart } from "./MealTrendChart";
@@ -148,28 +148,28 @@ export function ModernDashboard({
         </div>
       </div>
 
-      {/* 2. Red Alert Notice (জরুরি লাল অ্যালার্ট টাইপ নোটিশ) */}
+      {/* 2. Notice Announcement Banner (Orange in Light Mode, Red Alert in Night Mode) */}
       {urgentNotice && (
-        <div className="bg-rose-50/95 border border-rose-300/90 rounded-2xl p-4 shadow-xs flex items-start justify-between gap-3 relative overflow-hidden animate-in fade-in-0 duration-200">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-600" />
+        <div className="bg-amber-50/95 dark:bg-rose-950/40 border border-amber-300/90 dark:border-rose-800/80 rounded-2xl p-4 shadow-xs flex items-start justify-between gap-3 relative overflow-hidden animate-in fade-in-0 duration-200">
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 via-orange-500 to-amber-600 dark:bg-rose-600" />
           <div className="flex items-start gap-3 min-w-0 pl-1">
-            <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs animate-pulse mt-0.5">
-              <AlertCircle size={17} />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 dark:bg-gradient-to-tr dark:from-rose-600 dark:to-red-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs mt-0.5">
+              <Megaphone size={16} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white px-2 py-0.5 rounded-md">
-                  🚨 জরুরি অ্যালার্ট
+                <span className="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 dark:bg-rose-600 text-white px-2 py-0.5 rounded-md shadow-2xs">
+                  📢 মেস নোটিশ
                 </span>
-                <h4 className="font-extrabold text-xs sm:text-sm text-rose-950 truncate">{urgentNotice.title}</h4>
+                <h4 className="font-black text-xs sm:text-sm text-amber-950 dark:text-rose-100 truncate">{urgentNotice.title}</h4>
               </div>
-              <p className="text-xs text-rose-900/90 mt-1 leading-relaxed">{urgentNotice.content}</p>
+              <p className="text-xs text-amber-900/90 dark:text-rose-200/90 mt-1 leading-relaxed">{urgentNotice.content}</p>
             </div>
           </div>
 
           <Link
             href="/notices"
-            className="shrink-0 text-xs font-extrabold text-rose-700 hover:text-rose-900 bg-white border border-rose-200 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-rose-100 transition-all flex items-center gap-1"
+            className="shrink-0 text-xs font-black text-amber-800 hover:text-amber-950 dark:text-white bg-white dark:bg-rose-900/80 border border-amber-200 dark:border-rose-700 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-amber-100 dark:hover:bg-rose-800 transition-all flex items-center gap-1"
           >
             <span>বিস্তারিত</span>
             <ArrowRight size={12} />
@@ -269,35 +269,35 @@ export function ModernDashboard({
             {/* Bazar Duty */}
             <Link
               href="/bazar"
-              className="flex items-center justify-between p-2 rounded-xl bg-amber-50/60 border border-amber-100 hover:bg-amber-100/60 transition-colors"
+              className="flex items-center justify-between p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 hover:bg-amber-100/70 dark:hover:bg-amber-950/60 transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-2xs">
                   <ShoppingBasket size={12} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-amber-800 uppercase leading-none">বাজার দায়িত্ব</p>
-                  <p className="text-xs font-bold text-gray-900 truncate mt-0.5">{todayBazarBuyer || "Admin (You)"}</p>
+                  <p className="text-[10px] font-black text-amber-800 dark:text-amber-300 uppercase leading-none">বাজার দায়িত্ব</p>
+                  <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate mt-0.5">{todayBazarBuyer || "Admin (You)"}</p>
                 </div>
               </div>
-              <ArrowRight size={12} className="text-amber-700 shrink-0" />
+              <ArrowRight size={12} className="text-amber-700 dark:text-amber-400 shrink-0" />
             </Link>
 
             {/* Cleaning Duty */}
             <Link
               href="/house"
-              className="flex items-center justify-between p-2 rounded-xl bg-teal-50/60 border border-teal-100 hover:bg-teal-100/60 transition-colors"
+              className="flex items-center justify-between p-2 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/60 hover:bg-teal-100/70 dark:hover:bg-teal-950/60 transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-teal-500 to-cyan-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-2xs">
                   <Brush size={12} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-teal-800 uppercase leading-none">ক্লিনিং ডিউটি</p>
-                  <p className="text-xs font-bold text-gray-900 truncate mt-0.5">{todayCleaningTask} ({cleaningAssignee})</p>
+                  <p className="text-[10px] font-black text-teal-800 dark:text-teal-300 uppercase leading-none">ক্লিনিং ডিউটি</p>
+                  <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate mt-0.5">{todayCleaningTask} ({cleaningAssignee})</p>
                 </div>
               </div>
-              <ArrowRight size={12} className="text-teal-700 shrink-0" />
+              <ArrowRight size={12} className="text-teal-700 dark:text-teal-400 shrink-0" />
             </Link>
           </div>
 

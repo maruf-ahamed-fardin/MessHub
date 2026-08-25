@@ -158,13 +158,13 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
     const isToday = new Date(bs.date).toDateString() === today.toDateString();
     items.push({
       id: `duty-bazar-${bs.id}`,
-      category: "duty",
+      category: "bazar",
       title: isToday ? `🛒 আজকের বাজার দায়িত্ব: ${buyer}` : `🗓️ আগামী বাজার শিডিউল: ${buyer} (${bs.dayName})`,
       desc: bs.note || `সাপ্তাহিক রোটেশন অনুযায়ী বাজার করার দায়িত্ব।`,
       time: isToday ? "আজকের দায়িত্ব" : formatShortDate(bs.date),
       createdAt: bs.createdAt,
       href: "/bazar",
-      type: "DUTY",
+      type: "BAZAR_SCHEDULE",
       read: false,
     });
   }

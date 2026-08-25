@@ -9,7 +9,14 @@ export function SettlementOverview({ summary, isFinalized }: { summary: Settleme
     <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-semibold">{formatMonthYear(summary.month, summary.year)}</h2>
-        <Badge className={isFinalized ? "bg-green-100 text-green-700 border-green-200" : "bg-amber-100 text-amber-700 border-amber-200"}>
+        <Badge
+          className={cn(
+            "font-black text-xs px-2.5 py-0.5 rounded-full border",
+            isFinalized
+              ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+              : "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+          )}
+        >
           {isFinalized ? "Finalized" : "Draft"}
         </Badge>
       </div>

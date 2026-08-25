@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PwaServiceWorkerRegister } from "@/components/shared/PwaServiceWorkerRegister";
+import { PreferencesProvider } from "@/lib/context/PreferencesContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
   title: { default: "MessHub", template: "%s | MessHub" },
   description: "Manage your mess — meals, expenses, bazar, payments, and community all in one place.",
   keywords: ["mess management", "expense tracker", "meal tracker", "bazar", "settlement"],
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3B4FBF",
+  themeColor: "#4f46e5",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -38,14 +40,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/icons/icon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
-        <TooltipProvider delay={300}>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <PreferencesProvider>
+          <TooltipProvider delay={300}>
+            {children}
+            <Toaster />
+            <PwaServiceWorkerRegister />
+          </TooltipProvider>
+        </PreferencesProvider>
       </body>
     </html>
   );

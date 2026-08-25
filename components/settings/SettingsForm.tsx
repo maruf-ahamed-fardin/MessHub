@@ -5,103 +5,409 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateSettingsAction } from "@/app/actions/app.actions";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2, Moon, Sun, Globe, Check, Sliders, CheckCircle2,
+  Building2, MapPin, DollarSign, BookOpen, Sparkles, Plus,
+  ShieldCheck, ArrowRight, Save, Utensils,
+} from "lucide-react";
+import { usePreferences } from "@/lib/context/PreferencesContext";
+import { PwaInstallButton } from "@/components/shared/PwaInstallButton";
+import { cn } from "@/lib/utils/cn";
 
 export function SettingsForm({ settings }: { settings: any }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<"general" | "finance" | "rules">("general");
+
+  const [messName, setMessName] = useState(settings?.messName ?? "MessHub Flat 4B");
+  const [address, setAddress] = useState(settings?.address ?? "House 12, Road 4, Dhanmondi, Dhaka");
+  const [currency, setCurrency] = useState(settings?.currency ?? "৳");
+  const [defaultSeatRent, setDefaultSeatRent] = useState(settings?.defaultSeatRent ?? 3500);
+  const [guestMealPricing, setGuestMealPricing] = useState(settings?.guestMealPricing ?? "DYNAMIC");
+  const [guestMealFixedPrice, setGuestMealFixedPrice] = useState(settings?.guestMealFixedPrice ?? 80);
+  const [messRules, setMessRules] = useState<string>(
+    settings?.messRules ??
+      "1. Lock the main door when leaving.\n2. Turn off lights/AC/fans after use.\n3. Keep dining area and kitchen clean after meals."
+  );
+
   const router = useRouter();
+  const { theme, setTheme, language, setLanguage } = usePreferences();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
-    const fd = new FormData(e.currentTarget);
     try {
       await updateSettingsAction({
-        messName: fd.get("messName"),
-        address: fd.get("address") || undefined,
-        currency: fd.get("currency"),
-        guestMealPricing: fd.get("guestMealPricing"),
-        guestMealFixedPrice: fd.get("guestMealFixedPrice") ? Number(fd.get("guestMealFixedPrice")) : undefined,
-        guestMealResponsibility: fd.get("guestMealResponsibility"),
-        defaultSeatRent: Number(fd.get("defaultSeatRent")),
-        messRules: fd.get("messRules") || undefined,
+        messName,
+        address: address || undefined,
+        currency,
+        guestMealPricing,
+        guestMealFixedPrice: guestMealPricing === "FIXED" ? Number(guestMealFixedPrice) : undefined,
+        guestMealResponsibility: "MEMBER",
+        defaultSeatRent: Number(defaultSeatRent),
+        messRules: messRules || undefined,
       });
       setSuccess(true);
       router.refresh();
+      setTimeout(() => setSuccess(false), 4000);
     } finally {
       setLoading(false);
     }
   }
 
+  const addRuleTemplate = (template: string) => {
+    setMessRules((prev: string) => (prev ? `${prev}\n• ${template}` : `• ${template}`));
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
-      <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] p-5 space-y-4">
-        <p className="text-sm font-semibold">General</p>
-        <div className="space-y-1">
-          <Label htmlFor="messName">Mess Name</Label>
-          <Input id="messName" name="messName" defaultValue={settings?.messName ?? "MessHub"} required />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="address">Address (optional)</Label>
-          <Input id="address" name="address" defaultValue={settings?.address ?? ""} placeholder="House no, Road, Area..." />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="defaultSeatRent">Default Seat Rent (৳)</Label>
-            <Input id="defaultSeatRent" name="defaultSeatRent" type="number" min="0" defaultValue={settings?.defaultSeatRent ?? 3500} />
+    <div className="max-w-3xl space-y-6 pb-20">
+      {/* 1. TOP APP PREFERENCES (Centered Compact Switches & PWA Banner) */}
+      <div className="bg-white border border-gray-200/90 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {/* Language Switcher */}
+          <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200/80 flex flex-col items-center justify-center text-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-black text-gray-800">
+              <Globe size={14} className="text-indigo-600" />
+              <span>{language === "bn" ? "ভাষা (Language)" : "Language"}</span>
+            </div>
+            <div className="flex items-center p-1 bg-gray-200/80 dark:bg-slate-800 rounded-xl gap-1 border border-gray-300/40 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setLanguage("bn")}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 select-none",
+                  language === "bn"
+                    ? "bg-indigo-600 text-white shadow-xs ring-1 ring-indigo-500/50"
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                )}
+              >
+                <span>🇧🇩 বাংলা</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 select-none",
+                  language === "en"
+                    ? "bg-indigo-600 text-white shadow-xs ring-1 ring-indigo-500/50"
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                )}
+              >
+                <span>🇬🇧 English</span>
+              </button>
+            </div>
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="currency">Currency Symbol</Label>
-            <Input id="currency" name="currency" defaultValue={settings?.currency ?? "৳"} maxLength={5} />
+
+          {/* Night Mode & Light Mode Switcher */}
+          <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200/80 flex flex-col items-center justify-center text-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-black text-gray-800">
+              {theme === "dark" ? <Moon size={14} className="text-indigo-400" /> : <Sun size={14} className="text-amber-500" />}
+              <span>{language === "bn" ? "ডিসপ্লে থিম" : "Theme Mode"}</span>
+            </div>
+            <div className="flex items-center p-1 bg-gray-200/80 dark:bg-slate-800 rounded-xl gap-1 border border-gray-300/40 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setTheme("light")}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 select-none",
+                  theme === "light"
+                    ? "bg-amber-500 text-white shadow-xs ring-1 ring-amber-400/50"
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                )}
+              >
+                <Sun size={13} className="text-white" />
+                <span>লাইট</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme("dark")}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 select-none",
+                  theme === "dark"
+                    ? "bg-indigo-600 text-white shadow-xs ring-1 ring-indigo-500/50"
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                )}
+              >
+                <Moon size={13} className="text-indigo-200" />
+                <span>নাইট</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* PWA App Download Option */}
+        <PwaInstallButton variant="card" />
       </div>
 
-      <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] p-5 space-y-4">
-        <p className="text-sm font-semibold">Guest Meals</p>
-        <div className="space-y-1">
-          <Label>Guest Meal Pricing</Label>
-          <Select name="guestMealPricing" defaultValue={settings?.guestMealPricing ?? "DYNAMIC"}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="DYNAMIC">Dynamic (same as meal rate)</SelectItem>
-              <SelectItem value="FIXED">Fixed price</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="guestMealFixedPrice">Fixed Price (৳) — if above is Fixed</Label>
-          <Input id="guestMealFixedPrice" name="guestMealFixedPrice" type="number" min="0" step="0.01"
-            defaultValue={settings?.guestMealFixedPrice ?? ""} placeholder="Leave blank for dynamic" />
-        </div>
-        <div className="space-y-1">
-          <Label>Guest Meal Cost Responsibility</Label>
-          <Select name="guestMealResponsibility" defaultValue={settings?.guestMealResponsibility ?? "MEMBER"}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MEMBER">Charged to Member</SelectItem>
-              <SelectItem value="GUEST">Guest pays separately</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* 2. MESS CONFIGURATION HUB (Interactive Modern Design) */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Navigation Category Tabs */}
+        <div className="flex items-center gap-1.5 p-1.5 bg-gray-100/90 rounded-2xl border border-gray-200/80 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab("general")}
+            className={cn(
+              "flex-1 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none",
+              activeTab === "general"
+                ? "bg-white text-indigo-600 shadow-xs"
+                : "text-gray-600 hover:text-gray-900"
+            )}
+          >
+            <Building2 size={14} />
+            <span>{language === "bn" ? "মেস পরিচিতি" : "Mess Identity"}</span>
+          </button>
 
-      <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] p-5 space-y-4">
-        <p className="text-sm font-semibold">Mess Rules</p>
-        <Textarea name="messRules" defaultValue={settings?.messRules ?? ""} placeholder="House rules, guidelines..." rows={5} className="resize-none" />
-      </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("finance")}
+            className={cn(
+              "flex-1 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none",
+              activeTab === "finance"
+                ? "bg-white text-emerald-600 shadow-xs"
+                : "text-gray-600 hover:text-gray-900"
+            )}
+          >
+            <DollarSign size={14} />
+            <span>{language === "bn" ? "ভাড়া ও মিল রেট" : "Rent & Pricing"}</span>
+          </button>
 
-      {success && <p className="text-sm text-[hsl(var(--success))]">✓ Settings saved successfully</p>}
+          <button
+            type="button"
+            onClick={() => setActiveTab("rules")}
+            className={cn(
+              "flex-1 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none",
+              activeTab === "rules"
+                ? "bg-white text-amber-600 shadow-xs"
+                : "text-gray-600 hover:text-gray-900"
+            )}
+          >
+            <BookOpen size={14} />
+            <span>{language === "bn" ? "মেস নীতিমালা" : "Rules & Notice"}</span>
+          </button>
+        </div>
 
-      <Button type="submit" disabled={loading} className="gap-2">
-        {loading ? <Loader2 size={14} className="animate-spin" /> : null}
-        Save Settings
-      </Button>
-    </form>
+        {/* Tab 1: General Mess Identity */}
+        {activeTab === "general" && (
+          <div className="bg-white border border-gray-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4 animate-in fade-in-0 duration-150">
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-primary text-white flex items-center justify-center font-black text-lg shadow-md shrink-0">
+                {messName.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <h4 className="font-black text-sm sm:text-base text-gray-900 leading-tight truncate">
+                  {messName || "My Mess"}
+                </h4>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{address || "Location not set"}</p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-black text-gray-800 flex items-center gap-1.5">
+                <Building2 size={13} className="text-indigo-600" />
+                <span>{language === "bn" ? "মেসের নাম *" : "Mess Name *"}</span>
+              </Label>
+              <Input
+                value={messName}
+                onChange={(e) => setMessName(e.target.value)}
+                placeholder="e.g. MessHub Flat 4B"
+                required
+                className="h-10 text-xs rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-black text-gray-800 flex items-center gap-1.5">
+                <MapPin size={13} className="text-rose-500" />
+                <span>{language === "bn" ? "মেসের ঠিকানা (ঠিকানা ও রোড)" : "Full Address"}</span>
+              </Label>
+              <Input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="House 12, Road 4, Dhanmondi, Dhaka"
+                className="h-10 text-xs rounded-xl"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Finance, Seat Rent & Guest Meal Pricing */}
+        {activeTab === "finance" && (
+          <div className="bg-white border border-gray-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4 animate-in fade-in-0 duration-150">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Default Seat Rent */}
+              <div className="space-y-1.5 p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/70">
+                <Label className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
+                  <DollarSign size={14} className="text-emerald-600" />
+                  <span>{language === "bn" ? "ডিফল্ট সিট ভাড়া" : "Default Seat Rent"}</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={defaultSeatRent}
+                    onChange={(e) => setDefaultSeatRent(Number(e.target.value))}
+                    className="h-10 text-xs font-black rounded-xl bg-white pl-8"
+                  />
+                  <span className="absolute left-3 top-2.5 text-xs font-black text-gray-400">
+                    {currency}
+                  </span>
+                </div>
+                <p className="text-[10px] text-emerald-700">নতুন মেম্বার যুক্ত করার সময় এটি ব্যবহার হবে</p>
+              </div>
+
+              {/* Currency Selector */}
+              <div className="space-y-1.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-200/80">
+                <Label className="text-xs font-black text-gray-800">
+                  {language === "bn" ? "কারেন্সি প্রতীক" : "Currency Symbol"}
+                </Label>
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  {["৳", "$", "₹", "€"].map((sym) => (
+                    <button
+                      key={sym}
+                      type="button"
+                      onClick={() => setCurrency(sym)}
+                      className={cn(
+                        "flex-1 h-9 rounded-xl font-black text-xs transition-all cursor-pointer select-none",
+                        currency === sym
+                          ? "bg-indigo-600 text-white shadow-xs scale-102"
+                          : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-100"
+                      )}
+                    >
+                      {sym}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400">ওয়েবসাইটের সকল হিসাব এই প্রতীকে দেখাবে</p>
+              </div>
+            </div>
+
+            {/* Guest Meal Pricing Rules */}
+            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-2.5">
+              <Label className="text-xs font-black text-gray-800 flex items-center gap-1.5">
+                <Utensils size={14} className="text-amber-500" />
+                <span>{language === "bn" ? "গেস্ট মিল প্রাইসিং নিয়ম" : "Guest Meal Pricing Mode"}</span>
+              </Label>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGuestMealPricing("DYNAMIC")}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all cursor-pointer",
+                    guestMealPricing === "DYNAMIC"
+                      ? "bg-white border-primary text-primary shadow-xs ring-1 ring-primary/20"
+                      : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white"
+                  )}
+                >
+                  <p className="font-black text-xs">📊 ডাইনামিক রেট</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">মাসের মিল রেট অনুযায়ী হিসাব</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGuestMealPricing("FIXED")}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all cursor-pointer",
+                    guestMealPricing === "FIXED"
+                      ? "bg-white border-primary text-primary shadow-xs ring-1 ring-primary/20"
+                      : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white"
+                  )}
+                >
+                  <p className="font-black text-xs">🔒 ফিক্সড রেট</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">প্রতি মিল নির্দিষ্ট টাকা</p>
+                </button>
+              </div>
+
+              {guestMealPricing === "FIXED" && (
+                <div className="pt-2 animate-in fade-in-0 duration-150">
+                  <Label className="text-[11px] font-black text-gray-700">
+                    ফিক্সড গেস্ট মিল রেট ({currency})
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={guestMealFixedPrice}
+                    onChange={(e) => setGuestMealFixedPrice(Number(e.target.value))}
+                    className="h-9 text-xs rounded-xl mt-1 bg-white"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Mess Rules & Regulations */}
+        {activeTab === "rules" && (
+          <div className="bg-white border border-gray-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-3.5 animate-in fade-in-0 duration-150">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-black text-gray-800 flex items-center gap-1.5">
+                <BookOpen size={14} className="text-amber-600" />
+                <span>{language === "bn" ? "মেস নীতিমালা ও নোটিস বোর্ড রুলস" : "Mess Rules & Regulations"}</span>
+              </Label>
+              <span className="text-[10px] text-gray-400">মেম্বারদের ড্যাশবোর্ডে প্রদর্শিত হবে</span>
+            </div>
+
+            {/* Quick Rule Templates */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-bold text-gray-500">💡 কুইক টেমপ্লেট:</span>
+              <button
+                type="button"
+                onClick={() => addRuleTemplate("লাইট ও ফ্যান অপ্রয়োজনে বন্ধ রাখুন")}
+                className="px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-[10px] font-bold border border-amber-200/80 transition-colors cursor-pointer"
+              >
+                + বিদ্যুৎ সাশ্রয়
+              </button>
+              <button
+                type="button"
+                onClick={() => addRuleTemplate("রাত ১১:৩০ টার পর মেইন গেট বন্ধ থাকবে")}
+                className="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-[10px] font-bold border border-indigo-200/80 transition-colors cursor-pointer"
+              >
+                + মেইন গেট নিয়ম
+              </button>
+              <button
+                type="button"
+                onClick={() => addRuleTemplate("খাবার পর প্লেট ধুয়ে ডাইনিং পরিষ্কার রাখুন")}
+                className="px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-bold border border-emerald-200/80 transition-colors cursor-pointer"
+              >
+                + ডাইনিং পরিচ্ছন্নতা
+              </button>
+            </div>
+
+            <Textarea
+              value={messRules}
+              onChange={(e) => setMessRules(e.target.value)}
+              rows={6}
+              placeholder="1. মেসের নিয়ম লিখুন..."
+              className="text-xs rounded-2xl leading-relaxed p-3.5 resize-none bg-gray-50/50"
+            />
+          </div>
+        )}
+
+        {/* Success Alert Feedback */}
+        {success && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-black flex items-center gap-2 animate-in fade-in-0 duration-150">
+            <CheckCircle2 size={18} className="text-emerald-600" />
+            <span>{language === "bn" ? "মেস সেটিংস সফলভাবে আপডেট করা হয়েছে!" : "Settings saved successfully!"}</span>
+          </div>
+        )}
+
+        {/* Modern Save Action Button */}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-gradient-to-r from-primary via-indigo-600 to-purple-600 text-white font-black h-11 rounded-2xl shadow-md hover:shadow-lg active:scale-[0.99] transition-all cursor-pointer text-xs gap-2"
+        >
+          {loading ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Save size={16} />
+          )}
+          <span>{language === "bn" ? "সেটিংস সংরক্ষণ করুন (Save Changes)" : "Save Changes"}</span>
+        </Button>
+      </form>
+    </div>
   );
 }

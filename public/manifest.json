@@ -1,0 +1,36 @@
+{
+  "name": "MessHub - Mess Management App",
+  "short_name": "MessHub",
+  "description": "Your mess, digitally managed. Meals, Bazar, Expenses & Member Community.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Meals",
+      "url": "/meals",
+      "description": "Meal booking and daily counts"
+    },
+    {
+      "name": "Community Feed",
+      "url": "/community",
+      "description": "Member posts, photos and discussions"
+    },
+    {
+      "name": "Money",
+      "url": "/payments",
+      "description": "Money transactions and deposit records"
+    }
+  ]
+}

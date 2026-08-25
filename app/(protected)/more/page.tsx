@@ -9,6 +9,8 @@ import { auth } from "@/lib/auth/config";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { cn } from "@/lib/utils/cn";
 
+import { PwaInstallButton } from "@/components/shared/PwaInstallButton";
+
 export const metadata: Metadata = { title: "More Menu" };
 
 const ALL_ITEMS = [
@@ -111,6 +113,9 @@ export default async function MorePage() {
         title="More"
         description="মেসের সকল ফিচার ও সেটিংসের এক ক্লিকে তালিকা"
       />
+
+      {/* PWA App Install Banner Card */}
+      <PwaInstallButton variant="card" />
 
       {/* One-By-One Modern List */}
       <div className="space-y-2.5">

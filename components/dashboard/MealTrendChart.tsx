@@ -55,18 +55,18 @@ export function MealTrendChart({ data, todayTotal, averageMeals }: MealTrendChar
                 )}
 
                 {/* Bar Column */}
-                <div className="w-full h-28 bg-gray-50 rounded-xl relative flex items-end justify-center p-1 overflow-hidden">
+                <div className="w-full h-28 bg-slate-100/90 dark:bg-slate-800/60 rounded-xl relative flex items-end justify-center p-1 overflow-hidden border border-slate-200/50 dark:border-slate-800/60">
                   <div
                     style={{ height: `${heightPercent}%` }}
                     className={cn(
-                      "w-full rounded-lg transition-all duration-300 relative group-hover:opacity-90",
+                      "w-full rounded-lg transition-all duration-300 relative group-hover:opacity-95",
                       item.isToday
-                        ? "bg-indigo-600 shadow-sm"
-                        : "bg-indigo-200/80 group-hover:bg-indigo-400"
+                        ? "bg-gradient-to-t from-indigo-600 to-indigo-500 dark:from-indigo-500 dark:to-indigo-400 shadow-xs"
+                        : "bg-indigo-200/90 hover:bg-indigo-300/90 dark:bg-indigo-900/60 dark:hover:bg-indigo-800/80"
                     )}
                   >
                     {item.isToday && (
-                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white ring-2 ring-indigo-600" />
+                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white ring-2 ring-indigo-600 dark:ring-indigo-400 shadow-2xs" />
                     )}
                   </div>
                 </div>
@@ -76,12 +76,12 @@ export function MealTrendChart({ data, todayTotal, averageMeals }: MealTrendChar
                   <p
                     className={cn(
                       "text-[10px] font-bold transition-colors",
-                      item.isToday ? "text-indigo-600 font-extrabold" : "text-gray-500"
+                      item.isToday ? "text-indigo-600 dark:text-indigo-400 font-black" : "text-gray-600 dark:text-slate-400"
                     )}
                   >
                     {item.day}
                   </p>
-                  <p className="text-[9px] text-gray-400 font-semibold">{item.meals}</p>
+                  <p className="text-[9px] text-gray-400 dark:text-slate-500 font-semibold">{item.meals}</p>
                 </div>
               </div>
             );

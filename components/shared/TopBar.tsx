@@ -5,11 +5,14 @@ import Link from "next/link";
 import {
   Bell, Plus, ShoppingBasket, UserPlus, Receipt, Wrench,
   Users, Megaphone, User, Settings, LogOut, ChevronDown,
+  Globe, Moon, Sun, Download,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 import { NotificationPopover } from "@/components/shared/NotificationPopover";
+import { PwaInstallButton } from "@/components/shared/PwaInstallButton";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface TopBarProps {
   user: {
@@ -38,6 +41,7 @@ const ADMIN_ACTIONS = [
 ];
 
 export function TopBar({ user }: TopBarProps) {
+  const { theme, toggleTheme, language, toggleLanguage } = usePreferences();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -86,6 +90,8 @@ export function TopBar({ user }: TopBarProps) {
 
       {/* Right actions */}
       <div className="flex items-center gap-2">
+        <PwaInstallButton variant="topbar" />
+
         {/* 1. Quick Add Dropdown */}
         <div className="relative" ref={quickAddRef}>
           <Button
@@ -151,40 +157,45 @@ export function TopBar({ user }: TopBarProps) {
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-[hsl(var(--border))] py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-              <div className="px-3.5 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-900 truncate">{user.name ?? "Member"}</p>
+            <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-200/90 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 divide-y divide-gray-100">
+              {/* Profile Header */}
+              <div className="px-3.5 py-2.5">
+                <p className="text-xs font-black text-gray-900 truncate">{user.name ?? "Member"}</p>
                 <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
-                <span className="inline-block mt-1 text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                <span className="inline-block mt-1 text-[10px] font-extrabold bg-primary/10 text-primary px-2 py-0.5 rounded-md">
                   {user.role}
                 </span>
               </div>
-              <div className="py-1">
+
+              {/* Navigation Links */}
+              <div className="py-1 px-1.5 space-y-0.5">
                 <Link
                   href="/members/me"
                   onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <User size={14} className="text-gray-400" />
-                  My Profile
+                  <span>আমার প্রোফাইল</span>
                 </Link>
                 <Link
                   href="/settings"
                   onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <Settings size={14} className="text-gray-400" />
-                  Settings
+                  <span>সেটিংস ও থিম</span>
                 </Link>
               </div>
-              <div className="border-t border-gray-100 pt-1">
+
+              {/* Sign out */}
+              <div className="pt-1 px-1.5">
                 <button
                   type="button"
                   onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="flex items-center gap-2.5 w-full text-left px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
                   <LogOut size={14} />
-                  Sign out
+                  <span>লগ আউট</span>
                 </button>
               </div>
             </div>

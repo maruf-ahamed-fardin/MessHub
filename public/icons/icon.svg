@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="pwaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#4f46e5" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#pwaGrad)" filter="url(#shadow)" />
+
+  <!-- Inner Subtle Border -->
+  <rect x="12" y="12" width="488" height="488" rx="116" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.2" />
+
+  <!-- Bold Modern "M" Brandmark -->
+  <path d="M 130 370 L 130 150 L 210 150 L 256 240 L 302 150 L 382 150 L 382 370 L 316 370 L 316 230 L 272 320 L 240 320 L 196 230 L 196 370 Z" fill="#ffffff" />
+
+  <!-- Decorative Accent Circle Dot -->
+  <circle cx="382" cy="130" r="24" fill="#38bdf8" />
+</svg>

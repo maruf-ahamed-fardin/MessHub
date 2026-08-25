@@ -304,7 +304,7 @@ export function BazarExplorer({
                 {/* Header */}
                 <div className="px-4 py-3 bg-gray-50/70 border-b border-gray-100 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                       <Receipt size={16} />
                     </div>
                     <div className="min-w-0">

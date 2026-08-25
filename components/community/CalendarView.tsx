@@ -353,16 +353,18 @@ export function CalendarView({
 
             {/* 5. Notices / Meetings */}
             {currentDayInfo.notices.length > 0 && (
-              <div className="bg-purple-50/60 border border-purple-200/80 rounded-xl p-3.5 space-y-2">
-                <div className="flex items-center gap-2 text-purple-800 font-bold text-xs">
-                  <Bell size={15} className="text-purple-600" />
+              <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-purple-900 dark:text-purple-300 font-black text-xs">
+                  <div className="w-6 h-6 rounded-lg bg-purple-200/80 dark:bg-purple-900/60 flex items-center justify-center text-purple-700 dark:text-purple-300">
+                    <Bell size={13} />
+                  </div>
                   <span>নোটিশ ও মিটিং (Announcements)</span>
                 </div>
 
                 {currentDayInfo.notices.map((n) => (
-                  <div key={n.id} className="bg-white rounded-lg p-2.5 border border-purple-100">
-                    <p className="text-xs font-bold text-gray-900">{n.title}</p>
-                    <p className="text-[11px] text-gray-600 mt-0.5">{n.description}</p>
+                  <div key={n.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-purple-100 dark:border-slate-800 shadow-2xs">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100">{n.title}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{n.description}</p>
                   </div>
                 ))}
               </div>

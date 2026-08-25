@@ -71,7 +71,7 @@ export function NotificationPopover() {
       >
         <Bell size={17} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-extrabold text-white ring-2 ring-white animate-pulse">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-tr from-rose-500 to-red-600 px-1 text-[9px] font-black text-white shadow-xs leading-none">
             {unreadCount}
           </span>
         )}

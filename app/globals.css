@@ -86,6 +86,28 @@
     --sidebar-primary: 231 80% 70%;
   }
 
+  .dark {
+    --background: 224 30% 9%;
+    --foreground: 210 20% 98%;
+    --card: 224 28% 13%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 28% 13%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 231 75% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 25% 18%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 224 25% 16%;
+    --muted-foreground: 215 15% 65%;
+    --accent: 224 25% 18%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 224 20% 20%;
+    --input: 224 20% 20%;
+    --ring: 231 75% 65%;
+  }
+
   * {
     border-color: hsl(var(--border));
     box-sizing: border-box;
@@ -110,6 +132,169 @@
   button, a[role="button"], input[type="button"], input[type="submit"] {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+  }
+
+  /* Comprehensive Perfect Dark Mode Styles */
+  .dark body {
+    background-color: #0b0f19 !important;
+    color: #f1f5f9 !important;
+  }
+
+  /* Universal Dark Background Mappings (prevents washed-out gray boxes) */
+  .dark .bg-white,
+  .dark [class*="bg-white/"] {
+    background-color: #131b2e !important;
+  }
+
+  /* Soft Tinted Backgrounds for Dark Mode (ONLY 50 and 100 tints - preserves solid buttons & charts) */
+  .dark .bg-gray-50, .dark .bg-gray-100, .dark .bg-slate-50, .dark .bg-slate-100,
+  .dark [class*="bg-gray-50/"], .dark [class*="bg-gray-100/"],
+  .dark [class*="bg-slate-50/"], .dark [class*="bg-slate-100/"] {
+    background-color: #1a233a !important;
+  }
+
+  .dark .bg-indigo-50, .dark .bg-indigo-100, .dark .bg-blue-50, .dark .bg-blue-100,
+  .dark [class*="bg-indigo-50/"], .dark [class*="bg-indigo-100/"],
+  .dark [class*="bg-blue-50/"], .dark [class*="bg-blue-100/"] {
+    background-color: #172138 !important;
+  }
+
+  .dark .bg-purple-50, .dark .bg-purple-100, .dark .bg-violet-50, .dark .bg-violet-100,
+  .dark [class*="bg-purple-50/"], .dark [class*="bg-purple-100/"],
+  .dark [class*="bg-violet-50/"], .dark [class*="bg-violet-100/"] {
+    background-color: #23193a !important;
+  }
+
+  .dark .bg-teal-50, .dark .bg-teal-100, .dark .bg-cyan-50, .dark .bg-cyan-100,
+  .dark [class*="bg-teal-50/"], .dark [class*="bg-teal-100/"],
+  .dark [class*="bg-cyan-50/"], .dark [class*="bg-cyan-100/"] {
+    background-color: #122828 !important;
+  }
+
+  .dark .bg-amber-50, .dark .bg-amber-100, .dark .bg-yellow-50, .dark .bg-yellow-100, .dark .bg-orange-50, .dark .bg-orange-100,
+  .dark [class*="bg-amber-50/"], .dark [class*="bg-amber-100/"],
+  .dark [class*="bg-yellow-50/"], .dark [class*="bg-yellow-100/"],
+  .dark [class*="bg-orange-50/"], .dark [class*="bg-orange-100/"] {
+    background-color: #2b2011 !important;
+  }
+
+  .dark .bg-emerald-50, .dark .bg-emerald-100, .dark .bg-green-50, .dark .bg-green-100,
+  .dark [class*="bg-emerald-50/"], .dark [class*="bg-emerald-100/"],
+  .dark [class*="bg-green-50/"], .dark [class*="bg-green-100/"] {
+    background-color: #112922 !important;
+  }
+
+  .dark .bg-rose-50, .dark .bg-rose-100, .dark .bg-red-50, .dark .bg-red-100,
+  .dark [class*="bg-rose-50/"], .dark [class*="bg-rose-100/"],
+  .dark [class*="bg-red-50/"], .dark [class*="bg-red-100/"] {
+    background-color: #2e161e !important;
+  }
+
+  /* Universal Dark Border Mappings */
+  .dark [class*="border-gray-"],
+  .dark [class*="border-slate-"],
+  .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+  .dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #232f48 !important;
+  }
+
+  .dark [class*="border-indigo-"],
+  .dark [class*="border-blue-"],
+  .dark [class*="border-sky-"] {
+    border-color: #304169 !important;
+  }
+
+  .dark [class*="border-emerald-"],
+  .dark [class*="border-green-"] {
+    border-color: #1e5246 !important;
+  }
+
+  .dark [class*="border-amber-"],
+  .dark [class*="border-yellow-"],
+  .dark [class*="border-orange-"] {
+    border-color: #573e1c !important;
+  }
+
+  .dark [class*="border-rose-"],
+  .dark [class*="border-red-"] {
+    border-color: #5c2838 !important;
+  }
+
+  .dark [class*="border-purple-"],
+  .dark [class*="border-violet-"] {
+    border-color: #4c2d73 !important;
+  }
+
+  .dark [class*="border-teal-"],
+  .dark [class*="border-cyan-"] {
+    border-color: #1a4d4b !important;
+  }
+
+  /* Universal Dark Text Mappings */
+  .dark .text-gray-900,
+  .dark .text-gray-800,
+  .dark .text-slate-900,
+  .dark .text-slate-800 {
+    color: #f8fafc !important;
+  }
+
+  .dark .text-gray-700,
+  .dark .text-gray-600,
+  .dark .text-slate-700,
+  .dark .text-slate-600 {
+    color: #cbd5e1 !important;
+  }
+
+  .dark .text-gray-500,
+  .dark .text-gray-400,
+  .dark .text-slate-500,
+  .dark .text-slate-400 {
+    color: #94a3b8 !important;
+  }
+
+  .dark [class*="text-indigo-"],
+  .dark [class*="text-blue-"],
+  .dark [class*="text-sky-"] {
+    color: #a5b4fc !important;
+  }
+
+  .dark [class*="text-emerald-"],
+  .dark [class*="text-green-"] {
+    color: #6ee7b7 !important;
+  }
+
+  .dark [class*="text-amber-"],
+  .dark [class*="text-yellow-"],
+  .dark [class*="text-orange-"] {
+    color: #fde68a !important;
+  }
+
+  .dark [class*="text-rose-"],
+  .dark [class*="text-red-"] {
+    color: #fecdd3 !important;
+  }
+
+  .dark [class*="text-purple-"],
+  .dark [class*="text-violet-"] {
+    color: #d8b4fe !important;
+  }
+
+  .dark [class*="text-teal-"],
+  .dark [class*="text-cyan-"] {
+    color: #5eead4 !important;
+  }
+
+  .dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+  .dark textarea,
+  .dark select {
+    background-color: #172036 !important;
+    color: #f8fafc !important;
+    border-color: #2a3856 !important;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #64748b !important;
   }
 
   /* Prevent horizontal overflow */
