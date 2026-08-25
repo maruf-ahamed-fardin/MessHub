@@ -45,48 +45,105 @@ export default async function DashboardPage() {
   let urgentNotice: any = null;
   let weeklyMealTrend: any[] = [];
 
-  try {
-    // 1. Current user profile
-    const currentMemberId = session?.user.memberId ?? "member-admin";
-    member = await prisma.memberProfile.findUnique({
-      where: { id: currentMemberId },
-      include: { seat: { include: { room: true } }, user: true },
-    });
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
 
+  try {
+    const currentMemberId = session?.user.memberId ?? "member-admin";
+
+    // 1. Concurrently fetch all primary data in a single parallel batch
+    const [
+      member,
+      allMembers,
+      dbRooms,
+      dbSeats,
+      weeklyMealsList,
+      bazarAgg,
+      utilityAgg,
+      paymentsAgg,
+      todaySchedule,
+      todayCleaning,
+      dbBazar,
+      dbPayments,
+      notices,
+      calculatedMealRate,
+    ] = await Promise.all([
+      prisma.memberProfile.findUnique({
+        where: { id: currentMemberId },
+        include: { seat: { include: { room: true } }, user: true },
+      }),
+      prisma.memberProfile.findMany({
+        where: { isActive: true },
+        include: {
+          user: { select: { name: true, image: true, email: true } },
+          seat: { include: { room: true } },
+        },
+      }),
+      prisma.room.count(),
+      prisma.seat.count(),
+      prisma.meal.findMany({
+        where: { date: { gte: sevenDaysAgo, lte: today } },
+      }),
+      prisma.bazar.aggregate({
+        where: { date: { gte: startDate, lte: endDate } },
+        _sum: { totalAmount: true },
+      }),
+      prisma.utilityBill.aggregate({
+        where: { month, year },
+        _sum: { amount: true },
+      }),
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+      }),
+      prisma.bazarSchedule.findFirst({
+        where: { date: today },
+        include: { member: { include: { user: { select: { name: true } } } } },
+      }),
+      prisma.cleaningTask.findFirst({
+        where: { dueDate: { gte: today } },
+        include: { assignedMember: { include: { user: { select: { name: true } } } } },
+        orderBy: { dueDate: "asc" },
+      }),
+      prisma.bazar.findMany({
+        take: 3,
+        orderBy: { createdAt: "desc" },
+        include: { buyerMember: { include: { user: { select: { name: true } } } } },
+      }),
+      prisma.payment.findMany({
+        take: 3,
+        orderBy: { createdAt: "desc" },
+        include: { member: { include: { user: { select: { name: true } } } } },
+      }),
+      getActiveNotices(),
+      calculateMealRate(month, year),
+    ]);
+
+    mealRate = calculatedMealRate;
+    totalMembers = allMembers.length;
+    totalRooms = dbRooms || 3;
+    totalSeats = dbSeats || 7;
+
+    // 2. Process current member stats
     if (member) {
-      todayMeal = await prisma.meal.findUnique({
-        where: { memberId_date: { memberId: member.id, date: today } },
-      });
-      mealRate = await calculateMealRate(month, year);
+      const todayMealFound = weeklyMealsList.find(
+        (m) => m.memberId === member.id && new Date(m.date).toDateString() === today.toDateString()
+      );
+      if (todayMealFound) {
+        todayMeal = todayMealFound;
+      }
       const calculated = await calculateMemberFoodCost(member.id, month, year, mealRate);
       foodCost = calculated.foodCost;
       totalMeals = calculated.totalMeals;
       balance = await calculateMemberRunningBalance(member.id);
     }
 
-    // 2. All Members
-    const allMembers = await prisma.memberProfile.findMany({
-      where: { isActive: true },
-      include: {
-        user: { select: { name: true, image: true, email: true } },
-        seat: { include: { room: true } },
-      },
-    });
-    totalMembers = allMembers.length;
-
-    // 3. Count rooms and seats
-    const [dbRooms, dbSeats] = await Promise.all([
-      prisma.room.count(),
-      prisma.seat.count(),
-    ]);
-    totalRooms = dbRooms || 3;
-    totalSeats = dbSeats || 7;
-
-    // 4. Today's meals counts
-    const todayMealsList = await prisma.meal.findMany({ where: { date: today } });
-    if (todayMealsList.length > 0) {
+    // 3. Process today's meal totals
+    const todayMealsOnly = weeklyMealsList.filter(
+      (m) => new Date(m.date).toDateString() === today.toDateString()
+    );
+    if (todayMealsOnly.length > 0) {
       let b = 0, l = 0, d = 0;
-      for (const m of todayMealsList) {
+      for (const m of todayMealsOnly) {
         if (m.breakfast) b++;
         if (m.lunch) l++;
         if (m.dinner) d++;
@@ -94,39 +151,22 @@ export default async function DashboardPage() {
       todayTotalMeals = { breakfast: b, lunch: l, dinner: d, total: b + l + d };
     }
 
-    // 5. Total Bazar & Utilities & Payments
-    const [bazarAgg, utilityAgg, paymentsAgg] = await Promise.all([
-      prisma.bazar.aggregate({ where: { date: { gte: startDate, lte: endDate } }, _sum: { totalAmount: true } }),
-      prisma.utilityBill.aggregate({ where: { month, year }, _sum: { amount: true } }),
-      prisma.payment.aggregate({ _sum: { amount: true } }),
-    ]);
-
+    // 4. Financial sums
     monthBazarExpense = Number(bazarAgg._sum.totalAmount) || 2450;
     monthUtilityBills = Number(utilityAgg._sum.amount) || 31850;
     const totalPayments = Number(paymentsAgg._sum.amount) || 26500;
     totalFundInHand = Math.max(0, totalPayments - monthBazarExpense);
 
-    // 6. Today's Bazar Schedule
-    const todaySchedule = await prisma.bazarSchedule.findFirst({
-      where: { date: today },
-      include: { member: { include: { user: { select: { name: true } } } } },
-    });
+    // 5. Schedules & Duties
     if (todaySchedule?.member?.user?.name) {
       todayBazarBuyer = todaySchedule.member.user.name;
     }
-
-    // 7. Today's Cleaning Task
-    const todayCleaning = await prisma.cleaningTask.findFirst({
-      where: { dueDate: { gte: today } },
-      include: { assignedMember: { include: { user: { select: { name: true } } } } },
-      orderBy: { dueDate: "asc" },
-    });
     if (todayCleaning) {
       todayCleaningTask = todayCleaning.title;
       cleaningAssignee = todayCleaning.assignedMember?.user?.name ?? "Member";
     }
 
-    // 8. 7 Members live status & balance
+    // 6. Member live status & balance in parallel
     memberStatusList = await Promise.all(
       allMembers.map(async (m) => {
         const [paidAgg, mbBalance] = await Promise.all([
@@ -141,7 +181,7 @@ export default async function DashboardPage() {
       })
     );
 
-    // 9. Generate 7-day Weekly Meal Trend Data
+    // 7. Process weekly trend in-memory (0 extra DB calls)
     const trendList = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
@@ -149,7 +189,9 @@ export default async function DashboardPage() {
       const dayName = BN_DAYS[d.getDay()];
       const dateStr = d.toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
 
-      const dayMeals = await prisma.meal.findMany({ where: { date: d } });
+      const dayMeals = weeklyMealsList.filter(
+        (m) => new Date(m.date).toDateString() === d.toDateString()
+      );
       const mealSum = dayMeals.length > 0
         ? dayMeals.reduce((acc, m) => acc + (m.breakfast ? 1 : 0) + (m.lunch ? 1 : 0) + (m.dinner ? 1 : 0), 0)
         : (i === 0 ? todayTotalMeals.total : 18 + (i % 4));
@@ -163,19 +205,13 @@ export default async function DashboardPage() {
     }
     weeklyMealTrend = trendList;
 
-    // 10. Recent activities
-    const [dbBazar, dbPayments] = await Promise.all([
-      prisma.bazar.findMany({ take: 3, orderBy: { createdAt: "desc" }, include: { buyerMember: { include: { user: { select: { name: true } } } } } }),
-      prisma.payment.findMany({ take: 3, orderBy: { createdAt: "desc" }, include: { member: { include: { user: { select: { name: true } } } } } }),
-    ]);
-
+    // 8. Recent activities
     recentActivities = [
       ...dbBazar.map((b) => ({ id: `b-${b.id}`, title: `${b.buyerMember?.user?.name ?? "Member"} বাজার করেছেন`, amount: Number(b.totalAmount), time: b.createdAt })),
       ...dbPayments.map((p) => ({ id: `p-${p.id}`, title: `${p.member?.user?.name ?? "Member"} টাকা জমা দিয়েছেন`, amount: Number(p.amount), time: p.createdAt })),
     ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
-    // 11. Notices
-    const notices = await getActiveNotices();
+    // 9. Urgent notice
     if (notices.length > 0) {
       urgentNotice = notices.find((n) => n.priority === "URGENT") ?? notices.find((n) => n.priority === "IMPORTANT") ?? notices[0] ?? null;
     }

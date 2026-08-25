@@ -13,12 +13,35 @@ import {
   Plus, Check, Sparkles, AlertCircle, Clock, Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { MealTrendChart } from "./MealTrendChart";
-import { ExpenseBreakdownChart } from "./ExpenseBreakdownChart";
+import dynamic from "next/dynamic";
 import { toggleMealAction } from "@/app/actions/meal.actions";
 import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/useT";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+
+const MealTrendChart = dynamic(
+  () => import("./MealTrendChart").then((mod) => mod.MealTrendChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-5 h-72 animate-pulse flex items-center justify-center text-xs text-gray-400">
+        Loading chart...
+      </div>
+    ),
+  }
+);
+
+const ExpenseBreakdownChart = dynamic(
+  () => import("./ExpenseBreakdownChart").then((mod) => mod.ExpenseBreakdownChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-5 h-72 animate-pulse flex items-center justify-center text-xs text-gray-400">
+        Loading chart...
+      </div>
+    ),
+  }
+);
 
 interface ModernDashboardProps {
   userName: string;

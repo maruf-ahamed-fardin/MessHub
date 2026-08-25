@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns", "@radix-ui/react-icons", "recharts"],
+  },
 };
 
 export default nextConfig;
