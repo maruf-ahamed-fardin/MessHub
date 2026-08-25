@@ -40,9 +40,9 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
     bazarSchedules,
   ] = await Promise.all([
     prisma.notice.findMany({
-      take: 5,
+      take: 6,
       orderBy: { createdAt: "desc" },
-      include: { author: { include: { user: { select: { name: true } } } } },
+      include: { author: { select: { name: true } } },
     }),
     prisma.bazar.findMany({
       take: 6,
@@ -74,10 +74,10 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
       orderBy: { createdAt: "desc" },
       include: { addedBy: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.post.findMany({
+    prisma.communityPost.findMany({
       take: 4,
       orderBy: { createdAt: "desc" },
-      include: { author: { include: { user: { select: { name: true } } } } },
+      include: { author: { select: { name: true } } },
     }),
     prisma.bazarSchedule.findMany({
       where: { date: { gte: today } },
@@ -95,7 +95,7 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
       id: `notice-${n.id}`,
       category: "notice",
       title: `${n.priority === "URGENT" ? "🚨 জরুরি নোটিশ: " : "📢 নোটিশ: "}${n.title}`,
-      desc: n.content,
+      desc: n.description,
       time: formatRelativeDate(n.createdAt),
       createdAt: n.createdAt,
       href: "/notices",
@@ -219,7 +219,7 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
 
   // 9. Community Posts
   for (const po of posts) {
-    const author = po.author?.user?.name ?? "মেম্বার";
+    const author = po.author?.name ?? "মেম্বার";
     items.push({
       id: `post-${po.id}`,
       category: "community",

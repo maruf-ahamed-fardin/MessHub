@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Notifications" };
 
 export default async function NotificationsPage() {
   const session = await auth();
-  const notifications = await getLiveNotifications(session?.user.memberId);
+  const notifications = await getLiveNotifications(session?.user.memberId ?? undefined);
 
   return (
     <div className="space-y-5">

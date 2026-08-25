@@ -160,6 +160,8 @@ model User {
 
   // Community
   communityPosts CommunityPost[]
+  postComments   PostComment[]
+  postReactions  PostReaction[]
   notices        Notice[]
   calendarEvents CalendarEvent[]
 
@@ -609,15 +611,51 @@ model CommunityPost {
   type      PostType @default(GENERAL)
   content   String
   imageUrl  String?
+  videoUrl  String?
   isPinned  Boolean  @default(false)
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  author User @relation(fields: [authorId], references: [id])
+  author    User           @relation(fields: [authorId], references: [id])
+  comments  PostComment[]
+  reactions PostReaction[]
 
   @@index([createdAt])
   @@map("community_posts")
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  parentId  String?
+  content   String
+  createdAt DateTime @default(now())
+
+  post    CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies PostComment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([parentId])
+  @@map("post_comments")
+}
+
+model PostReaction {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, emoji])
+  @@index([postId])
+  @@map("post_reactions")
 }
 
 model Notice {

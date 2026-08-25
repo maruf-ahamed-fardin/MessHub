@@ -129,11 +129,22 @@ export async function createSeatAction(data: { roomId: string; label: string }) 
 }
 
 // ---- Community ----
-export async function createPostAction(data: { type: string; content: string; authorId: string }) {
+export async function createPostAction(data: {
+  type: string;
+  content: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  authorId: string;
+}) {
   try {
     const session = await auth();
-    if (!session?.user) throw new Error("Unauthorized");
-    await createPost(data);
+    let authorId = session?.user?.id || data.authorId;
+    const user = await prisma.user.findFirst({
+      where: { OR: [{ id: authorId }, { email: session?.user?.email || "admin@messhub.local" }] },
+    });
+    if (user) authorId = user.id;
+
+    await createPost({ ...data, authorId });
   } catch (err) {
     console.warn("DB offline (demo mode createPost):", err);
   }
@@ -154,10 +165,52 @@ export async function togglePinAction(id: string) {
 
 export async function deletePostAction(id: string) {
   try {
-    await requireAdmin();
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
     await deletePost(id);
   } catch (err) {
     console.warn("DB offline (demo mode deletePost):", err);
+  }
+  revalidatePath("/community");
+  return { success: true };
+}
+
+export async function addPostCommentAction(data: {
+  postId: string;
+  authorId: string;
+  parentId?: string;
+  content: string;
+}) {
+  try {
+    const session = await auth();
+    let authorId = session?.user?.id || data.authorId;
+    const user = await prisma.user.findFirst({
+      where: { OR: [{ id: authorId }, { email: session?.user?.email || "admin@messhub.local" }] },
+    });
+    if (user) authorId = user.id;
+
+    const { addPostComment } = await import("@/backend/community/community.repository");
+    await addPostComment({ ...data, authorId });
+  } catch (err) {
+    console.warn("DB offline (demo mode addComment):", err);
+  }
+  revalidatePath("/community");
+  return { success: true };
+}
+
+export async function togglePostReactionAction(data: { postId: string; userId: string; emoji: string }) {
+  try {
+    const session = await auth();
+    let userId = session?.user?.id || data.userId;
+    const user = await prisma.user.findFirst({
+      where: { OR: [{ id: userId }, { email: session?.user?.email || "admin@messhub.local" }] },
+    });
+    if (user) userId = user.id;
+
+    const { togglePostReaction } = await import("@/backend/community/community.repository");
+    await togglePostReaction({ ...data, userId });
+  } catch (err) {
+    console.warn("DB offline (demo mode toggleReaction):", err);
   }
   revalidatePath("/community");
   return { success: true };

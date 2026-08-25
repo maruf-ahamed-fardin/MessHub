@@ -1,8 +1,19 @@
 import { prisma } from "@/lib/db/prisma";
 
-export async function getPosts(limit = 20) {
+export async function getPosts(limit = 30) {
   return prisma.communityPost.findMany({
-    include: { author: { select: { id: true, name: true, image: true } } },
+    include: {
+      author: { select: { id: true, name: true, image: true } },
+      comments: {
+        include: {
+          author: { select: { id: true, name: true, image: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+      reactions: {
+        select: { id: true, emoji: true, userId: true },
+      },
+    },
     orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
     take: limit,
   });
@@ -16,7 +27,52 @@ export async function createPost(data: {
 }) {
   return prisma.communityPost.create({
     data: { ...data, type: data.type as any },
-    include: { author: { select: { id: true, name: true, image: true } } },
+    include: {
+      author: { select: { id: true, name: true, image: true } },
+      comments: {
+        include: { author: { select: { id: true, name: true, image: true } } },
+      },
+      reactions: true,
+    },
+  });
+}
+
+export async function addPostComment(data: {
+  postId: string;
+  authorId: string;
+  content: string;
+}) {
+  return prisma.postComment.create({
+    data,
+    include: {
+      author: { select: { id: true, name: true, image: true } },
+    },
+  });
+}
+
+export async function togglePostReaction(data: {
+  postId: string;
+  userId: string;
+  emoji: string;
+}) {
+  const existing = await prisma.postReaction.findUnique({
+    where: {
+      postId_userId_emoji: {
+        postId: data.postId,
+        userId: data.userId,
+        emoji: data.emoji,
+      },
+    },
+  });
+
+  if (existing) {
+    return prisma.postReaction.delete({
+      where: { id: existing.id },
+    });
+  }
+
+  return prisma.postReaction.create({
+    data,
   });
 }
 
