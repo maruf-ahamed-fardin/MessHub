@@ -25,16 +25,16 @@ interface MoreSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { labelKey: "rooms",         href: "/rooms",         icon: BedDouble,   colorStyle: "bg-indigo-50 text-indigo-600",  activeColor: "bg-indigo-100 text-indigo-700" },
-  { labelKey: "bazar",         href: "/bazar",         icon: ShoppingBasket, colorStyle: "bg-amber-50 text-amber-600",   activeColor: "bg-amber-100 text-amber-700" },
-  { labelKey: "expenses",      href: "/expenses",      icon: Receipt,     colorStyle: "bg-rose-50 text-rose-600",      activeColor: "bg-rose-100 text-rose-700" },
-  { labelKey: "payments",      href: "/payments",      icon: CreditCard,  colorStyle: "bg-emerald-50 text-emerald-600", activeColor: "bg-emerald-100 text-emerald-700" },
-  { labelKey: "settlement",    href: "/settlement",    icon: BarChart3,   colorStyle: "bg-purple-50 text-purple-600",  activeColor: "bg-purple-100 text-purple-700" },
-  { labelKey: "house",         href: "/house",         icon: Brush,       colorStyle: "bg-sky-50 text-sky-600",        activeColor: "bg-sky-100 text-sky-700" },
-  { labelKey: "notices",       href: "/notices",       icon: Megaphone,   colorStyle: "bg-red-50 text-red-600",        activeColor: "bg-red-100 text-red-700" },
-  { labelKey: "notifications", href: "/notifications", icon: Bell,        colorStyle: "bg-blue-50 text-blue-600",      activeColor: "bg-blue-100 text-blue-700" },
-  { labelKey: "calendar",      href: "/calendar",      icon: Calendar,    colorStyle: "bg-orange-50 text-orange-600",  activeColor: "bg-orange-100 text-orange-700" },
-  { labelKey: "moreFeatures",  href: "/more",          icon: LayoutGrid,  colorStyle: "bg-slate-100 text-slate-600",   activeColor: "bg-slate-200 text-slate-700" },
+  { labelKey: "rooms",         href: "/rooms",         icon: BedDouble,      colorStyle: "bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60",  activeColor: "bg-indigo-600 text-white shadow-xs" },
+  { labelKey: "bazar",         href: "/bazar",         icon: ShoppingBasket, colorStyle: "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60",   activeColor: "bg-amber-600 text-white shadow-xs" },
+  { labelKey: "expenses",      href: "/expenses",      icon: Receipt,        colorStyle: "bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/60",      activeColor: "bg-rose-600 text-white shadow-xs" },
+  { labelKey: "payments",      href: "/payments",      icon: CreditCard,     colorStyle: "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60", activeColor: "bg-emerald-600 text-white shadow-xs" },
+  { labelKey: "settlement",    href: "/settlement",    icon: BarChart3,      colorStyle: "bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60",  activeColor: "bg-purple-600 text-white shadow-xs" },
+  { labelKey: "house",         href: "/house",         icon: Brush,          colorStyle: "bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/60",        activeColor: "bg-teal-600 text-white shadow-xs" },
+  { labelKey: "notices",       href: "/notices",       icon: Megaphone,      colorStyle: "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-200/80 dark:border-red-800/60",        activeColor: "bg-red-600 text-white shadow-xs" },
+  { labelKey: "notifications", href: "/notifications", icon: Bell,           colorStyle: "bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60",      activeColor: "bg-blue-600 text-white shadow-xs" },
+  { labelKey: "calendar",      href: "/calendar",      icon: Calendar,       colorStyle: "bg-orange-100 dark:bg-orange-950/80 text-orange-800 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800/60",  activeColor: "bg-orange-600 text-white shadow-xs" },
+  { labelKey: "moreFeatures",  href: "/more",          icon: LayoutGrid,     colorStyle: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300/80 dark:border-slate-700",   activeColor: "bg-slate-700 text-white shadow-xs" },
 ] as const;
 
 export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
@@ -136,8 +136,8 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
                     isActive
-                      ? "bg-primary/8 text-primary"
-                      : "text-gray-700 hover:bg-gray-50"
+                      ? "bg-primary/10 text-primary dark:bg-primary/20"
+                      : "text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800"
                   )}
                 >
                   <div
@@ -151,7 +151,7 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
                   <div className="min-w-0 flex-1">
                     <p className={cn(
                       "text-sm leading-tight truncate",
-                      isActive ? "font-extrabold text-primary" : "font-semibold text-gray-800"
+                      isActive ? "font-extrabold text-primary" : "font-semibold text-gray-800 dark:text-slate-200"
                     )}>
                     {T.sidebar[item.labelKey]}
                     </p>
@@ -166,13 +166,13 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
         </div>
 
         {/* Footer — Profile & Sign Out */}
-        <div className="px-2 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
+        <div className="px-2 py-3 border-t border-gray-100 dark:border-slate-800 space-y-0.5 shrink-0">
           <Link
             href="/settings"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors group"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors group"
           >
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
               <Settings size={15} />
             </div>
             <span className="text-sm font-semibold">{T.nav.settings}</span>
@@ -180,9 +180,9 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer group"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40 flex items-center justify-center shrink-0">
               <LogOut size={15} />
             </div>
             <span className="text-sm font-semibold">{T.nav.logOut}</span>

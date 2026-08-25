@@ -3,12 +3,10 @@ import Link from "next/link";
 import {
   BedDouble, ShoppingBasket, Receipt, CreditCard, BarChart3,
   Brush, Bell, Calendar, Settings, Megaphone, ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import { auth } from "@/lib/auth/config";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { cn } from "@/lib/utils/cn";
-
 import { PwaInstallButton } from "@/components/shared/PwaInstallButton";
 
 export const metadata: Metadata = { title: "More Menu" };
@@ -21,7 +19,7 @@ const ALL_ITEMS = [
     icon: BedDouble,
     desc: "৩টি রুমের সিট বিবরণ ও ৭ জন মেম্বারের প্রোফাইল",
     badge: "৩ রুম",
-    colorStyle: "bg-indigo-50 text-indigo-600 border-indigo-200",
+    colorStyle: "bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60",
   },
   {
     label: "Bazar Records",
@@ -29,7 +27,7 @@ const ALL_ITEMS = [
     href: "/bazar",
     icon: ShoppingBasket,
     desc: "দৈনিক বাজার খরচ, ভাউচার ও মেম্বারদের বাজার রোটেশন",
-    colorStyle: "bg-amber-50 text-amber-600 border-amber-200",
+    colorStyle: "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60",
   },
   {
     label: "Expenses & Bills",
@@ -37,7 +35,7 @@ const ALL_ITEMS = [
     href: "/expenses",
     icon: Receipt,
     desc: "ফ্ল্যাট ভাড়া, বিদ্যুৎ, ওয়াইফাই, পানি ও গ্যাস বিল বণ্টন",
-    colorStyle: "bg-rose-50 text-rose-600 border-rose-200",
+    colorStyle: "bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60",
   },
   {
     label: "Money Transaction",
@@ -46,7 +44,7 @@ const ALL_ITEMS = [
     icon: CreditCard,
     desc: "মেম্বারদের টাকা জমা (Money In), মোট ব্যয় ও ব্যালেন্স স্থিতি",
     badge: "টাকা ইন/আউট",
-    colorStyle: "bg-emerald-50 text-emerald-600 border-emerald-200",
+    colorStyle: "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60",
   },
   {
     label: "Monthly Settlement",
@@ -54,7 +52,7 @@ const ALL_ITEMS = [
     href: "/settlement",
     icon: BarChart3,
     desc: "মাস শেষের মিল রেট ও মেম্বারদের লেনদেন নিষ্পত্তি",
-    colorStyle: "bg-purple-50 text-purple-600 border-purple-200",
+    colorStyle: "bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60",
   },
   {
     label: "House & Tasks",
@@ -62,7 +60,7 @@ const ALL_ITEMS = [
     href: "/house",
     icon: Brush,
     desc: "ক্লিনিং শিডিউল, গ্যাস সিলিন্ডার ও সার্ভিসিং টাস্ক",
-    colorStyle: "bg-sky-50 text-sky-600 border-sky-200",
+    colorStyle: "bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border-teal-200/80 dark:border-teal-800/60",
   },
   {
     label: "Notices Board",
@@ -71,7 +69,8 @@ const ALL_ITEMS = [
     icon: Megaphone,
     desc: "জরুরি নোটিশ, মেস মিটিং ও অফিশিয়াল ঘোষণা",
     badge: "অ্যালার্ট",
-    colorStyle: "bg-red-50 text-red-600 border-red-200",
+    badgeColor: "bg-rose-500 text-white",
+    colorStyle: "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border-red-200/80 dark:border-red-800/60",
   },
   {
     label: "Notifications",
@@ -79,7 +78,7 @@ const ALL_ITEMS = [
     href: "/notifications",
     icon: Bell,
     desc: "বাজার, টাকা জমা, মিল ও ডিউটির সকল আপডেট",
-    colorStyle: "bg-blue-50 text-blue-600 border-blue-200",
+    colorStyle: "bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60",
   },
   {
     label: "Mess Calendar",
@@ -87,7 +86,7 @@ const ALL_ITEMS = [
     href: "/calendar",
     icon: Calendar,
     desc: "বাজারের শিডিউল, মিটিং ও গুরুত্বপূর্ণ তারিখ",
-    colorStyle: "bg-orange-50 text-orange-600 border-orange-200",
+    colorStyle: "bg-orange-100 dark:bg-orange-950/80 text-orange-800 dark:text-orange-300 border-orange-200/80 dark:border-orange-800/60",
   },
   {
     label: "Mess Settings",
@@ -95,7 +94,7 @@ const ALL_ITEMS = [
     href: "/settings",
     icon: Settings,
     desc: "মেসের নাম, অ্যাডমিন নিয়ন্ত্রণ ও রুলস সেটআপ",
-    colorStyle: "bg-slate-100 text-slate-700 border-slate-200",
+    colorStyle: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300/80 dark:border-slate-700",
   },
 ];
 
@@ -124,10 +123,10 @@ export default async function MorePage() {
             <Link
               key={item.href}
               href={item.href}
-              className="bg-white border border-gray-200/90 rounded-2xl p-4 flex items-center justify-between gap-3.5 shadow-2xs hover:shadow-xs hover:border-gray-300 hover:scale-[1.005] active:scale-[0.99] transition-all cursor-pointer group"
+              className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3.5 shadow-2xs hover:shadow-xs hover:border-gray-300 dark:hover:border-slate-700 hover:scale-[1.005] active:scale-[0.99] transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                {/* Colorful Glowing Icon */}
+                {/* Colorful High-Contrast Icon Squircle */}
                 <div
                   className={cn(
                     "w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform",
@@ -140,28 +139,28 @@ export default async function MorePage() {
                 {/* Text Labels */}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-extrabold text-gray-900 group-hover:text-primary transition-colors leading-tight">
+                    <p className="text-sm font-extrabold text-gray-900 dark:text-slate-100 group-hover:text-primary dark:group-hover:text-primary-foreground transition-colors leading-tight">
                       {item.label}
                     </p>
                     {"badge" in item && Boolean(item.badge) && (
                       <span
                         className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full border border-transparent shadow-2xs",
-                          (item as any).badgeColor || "bg-gray-100 text-gray-700 border-gray-200/60"
+                          (item as any).badgeColor || "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200/60 dark:border-slate-700"
                         )}
                       >
                         {item.badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 font-medium mt-0.5 truncate leading-relaxed">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5 truncate leading-relaxed">
                     {item.bengaliLabel} • {item.desc}
                   </p>
                 </div>
               </div>
 
               {/* Right Arrow */}
-              <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary group-hover:bg-primary/10 transition-all shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700/60 flex items-center justify-center text-gray-400 dark:text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-all shrink-0">
                 <ChevronRight size={16} />
               </div>
             </Link>
