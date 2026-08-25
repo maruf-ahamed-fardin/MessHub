@@ -59,15 +59,19 @@ export function Sidebar({ className }: SidebarProps) {
         className
       )}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 py-5 border-b border-[hsl(var(--sidebar-border))]">
-        <div className="w-8 h-8 rounded-lg bg-[hsl(var(--sidebar-primary))] flex items-center justify-center text-white font-bold text-sm">
+      {/* Logo (Clickable -> Home / Dashboard) */}
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-2.5 px-4 py-5 border-b border-[hsl(var(--sidebar-border))] hover:opacity-90 transition-all cursor-pointer"
+        title="হোম পেজে যান"
+      >
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-2xs">
           M
         </div>
-        <span className="font-semibold text-[hsl(var(--sidebar-foreground))] text-base tracking-tight">
+        <span className="font-extrabold text-[hsl(var(--sidebar-foreground))] text-base tracking-tight">
           MessHub
         </span>
-      </div>
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5">

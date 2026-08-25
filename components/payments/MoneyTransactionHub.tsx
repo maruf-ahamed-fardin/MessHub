@@ -211,52 +211,62 @@ export function MoneyTransactionHub({
 
   return (
     <div className="space-y-5">
-      {/* 1. Minimal 3-Stat Cashflow Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-gray-500">মোট জমা (Money In)</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+      {/* 1. 2-Column Responsive Stat Cashflow Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+        {/* Card 1: Money In */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">মোট জমা (Money In)</span>
+            <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
               <ArrowDownLeft size={14} />
             </div>
           </div>
-          <p className="text-xl font-bold text-emerald-700 mt-1">{formatCurrency(totalIn)}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">{payments.length} টি পেমেন্ট রেকর্ড</p>
+          <div className="mt-2">
+            <p className="text-lg sm:text-xl font-black text-emerald-700 leading-tight">{formatCurrency(totalIn)}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{payments.length} টি পেমেন্ট রেকর্ড</p>
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-gray-500">মোট খরচ (Money Out)</span>
-            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+        {/* Card 2: Money Out */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">মোট খরচ (Money Out)</span>
+            <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
               <ArrowUpRight size={14} />
             </div>
           </div>
-          <p className="text-xl font-bold text-rose-700 mt-1">{formatCurrency(totalOut)}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">বাজার ও অন্যান্য সব ব্যয়</p>
+          <div className="mt-2">
+            <p className="text-lg sm:text-xl font-black text-rose-700 leading-tight">{formatCurrency(totalOut)}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">বাজার ও অন্যান্য সব ব্যয়</p>
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-gray-500">হাতে জমা ফান্ড (Fund Balance)</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        {/* Card 3: Fund Balance */}
+        <div className="col-span-2 sm:col-span-1 bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">হাতে জমা ফান্ড (Fund Balance)</span>
+            <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
               <Wallet size={14} />
             </div>
           </div>
-          <p className={cn("text-xl font-bold mt-1", netFund >= 0 ? "text-indigo-900" : "text-rose-600")}>
-            {formatCurrency(netFund)}
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">{netFund >= 0 ? "মেস ফান্ডে অবশিষ্ট আছে" : "ফান্ড শর্টেজ"}</p>
+          <div className="mt-2">
+            <p className={cn("text-lg sm:text-xl font-black leading-tight", netFund >= 0 ? "text-indigo-900" : "text-rose-600")}>
+              {formatCurrency(netFund)}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{netFund >= 0 ? "মেস ফান্ডে অবশিষ্ট আছে" : "ফান্ড শর্টেজ"}</p>
+          </div>
         </div>
       </div>
 
-      {/* 2. Action Buttons & Filter */}
-      <div className="flex items-center justify-between flex-wrap gap-2.5">
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl">
+      {/* 2. Centered Action Buttons & Filter */}
+      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 text-center">
+        {/* Filter Pills Centered */}
+        <div className="flex items-center justify-center gap-1 p-1 bg-gray-100/90 rounded-xl overflow-x-auto max-w-full">
           <button
             type="button"
             onClick={() => setActiveTab("all")}
             className={cn(
-              "px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
+              "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
               activeTab === "all" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
             )}
           >
@@ -266,8 +276,8 @@ export function MoneyTransactionHub({
             type="button"
             onClick={() => setActiveTab("in")}
             className={cn(
-              "px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer text-emerald-700",
-              activeTab === "in" ? "bg-white text-gray-900 shadow-xs" : "hover:text-emerald-800 opacity-80"
+              "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer text-emerald-700 select-none",
+              activeTab === "in" ? "bg-white text-gray-900 shadow-xs font-black" : "hover:text-emerald-800 opacity-80"
             )}
           >
             টাকা জমা ({payments.length})
@@ -276,22 +286,22 @@ export function MoneyTransactionHub({
             type="button"
             onClick={() => setActiveTab("out")}
             className={cn(
-              "px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer text-rose-700",
-              activeTab === "out" ? "bg-white text-gray-900 shadow-xs" : "hover:text-rose-800 opacity-80"
+              "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer text-rose-700 select-none",
+              activeTab === "out" ? "bg-white text-gray-900 shadow-xs font-black" : "hover:text-rose-800 opacity-80"
             )}
           >
             টাকা খরচ ({bazars.length + expenses.length})
           </button>
         </div>
 
-        {/* Action Dialogs */}
-        <div className="flex items-center gap-2">
+        {/* Centered Action Dialogs */}
+        <div className="flex items-center justify-center gap-2 flex-wrap w-full sm:w-auto">
           {isAdmin && (
             <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-8 text-xs font-semibold gap-1.5 border-rose-200 text-rose-800 hover:bg-rose-50">
-                  <Plus size={13} />
-                  + টাকা খরচ রেকর্ড
+                <Button size="sm" variant="outline" className="h-8.5 px-3.5 text-xs font-bold gap-1.5 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl shadow-2xs cursor-pointer">
+                  <Plus size={14} />
+                  <span>টাকা খরচ রেকর্ড</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-xs">
@@ -356,9 +366,9 @@ export function MoneyTransactionHub({
           {isAdmin && (
             <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
-                  <Plus size={13} />
-                  + টাকা জমা রেকর্ড
+                <Button size="sm" className="h-8.5 px-3.5 text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs cursor-pointer">
+                  <Plus size={14} />
+                  <span>টাকা জমা রেকর্ড</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-xs">

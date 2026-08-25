@@ -69,13 +69,17 @@ export function TopBar({ user }: TopBarProps) {
 
   return (
     <header className="h-14 border-b border-[hsl(var(--border))] bg-white flex items-center justify-between px-4 shrink-0 relative z-30">
-      {/* Mobile logo */}
-      <div className="flex items-center gap-2 md:hidden">
-        <div className="w-7 h-7 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs">
+      {/* Mobile logo (Clickable -> Home / Dashboard) */}
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-2 md:hidden hover:opacity-85 active:scale-95 transition-all cursor-pointer select-none"
+        title="হোম পেজে যান"
+      >
+        <div className="w-7.5 h-7.5 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-2xs">
           M
         </div>
-        <span className="font-semibold text-sm tracking-tight">MessHub</span>
-      </div>
+        <span className="font-extrabold text-sm tracking-tight text-gray-900">MessHub</span>
+      </Link>
 
       {/* Desktop spacer */}
       <div className="hidden md:block" />

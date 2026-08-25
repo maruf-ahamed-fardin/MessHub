@@ -398,35 +398,35 @@ export function CommunityFeedHub({
         className="hidden"
       />
 
-      {/* 1. Header Filter Bar & Activity Pulse (Spacious Width) */}
-      <div className="bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex items-center justify-between flex-wrap gap-3">
+      {/* 1. Header Filter Bar & Activity Pulse */}
+      <div className="bg-white border border-gray-200/90 rounded-2xl p-2.5 sm:p-3.5 shadow-2xs flex items-center justify-between gap-2 overflow-x-auto">
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100/90 rounded-xl">
+        <div className="flex items-center gap-1 p-1 bg-gray-100/90 rounded-xl shrink-0">
           <button
             type="button"
             onClick={() => setActiveFilter("all")}
             className={cn(
-              "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+              "px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
               activeFilter === "all" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
             )}
           >
-            সব পোস্ট ({posts.length})
+            সব ({posts.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("pinned")}
             className={cn(
-              "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+              "px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
               activeFilter === "pinned" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
             )}
           >
-            📌 পিন করা ({posts.filter((p) => p.isPinned).length})
+            📌 পিন ({posts.filter((p) => p.isPinned).length})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("media")}
             className={cn(
-              "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+              "px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
               activeFilter === "media" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
             )}
           >
@@ -434,15 +434,14 @@ export function CommunityFeedHub({
           </button>
         </div>
 
-        {/* Live Members Pulse */}
-        <div className="flex items-center gap-2 pr-1">
-          <span className="flex h-2.5 w-2.5 relative">
+        {/* Live Members Pulse Badge */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] font-extrabold shrink-0 shadow-2xs">
+          <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span className="text-xs font-extrabold text-gray-700">
-            ৭ জন মেম্বার লাইভ সক্রিয়
-          </span>
+          <span className="hidden sm:inline">৭ জন মেম্বার সক্রিয়</span>
+          <span className="sm:hidden">৭ সক্রিয়</span>
         </div>
       </div>
 
@@ -767,7 +766,7 @@ export function CommunityFeedHub({
       {/* ========================================================================= */}
       <div
         ref={bottomComposerRef}
-        className="fixed bottom-3 sm:bottom-5 left-3 right-3 sm:left-auto sm:right-auto sm:w-[896px] sm:max-w-4xl mx-auto z-40"
+        className="fixed bottom-16 md:bottom-5 left-2 right-2 md:left-auto md:right-auto md:w-[896px] md:max-w-4xl mx-auto z-40"
       >
         <div className="bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-2xl p-3.5 sm:p-4 space-y-2.5 ring-1 ring-black/5 animate-in slide-in-from-bottom-3 duration-200">
           {/* Loading Compression Status */}
@@ -880,123 +879,116 @@ export function CommunityFeedHub({
             </div>
           )}
 
-          {/* Main Input Row */}
-          <div className="flex items-end gap-3">
-            <Avatar className="h-9 w-9 shrink-0 mb-1 border border-primary/20">
-              <AvatarFallback className="text-xs font-black bg-indigo-50 text-indigo-600">
-                {userInitials}
-              </AvatarFallback>
-            </Avatar>
+          {/* Main Input Box (Full-Width Responsive Modern Composer) */}
+          <div className="bg-gray-50/90 border border-gray-200 rounded-2xl p-2.5 sm:p-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all space-y-2">
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => handleContentChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && (content.trim() || imageUrl || videoUrl)) {
+                  e.preventDefault();
+                  handleCreatePost();
+                }
+              }}
+              placeholder="মেসের মেম্বারদের কিছু জানান... (@ লিখে মেনশন করুন)"
+              className="w-full text-xs sm:text-sm resize-none border-0 shadow-none focus-visible:ring-0 p-0 min-h-[38px] max-h-32 placeholder:text-gray-400 leading-relaxed bg-transparent outline-none"
+              maxLength={3000}
+              rows={1}
+            />
 
-            <div className="flex-1 min-w-0 bg-gray-50 border border-gray-200/90 rounded-2xl px-3.5 py-2 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all">
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={(e) => handleContentChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey && (content.trim() || imageUrl || videoUrl)) {
-                    e.preventDefault();
-                    handleCreatePost();
-                  }
-                }}
-                placeholder="মেসের মেম্বারদের কিছু জানান... (@ লিখে মেনশন করুন, ফাইল থেকে ছবি/ভিডিও আপলোড করুন)"
-                className="w-full text-xs sm:text-sm resize-none border-0 shadow-none focus-visible:ring-0 p-0 min-h-[38px] max-h-32 placeholder:text-gray-400 leading-relaxed bg-transparent outline-none"
-                maxLength={3000}
-                rows={1}
-              />
+            {/* Bottom Quick Tag Selection & File Action Toolbar */}
+            <div className="flex items-center justify-between pt-1.5 border-t border-gray-200/60 flex-wrap gap-2">
+              {/* Left: Post Category Tags */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPostType("GENERAL")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer select-none",
+                    postType === "GENERAL" ? "bg-gray-900 text-white shadow-2xs" : "text-gray-500 hover:bg-gray-200/80"
+                  )}
+                >
+                  💬 সাধারণ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPostType("ANNOUNCEMENT")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer select-none",
+                    postType === "ANNOUNCEMENT" ? "bg-rose-600 text-white shadow-2xs" : "text-rose-700 hover:bg-rose-100"
+                  )}
+                >
+                  📢 ঘোষণা
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPostType("IDEA")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer select-none",
+                    postType === "IDEA" ? "bg-amber-500 text-white shadow-2xs" : "text-amber-700 hover:bg-amber-100"
+                  )}
+                >
+                  💡 প্রস্তাব
+                </button>
+              </div>
 
-              {/* Bottom Quick Tag Selection & File Action Icons inside Composer */}
-              <div className="flex items-center justify-between pt-1.5 border-t border-gray-200/50 mt-1">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setPostType("GENERAL")}
-                    className={cn(
-                      "px-2.5 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer",
-                      postType === "GENERAL" ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-200"
-                    )}
-                  >
-                    💬 সাধারণ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPostType("ANNOUNCEMENT")}
-                    className={cn(
-                      "px-2.5 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer",
-                      postType === "ANNOUNCEMENT" ? "bg-rose-600 text-white" : "text-rose-700 hover:bg-rose-100"
-                    )}
-                  >
-                    📢 ঘোষণা
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPostType("IDEA")}
-                    className={cn(
-                      "px-2.5 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer",
-                      postType === "IDEA" ? "bg-amber-500 text-white" : "text-amber-700 hover:bg-amber-100"
-                    )}
-                  >
-                    💡 প্রস্তাব
-                  </button>
-                </div>
+              {/* Right: Media Picker Icons & Send Button */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                {/* Upload Image from Device */}
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className={cn(
+                    "p-1.5 rounded-xl border text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all cursor-pointer",
+                    imageUrl ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-2xs" : "border-gray-200 bg-white"
+                  )}
+                  title="ডিভাইস থেকে ছবি আপলোড করুন"
+                >
+                  <ImageIcon size={15} />
+                </button>
 
-                {/* Native File Upload & Action Buttons */}
-                <div className="flex items-center gap-1">
-                  {/* Upload Image from Device File */}
-                  <button
-                    type="button"
-                    onClick={() => imageInputRef.current?.click()}
-                    className={cn(
-                      "px-2 py-1 rounded-lg text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer",
-                      imageUrl && "text-indigo-600 bg-indigo-50"
-                    )}
-                    title="ডিভাইস থেকে ছবি আপলোড করুন"
-                  >
-                    <ImageIcon size={15} />
-                    <span className="hidden sm:inline">ছবি আপলোড</span>
-                  </button>
+                {/* Upload Video from Device */}
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  className={cn(
+                    "p-1.5 rounded-xl border text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-all cursor-pointer",
+                    videoUrl ? "bg-purple-50 border-purple-200 text-purple-600 shadow-2xs" : "border-gray-200 bg-white"
+                  )}
+                  title="ডিভাইস থেকে ভিডিও আপলোড করুন"
+                >
+                  <Video size={15} />
+                </button>
 
-                  {/* Upload Video from Device File */}
-                  <button
-                    type="button"
-                    onClick={() => videoInputRef.current?.click()}
-                    className={cn(
-                      "px-2 py-1 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-purple-50 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer",
-                      videoUrl && "text-purple-600 bg-purple-50"
-                    )}
-                    title="ডিভাইস থেকে ভিডিও আপলোড করুন"
-                  >
-                    <Video size={15} />
-                    <span className="hidden sm:inline">ভিডিও আপলোড</span>
-                  </button>
+                {/* Mention Autocomplete Trigger */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContent((prev) => prev + " @");
+                    setShowMentionMenu(true);
+                  }}
+                  className="p-1.5 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all cursor-pointer"
+                  title="মেম্বার মেনশন করুন (@)"
+                >
+                  <AtSign size={15} />
+                </button>
 
-                  {/* Mention Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setContent((prev) => prev + " @");
-                      setShowMentionMenu(true);
-                    }}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
-                    title="মেম্বার মেনশন করুন (@)"
-                  >
-                    <AtSign size={15} />
-                  </button>
-                </div>
+                {/* Glowing Send Button */}
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleCreatePost()}
+                  disabled={(!content.trim() && !imageUrl && !videoUrl) || submitting}
+                  className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-primary to-indigo-600 text-white hover:from-primary/90 hover:to-indigo-700 shadow-xs hover:shadow-md transition-all cursor-pointer font-bold text-xs gap-1.5 select-none"
+                  title="পোস্ট করুন"
+                >
+                  <span>পোস্ট</span>
+                  <Send size={12} />
+                </Button>
               </div>
             </div>
-
-            {/* Glowing Send Button */}
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => handleCreatePost()}
-              disabled={(!content.trim() && !imageUrl && !videoUrl) || submitting}
-              className="h-11 w-11 p-0 rounded-2xl bg-gradient-to-r from-primary to-indigo-600 text-white hover:from-primary/90 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all cursor-pointer shrink-0 mb-0.5 flex items-center justify-center"
-              title="পোস্ট করুন"
-            >
-              <Send size={16} />
-            </Button>
           </div>
         </div>
       </div>
