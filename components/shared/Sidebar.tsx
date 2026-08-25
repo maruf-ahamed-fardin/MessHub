@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils/cn";
 import {
-  LayoutDashboard, Users, BedDouble, UtensilsCrossed, UserPlus,
-  ShoppingBasket, Receipt, Zap, CreditCard, BarChart3,
-  Brush, Wrench, ShoppingCart, Bell, Calendar, MessageSquare,
+  LayoutDashboard, Users, BedDouble, UtensilsCrossed,
+  ShoppingBasket, Receipt, CreditCard, BarChart3,
+  Brush, Bell, Calendar, MessageSquare, Megaphone,
   Settings, LogOut, ChevronRight,
 } from "lucide-react";
 
@@ -20,7 +20,8 @@ const NAV_SECTIONS = [
     label: "Community",
     items: [
       { href: "/community", label: "Feed", icon: MessageSquare },
-      { href: "/notices", label: "Notices", icon: Bell },
+      { href: "/notices", label: "Notices", icon: Megaphone },
+      { href: "/notifications", label: "Notifications", icon: Bell, badge: "3" },
       { href: "/calendar", label: "Calendar", icon: Calendar },
     ],
   },
@@ -83,6 +84,11 @@ export function Sidebar({ className }: SidebarProps) {
                 <Link key={item.href} href={item.href} className={cn("nav-item", isActive && "active")}>
                   <item.icon size={16} />
                   <span className="flex-1">{item.label}</span>
+                  {"badge" in item && item.badge && (
+                    <span className="text-[9px] font-extrabold bg-rose-500 text-white px-1.5 py-0.2 rounded-full ring-1 ring-rose-400">
+                      {item.badge}
+                    </span>
+                  )}
                   {isActive && <ChevronRight size={14} className="opacity-50" />}
                 </Link>
               );

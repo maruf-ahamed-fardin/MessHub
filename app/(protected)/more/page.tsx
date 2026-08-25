@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Users, BedDouble, ShoppingBasket, Receipt, Zap, CreditCard, BarChart3,
-  Brush, Wrench, ShoppingCart, Bell, Calendar, Settings, UserPlus,
+  Brush, Wrench, ShoppingCart, Bell, Calendar, Settings, Megaphone,
 } from "lucide-react";
 import { auth } from "@/lib/auth/config";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -16,7 +16,8 @@ const ALL_ITEMS = [
   { label: "Money Transaction", href: "/payments", icon: CreditCard, desc: "Member deposits, expenses & cash flow" },
   { label: "Settlement", href: "/settlement", icon: BarChart3, desc: "Monthly settlement" },
   { label: "House & Tasks", href: "/house", icon: Brush, desc: "Cleaning, maintenance & shopping" },
-  { label: "Notices", href: "/notices", icon: Bell, desc: "Mess announcements" },
+  { label: "Notices", href: "/notices", icon: Megaphone, desc: "Official announcements & meetings" },
+  { label: "Notifications", href: "/notifications", icon: Bell, desc: "Personal alerts & reminders" },
   { label: "Calendar", href: "/calendar", icon: Calendar, desc: "Events & schedule" },
   { label: "Settings", href: "/settings", icon: Settings, desc: "Mess configuration" },
 ];

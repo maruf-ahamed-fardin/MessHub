@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Bell, AlertTriangle, ShoppingBasket, Brush, CreditCard, CheckCheck, ArrowRight, X } from "lucide-react";
+import { Bell, AlertTriangle, ShoppingBasket, CreditCard, CheckCheck, ArrowRight, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export function NotificationPopover() {
@@ -77,9 +77,9 @@ export function NotificationPopover() {
         )}
       </button>
 
-      {/* Floating Notification Popover */}
+      {/* Floating Notification Popover - 100% Mobile Responsive */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-2xl shadow-2xl border border-gray-200 py-0 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
+        <div className="fixed sm:absolute top-14 sm:top-full right-3 sm:right-0 w-[calc(100vw-24px)] sm:w-88 max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 py-0 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/70 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export function NotificationPopover() {
           </div>
 
           {/* List */}
-          <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+          <div className="divide-y divide-gray-100 max-h-[60vh] sm:max-h-80 overflow-y-auto">
             {notifications.map((n) => {
               const Icon = n.icon;
               return (
@@ -136,11 +136,11 @@ export function NotificationPopover() {
           {/* Footer */}
           <div className="p-2.5 border-t border-gray-100 bg-gray-50/50 text-center">
             <Link
-              href="/notices"
+              href="/notifications"
               onClick={() => setIsOpen(false)}
               className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
             >
-              <span>সকল নোটিশ ও অ্যালার্ট বোর্ড</span>
+              <span>সকল নোটিফিকেশন সেন্টার</span>
               <ArrowRight size={12} />
             </Link>
           </div>
