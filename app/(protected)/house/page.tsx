@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth/config";
 import { getCleaningTasks } from "@/backend/cleaning/cleaning.repository";
 import { getMaintenanceReports } from "@/backend/maintenance/maintenance.repository";
@@ -31,15 +32,17 @@ export default async function HousePage() {
         description="ক্লিনিং শিডিউল, মেরামত খরচ ও শেয়ার্ড শপিং লিস্ট"
       />
 
-      <HouseHub
-        cleaningTasks={cleaningTasks}
-        maintenanceReports={maintenanceReports}
-        shoppingItems={shoppingItems}
-        members={members}
-        isAdmin={isAdmin}
-        currentMemberId={session?.user.memberId ?? null}
-        monthlyHouseCost={monthlyHouseCost}
-      />
+      <Suspense fallback={<div className="py-20 text-center text-xs text-muted-foreground">লোড হচ্ছে...</div>}>
+        <HouseHub
+          cleaningTasks={cleaningTasks}
+          maintenanceReports={maintenanceReports}
+          shoppingItems={shoppingItems}
+          members={members}
+          isAdmin={isAdmin}
+          currentMemberId={session?.user.memberId ?? null}
+          monthlyHouseCost={monthlyHouseCost}
+        />
+      </Suspense>
     </div>
   );
 }
