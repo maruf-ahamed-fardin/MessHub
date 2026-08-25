@@ -13,7 +13,7 @@ import {
   MessageSquare, Pin, Trash2, MoreHorizontal, Send,
   ThumbsUp, Heart, Flame, Lightbulb, Image as ImageIcon,
   Video, AtSign, X, Reply, ChevronDown, ChevronUp,
-  UploadCloud, Link as LinkIcon, FileText, Sparkles,
+  UploadCloud, Link as LinkIcon, FileText, Sparkles, SmilePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -50,11 +50,17 @@ const DEFAULT_MEMBERS: MemberItem[] = [
   { id: "m7", name: "Sifat Khan", room: "Room 103" },
 ];
 
-const EMOJI_OPTIONS = [
+const WHATSAPP_EMOJIS = [
   { emoji: "👍", label: "লাইক" },
   { emoji: "❤️", label: "লাভ" },
+  { emoji: "😂", label: "হাসি" },
+  { emoji: "😮", label: "বিস্ময়" },
+  { emoji: "😢", label: "কষ্ট" },
+  { emoji: "🙏", label: "ধন্যবাদ" },
   { emoji: "🔥", label: "দারুণ" },
   { emoji: "💡", label: "আইডিয়া" },
+  { emoji: "👏", label: "সাবাশ" },
+  { emoji: "🎉", label: "উদযাপন" },
 ];
 
 // Helper to highlight @mentions in text
@@ -88,6 +94,7 @@ export function CommunityFeedHub({
   const [postType, setPostType] = useState<"GENERAL" | "ANNOUNCEMENT" | "IDEA" | "ISSUE">("GENERAL");
   const [submitting, setSubmitting] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "pinned" | "media">("all");
+  const [reactionPickerPostId, setReactionPickerPostId] = useState<string | null>(null);
 
   // Media Attachment States (Files & URLs & Compression)
   const [imageUrl, setImageUrl] = useState("");
@@ -569,10 +576,14 @@ export function CommunityFeedHub({
                 )}
 
                 {/* Reactions & Comment Bar */}
-                <div className="pt-3.5 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2 text-xs">
-                  {/* Emoji Reactions */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {EMOJI_OPTIONS.map(({ emoji }) => {
+                <div className="pt-3.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 text-xs">
+                  {/* WhatsApp-Style Reactions & Action Bar */}
+                  <div className="flex items-center gap-1.5 flex-wrap relative">
+                    {/* 1. Active reaction badges */}
+                    {WHATSAPP_EMOJIS.filter(({ emoji }) => {
+                      const matching = postReactions.filter((r: any) => r.emoji === emoji);
+                      return matching.length > 0;
+                    }).map(({ emoji }) => {
                       const matching = postReactions.filter((r: any) => r.emoji === emoji);
                       const hasReacted = matching.some((r: any) => r.userId === currentUserId);
                       const count = matching.length;
@@ -583,20 +594,66 @@ export function CommunityFeedHub({
                           type="button"
                           onClick={() => handleReact(post.id, emoji)}
                           className={cn(
-                            "px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer select-none",
+                            "px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1 transition-all cursor-pointer select-none",
                             hasReacted
-                              ? "bg-indigo-50 border-indigo-200 text-indigo-700 shadow-2xs scale-105"
-                              : count > 0
-                              ? "bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100"
-                              : "bg-white border-gray-100 text-gray-400 hover:bg-gray-50"
+                              ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 shadow-2xs scale-105"
+                              : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
                           )}
-                          title="রিঅ্যাকশন দিন"
+                          title="রিঅ্যাকশন টগল করুন"
                         >
                           <span>{emoji}</span>
-                          {count > 0 && <span>{count}</span>}
+                          <span className="text-[11px] font-extrabold">{count}</span>
                         </button>
                       );
                     })}
+
+                    {/* 2. WhatsApp-Style Single Reaction Trigger Button with Floating Picker */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setReactionPickerPostId(reactionPickerPostId === post.id ? null : post.id)
+                        }
+                        className={cn(
+                          "h-8 px-2.5 rounded-full border flex items-center gap-1.5 transition-all text-xs font-semibold select-none cursor-pointer",
+                          reactionPickerPostId === post.id
+                            ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
+                            : "bg-gray-50/80 dark:bg-slate-800/80 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                        )}
+                        title="রিঅ্যাকশন দিন"
+                      >
+                        <SmilePlus size={15} className="text-primary" />
+                        <span className="text-[11px]">React</span>
+                      </button>
+
+                      {/* WhatsApp-Style Floating Emoji Bar */}
+                      {reactionPickerPostId === post.id && (
+                        <div className="absolute bottom-full left-0 mb-2 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/90 dark:border-slate-700 shadow-2xl rounded-full px-2.5 py-1.5 flex items-center gap-1 animate-in fade-in zoom-in-95 duration-150">
+                          {WHATSAPP_EMOJIS.map(({ emoji, label }) => {
+                            const hasReacted = postReactions.some(
+                              (r: any) => r.emoji === emoji && r.userId === currentUserId
+                            );
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => {
+                                  handleReact(post.id, emoji);
+                                  setReactionPickerPostId(null);
+                                }}
+                                className={cn(
+                                  "text-lg sm:text-xl p-1 rounded-full hover:scale-130 transition-transform active:scale-95 cursor-pointer select-none",
+                                  hasReacted && "bg-indigo-100 dark:bg-indigo-900/60"
+                                )}
+                                title={label}
+                              >
+                                {emoji}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Comment & Reply Count Button */}

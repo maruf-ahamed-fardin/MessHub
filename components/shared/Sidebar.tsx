@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -19,6 +20,27 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const T = useT();
+  const [unreadCount, setUnreadCount] = useState<number>(3);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("messhub_unread_notifs");
+      if (saved !== null) {
+        setUnreadCount(Number(saved));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (pathname === "/notifications") {
+      setUnreadCount(0);
+      try {
+        localStorage.setItem("messhub_unread_notifs", "0");
+      } catch {}
+    }
+  }, [pathname]);
+
+  const notifBadge = unreadCount > 99 ? "99+" : unreadCount > 0 ? String(unreadCount) : undefined;
 
   const NAV_SECTIONS = [
     {
@@ -30,7 +52,7 @@ export function Sidebar({ className }: SidebarProps) {
       items: [
         { href: "/community", label: T.nav.feed, icon: MessageSquare },
         { href: "/notices", label: T.sidebar.notices, icon: Megaphone },
-        { href: "/notifications", label: T.sidebar.notifications, icon: Bell, badge: "3" },
+        { href: "/notifications", label: T.sidebar.notifications, icon: Bell, badge: notifBadge },
         { href: "/calendar", label: T.sidebar.calendar, icon: Calendar },
       ],
     },

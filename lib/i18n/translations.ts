@@ -22,7 +22,7 @@ export const translations = {
     settlement:       { bn: "মাসিক সেটেলমেন্ট",  en: "Monthly Settlement" },
     house:            { bn: "বাসার ডিউটি",        en: "House & Tasks" },
     notices:          { bn: "মেস নোটিশ",          en: "Notices Board" },
-    notifications:    { bn: "নোটিফিকেশন",         en: "Live Notifications" },
+    notifications:    { bn: "নোটিফিকেশন",         en: "Notifications" },
     calendar:         { bn: "ক্যালেন্ডার",        en: "Mess Calendar" },
     moreFeatures:     { bn: "আরও ফিচার",          en: "More Features" },
     settings:         { bn: "সেটিংস",             en: "Mess Settings" },

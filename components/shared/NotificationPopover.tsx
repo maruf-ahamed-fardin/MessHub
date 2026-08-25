@@ -84,7 +84,7 @@ export function NotificationPopover() {
         <Bell size={17} />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-tr from-rose-500 to-red-600 px-1 text-[9px] font-black text-white shadow-xs leading-none">
-            {unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -100,7 +100,7 @@ export function NotificationPopover() {
               </span>
               {unreadCount > 0 && (
                 <span className="bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                  {unreadCount} নতুন
+                  {unreadCount > 99 ? "99+" : unreadCount} নতুন
                 </span>
               )}
             </div>

@@ -74,13 +74,11 @@ const ALL_ITEMS = [
     colorStyle: "bg-red-50 text-red-600 border-red-200",
   },
   {
-    label: "Live Notifications",
+    label: "Notifications",
     bengaliLabel: "নোটিফিকেশন সেন্টার",
     href: "/notifications",
     icon: Bell,
-    desc: "বাজার, টাকা জমা, মিল ও ডিউটির সকল লাইভ আপডেট",
-    badge: "৩ নতুন",
-    badgeColor: "bg-rose-500 text-white",
+    desc: "বাজার, টাকা জমা, মিল ও ডিউটির সকল আপডেট",
     colorStyle: "bg-blue-50 text-blue-600 border-blue-200",
   },
   {
@@ -145,11 +143,11 @@ export default async function MorePage() {
                     <p className="text-sm font-extrabold text-gray-900 group-hover:text-primary transition-colors leading-tight">
                       {item.label}
                     </p>
-                    {item.badge && (
+                    {"badge" in item && Boolean(item.badge) && (
                       <span
                         className={cn(
                           "text-[10px] font-black px-2 py-0.5 rounded-full border border-transparent shadow-2xs",
-                          item.badgeColor || "bg-gray-100 text-gray-700 border-gray-200/60"
+                          (item as any).badgeColor || "bg-gray-100 text-gray-700 border-gray-200/60"
                         )}
                       >
                         {item.badge}
