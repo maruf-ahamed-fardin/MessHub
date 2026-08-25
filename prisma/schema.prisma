@@ -1,0 +1,713 @@
+// This is your Prisma schema file for MessHub (SQLite Local Database)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+enum GuestMealPricing {
+  DYNAMIC
+  FIXED
+}
+
+enum GuestMealResponsibility {
+  MEMBER
+  GUEST
+}
+
+enum ExpenseCategory {
+  RENT
+  ELECTRICITY
+  GAS
+  WATER
+  INTERNET
+  COOK
+  WASTE
+  CLEANING
+  REPAIR
+  FURNITURE
+  HOUSEHOLD
+  OTHER
+}
+
+enum SharingMethod {
+  EQUAL
+  MEAL_BASED
+  SELECTED_MEMBERS
+}
+
+enum PaymentMethod {
+  CASH
+  BKASH
+  NAGAD
+  ROCKET
+  BANK_TRANSFER
+  OTHER
+}
+
+enum UtilityType {
+  RENT
+  ELECTRICITY
+  GAS
+  WATER
+  INTERNET
+  COOK
+  WASTE
+  OTHER
+}
+
+enum CleaningStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
+enum RecurrenceType {
+  DAILY
+  EVERY_2_DAYS
+  EVERY_3_DAYS
+  WEEKLY
+  CUSTOM
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MaintenanceStatus {
+  REPORTED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ShoppingItemStatus {
+  PENDING
+  PURCHASED
+}
+
+enum PostType {
+  GENERAL
+  ANNOUNCEMENT
+  BAZAR_UPDATE
+  EVENT
+  IMPORTANT
+}
+
+enum NoticePriority {
+  NORMAL
+  IMPORTANT
+  URGENT
+}
+
+enum NotificationType {
+  BALANCE_REMINDER
+  NEW_NOTICE
+  CLEANING_ASSIGNED
+  GUEST_MEAL_ADDED
+  MAINTENANCE_UPDATED
+  PAYMENT_RECORDED
+  SETTLEMENT_FINALIZED
+  GENERAL
+}
+
+// ============================================================
+// AUTH (Auth.js / NextAuth v5)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  member        MemberProfile?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  // Community
+  communityPosts CommunityPost[]
+  notices        Notice[]
+  calendarEvents CalendarEvent[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// MEMBER PROFILE
+// ============================================================
+
+model MemberProfile {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  phone      String?
+  avatar     String?
+  joinedAt   DateTime  @default(now())
+  leftAt     DateTime?
+  isActive   Boolean   @default(true)
+  seatRent   Float     @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat   Seat?  @relation("CurrentMember")
+  room   Room?  @relation("RoomMembers", fields: [roomId], references: [id])
+  roomId String?
+
+  meals             Meal[]
+  guestMeals        GuestMeal[]
+  payments          Payment[]
+  memberSettlements MemberSettlement[]
+
+  // House
+  cleaningTasks      CleaningTask[]
+  householdTasks     HouseholdTask[]
+  maintenanceReports MaintenanceReport[]
+
+  // Bazar
+  bazarEntries    Bazar[]
+  bazarSchedules  BazarSchedule[]
+
+  // Expenses
+  expensesPaid Expense[]
+
+  // Shopping
+  shoppingItemsAdded     ShoppingItem[] @relation("ShoppingItemsAdded")
+  shoppingItemsPurchased ShoppingItem[] @relation("ShoppingItemsPurchased")
+
+  // Guest meals added
+  guestMealsAdded GuestMeal[] @relation("GuestMealsAdded")
+
+  @@map("member_profiles")
+}
+
+// ============================================================
+// ROOMS & SEATS
+// ============================================================
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String
+  floor       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seats   Seat[]
+  members MemberProfile[] @relation("RoomMembers")
+
+  @@map("rooms")
+}
+
+model Seat {
+  id              String         @id @default(cuid())
+  roomId          String
+  label           String
+  isOccupied      Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  room            Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  currentMember   MemberProfile? @relation("CurrentMember", fields: [currentMemberId], references: [id])
+  currentMemberId String?        @unique
+
+  @@unique([roomId, label])
+  @@map("seats")
+}
+
+// ============================================================
+// MEALS
+// ============================================================
+
+model Meal {
+  id        String   @id @default(cuid())
+  memberId  String
+  date      DateTime
+  breakfast Boolean  @default(true)
+  lunch     Boolean  @default(true)
+  dinner    Boolean  @default(true)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  member MemberProfile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, date])
+  @@index([date])
+  @@map("meals")
+}
+
+model GuestMeal {
+  id        String   @id @default(cuid())
+  memberId  String
+  addedById String
+  guestName String
+  date      DateTime
+  mealType  MealType
+  quantity  Int      @default(1)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  member  MemberProfile @relation(fields: [memberId], references: [id])
+  addedBy MemberProfile @relation("GuestMealsAdded", fields: [addedById], references: [id])
+
+  @@index([date])
+  @@index([memberId])
+  @@map("guest_meals")
+}
+
+// ============================================================
+// PRODUCTS
+// ============================================================
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  unit      String   @default("kg")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bazarItems BazarItem[]
+
+  @@map("products")
+}
+
+// ============================================================
+// BAZAR
+// ============================================================
+
+model Bazar {
+  id          String   @id @default(cuid())
+  date        DateTime
+  buyerId     String
+  totalAmount Float    @default(0)
+  note        String?
+  receiptUrl  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  buyerMember MemberProfile @relation(fields: [buyerId], references: [id])
+  items       BazarItem[]
+
+  @@index([date])
+  @@index([buyerId])
+  @@map("bazars")
+}
+
+model BazarItem {
+  id          String   @id @default(cuid())
+  bazarId     String
+  productId   String?
+  productName String
+  quantity    Float
+  unit        String
+  unitPrice   Float
+  totalPrice  Float
+  note        String?
+  createdAt   DateTime @default(now())
+
+  bazar   Bazar    @relation(fields: [bazarId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@map("bazar_items")
+}
+
+model BazarSchedule {
+  id        String   @id @default(cuid())
+  date      DateTime
+  dayName   String?  // e.g. "শনিবার", "রবিবার", etc.
+  memberId  String
+  status    String   @default("PENDING") // PENDING, DONE, SWAPPED
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  member MemberProfile @relation(fields: [memberId], references: [id])
+
+  @@unique([date])
+  @@index([memberId])
+  @@map("bazar_schedules")
+}
+
+// ============================================================
+// EXPENSES & UTILITIES
+// ============================================================
+
+model Expense {
+  id                String          @id @default(cuid())
+  title             String
+  category          ExpenseCategory @default(OTHER)
+  amount            Float
+  date              DateTime
+  paidById          String
+  sharingMethod     SharingMethod   @default(EQUAL)
+  selectedMemberIds String          @default("")
+  note              String?
+  receiptUrl        String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  paidBy MemberProfile @relation(fields: [paidById], references: [id])
+
+  @@index([date])
+  @@map("expenses")
+}
+
+model UtilityBill {
+  id        String      @id @default(cuid())
+  type      UtilityType
+  amount    Float
+  month     Int
+  year      Int
+  date      DateTime
+  note      String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([type, month, year])
+  @@index([year, month])
+  @@map("utility_bills")
+}
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+
+model Payment {
+  id           String        @id @default(cuid())
+  memberId     String
+  amount       Float
+  date         DateTime
+  method       PaymentMethod @default(CASH)
+  note         String?
+  recordedById String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  member MemberProfile @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([date])
+  @@map("payments")
+}
+
+// ============================================================
+// MONTHLY SETTLEMENT
+// ============================================================
+
+model MonthlySettlement {
+  id                String    @id @default(cuid())
+  month             Int
+  year              Int
+  isFinalized       Boolean   @default(false)
+  finalizedAt       DateTime?
+  finalizedById     String?
+  totalFoodExpense  Float     @default(0)
+  totalNormalMeals  Int       @default(0)
+  mealRate          Float     @default(0)
+  totalGuestMeals   Int       @default(0)
+  totalUtility      Float     @default(0)
+  totalOtherExpense Float     @default(0)
+  activeMembers     Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  memberSettlements MemberSettlement[]
+
+  @@unique([month, year])
+  @@index([year, month])
+  @@map("monthly_settlements")
+}
+
+model MemberSettlement {
+  id            String   @id @default(cuid())
+  settlementId  String
+  memberId      String
+  totalMeals    Int      @default(0)
+  foodCost      Float    @default(0)
+  guestMealCost Float    @default(0)
+  utilityCost   Float    @default(0)
+  seatRent      Float    @default(0)
+  otherCost     Float    @default(0)
+  totalCost     Float    @default(0)
+  totalPaid     Float    @default(0)
+  balance       Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  settlement MonthlySettlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  member     MemberProfile     @relation(fields: [memberId], references: [id])
+
+  @@unique([settlementId, memberId])
+  @@map("member_settlements")
+}
+
+// ============================================================
+// HOUSE MANAGEMENT
+// ============================================================
+
+model CleaningTask {
+  id                 String          @id @default(cuid())
+  title              String
+  location           String
+  assignedMemberId   String
+  dueDate            DateTime
+  status             CleaningStatus  @default(PENDING)
+  completedAt        DateTime?
+  recurrence         RecurrenceType?
+  recurrenceInterval Int?
+  nextDueDate        DateTime?
+  note               String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  assignedMember MemberProfile @relation(fields: [assignedMemberId], references: [id])
+
+  @@index([dueDate])
+  @@map("cleaning_tasks")
+}
+
+model HouseholdTask {
+  id               String     @id @default(cuid())
+  title            String
+  category         String     @default("OTHER")
+  assignedMemberId String
+  dueDate          DateTime
+  status           TaskStatus @default(PENDING)
+  completedAt      DateTime?
+  note             String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  assignedMember MemberProfile @relation(fields: [assignedMemberId], references: [id])
+
+  @@index([dueDate])
+  @@map("household_tasks")
+}
+
+model MaintenanceReport {
+  id           String              @id @default(cuid())
+  title        String
+  description  String?
+  location     String?
+  priority     MaintenancePriority @default(MEDIUM)
+  status       MaintenanceStatus   @default(REPORTED)
+  cost         Float?              @default(0)
+  reportedById String
+  imageUrl     String?
+  resolvedAt   DateTime?
+  note         String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  reportedBy MemberProfile @relation(fields: [reportedById], references: [id])
+
+  @@map("maintenance_reports")
+}
+
+model ShoppingItem {
+  id            String             @id @default(cuid())
+  name          String
+  quantity      String?
+  unit          String?
+  cost          Float?             @default(0)
+  status        ShoppingItemStatus @default(PENDING)
+  addedById     String
+  purchasedById String?
+  purchasedAt   DateTime?
+  note          String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  addedBy     MemberProfile  @relation("ShoppingItemsAdded", fields: [addedById], references: [id])
+  purchasedBy MemberProfile? @relation("ShoppingItemsPurchased", fields: [purchasedById], references: [id])
+
+  @@map("shopping_items")
+}
+
+// ============================================================
+// COMMUNITY
+// ============================================================
+
+model CommunityPost {
+  id        String   @id @default(cuid())
+  type      PostType @default(GENERAL)
+  content   String
+  imageUrl  String?
+  isPinned  Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([createdAt])
+  @@map("community_posts")
+}
+
+model Notice {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  priority    NoticePriority @default(NORMAL)
+  authorId    String
+  expiresAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([createdAt])
+  @@map("notices")
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   @default("EVENT")
+  date        DateTime
+  description String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([date])
+  @@map("calendar_events")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType @default(GENERAL)
+  isRead      Boolean          @default(false)
+  relatedId   String?
+  relatedType String?
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ============================================================
+// SETTINGS & AUDIT
+// ============================================================
+
+model MessSettings {
+  id                          String                  @id @default("singleton")
+  messName                    String                  @default("MessHub")
+  address                     String?
+  currency                    String                  @default("৳")
+  guestMealPricing            GuestMealPricing        @default(DYNAMIC)
+  guestMealFixedPrice         Float?
+  guestMealResponsibility     GuestMealResponsibility @default(MEMBER)
+  defaultSeatRent             Float                   @default(0)
+  defaultExpenseSharingMethod SharingMethod           @default(EQUAL)
+  messRules                   String?
+  updatedAt                   DateTime                @updatedAt
+
+  @@map("mess_settings")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  oldData   String?
+  newData   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
