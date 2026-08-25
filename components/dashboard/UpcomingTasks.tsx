@@ -1,7 +1,8 @@
+"use client";
+
 import { formatShortDate } from "@/lib/utils/date";
-import { Brush, CheckSquare, Calendar } from "lucide-react";
+import { Brush, CheckSquare, Calendar, ArrowRight, ListTodo } from "lucide-react";
 import Link from "next/link";
-import { EmptyState } from "@/components/shared/EmptyState";
 
 interface UpcomingTasksProps {
   cleaning: any[];
@@ -11,49 +12,64 @@ interface UpcomingTasksProps {
 export function UpcomingTasks({ cleaning, tasks }: UpcomingTasksProps) {
   const all = [
     ...cleaning.map((c) => ({
-      id: c.id,
+      id: `cln-${c.id}`,
       type: "cleaning" as const,
       title: c.title,
       location: c.location,
-      assignedTo: c.assignedMember?.user?.name ?? "?",
+      assignedTo: c.assignedMember?.user?.name ?? "Member",
       dueDate: c.dueDate,
-      href: "/cleaning",
+      href: "/house",
     })),
     ...tasks.map((t) => ({
-      id: t.id,
+      id: `tsk-${t.id}`,
       type: "task" as const,
       title: t.title,
       location: t.category,
-      assignedTo: t.assignedMember?.user?.name ?? "?",
+      assignedTo: t.assignedMember?.user?.name ?? "Member",
       dueDate: t.dueDate,
-      href: "/cleaning",
+      href: "/house",
     })),
-  ].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).slice(0, 5);
+  ]
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 4);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <p className="section-heading mb-0">Upcoming</p>
-        <Link href="/cleaning" className="text-xs text-[hsl(var(--primary))] hover:underline">View all</Link>
+    <div className="bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-2xs space-y-0">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ListTodo size={14} className="text-primary" />
+          <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">আসন্ন টাস্ক ও ডিউটি</h4>
+        </div>
+        <Link href="/house" className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1">
+          <span>হাউস হাব</span>
+          <ArrowRight size={11} />
+        </Link>
       </div>
-      <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] divide-y divide-[hsl(var(--border))]">
+
+      <div className="divide-y divide-gray-100">
         {all.length === 0 ? (
-          <EmptyState icon={Calendar} title="Nothing upcoming" className="py-8" />
+          <p className="py-8 text-center text-xs text-gray-400">কোনো নির্ধারিত টাস্ক নেই।</p>
         ) : (
           all.map((item) => (
-            <Link key={item.id} href={item.href} className="flex items-start gap-3 px-4 py-3 hover:bg-[hsl(var(--muted))] transition-colors">
-              <div className="w-7 h-7 rounded-full bg-[hsl(var(--secondary))] flex items-center justify-center shrink-0 mt-0.5">
-                {item.type === "cleaning"
-                  ? <Brush size={13} className="text-[hsl(var(--secondary-foreground))]" />
-                  : <CheckSquare size={13} className="text-[hsl(var(--secondary-foreground))]" />}
+            <Link
+              key={item.id}
+              href={item.href}
+              className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-gray-50/80 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 text-teal-600 flex items-center justify-center shrink-0">
+                  {item.type === "cleaning" ? <Brush size={13} /> : <CheckSquare size={13} />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-gray-900 truncate leading-tight">{item.title}</p>
+                  <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                    {item.assignedTo} • {formatShortDate(item.dueDate)}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.title}</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">{item.location}</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {item.assignedTo} · {formatShortDate(item.dueDate)}
-                </p>
-              </div>
+              <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md shrink-0">
+                {item.location}
+              </span>
             </Link>
           ))
         )}

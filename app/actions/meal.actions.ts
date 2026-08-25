@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth/config";
 import { upsertMeal } from "@/backend/meals/meal.repository";
 import { createGuestMeal, deleteGuestMeal } from "@/backend/guest-meals/guest-meal.repository";
+import { prisma } from "@/lib/db/prisma";
 
 export async function updateMealAction(formData: {
   memberId: string;
@@ -25,6 +26,37 @@ export async function updateMealAction(formData: {
     });
   } catch (err) {
     console.error("Error in updateMealAction:", err);
+  }
+  revalidatePath("/meals");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function toggleMealAction(
+  memberId: string,
+  date: Date,
+  type: "breakfast" | "lunch" | "dinner",
+  value: boolean
+) {
+  try {
+    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const existing = await prisma.meal.findUnique({
+      where: { memberId_date: { memberId, date: d } },
+    });
+
+    const breakfast = type === "breakfast" ? value : (existing?.breakfast ?? true);
+    const lunch = type === "lunch" ? value : (existing?.lunch ?? true);
+    const dinner = type === "dinner" ? value : (existing?.dinner ?? true);
+
+    await upsertMeal({
+      memberId,
+      date: d,
+      breakfast,
+      lunch,
+      dinner,
+    });
+  } catch (err) {
+    console.error("Error in toggleMealAction:", err);
   }
   revalidatePath("/meals");
   revalidatePath("/dashboard");

@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
+import { NotificationPopover } from "@/components/shared/NotificationPopover";
 
 interface TopBarProps {
   user: {
@@ -124,14 +125,8 @@ export function TopBar({ user }: TopBarProps) {
           )}
         </div>
 
-        {/* 2. Notifications Link */}
-        <Link
-          href="/notices"
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-          title="Notices"
-        >
-          <Bell size={16} />
-        </Link>
+        {/* 2. Interactive Notifications Popover */}
+        <NotificationPopover />
 
         {/* 3. User Avatar Menu */}
         <div className="relative" ref={userMenuRef}>

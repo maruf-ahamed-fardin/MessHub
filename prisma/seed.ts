@@ -22,6 +22,13 @@ const DEFAULT_PRODUCTS = [
   { name: "Lentils", unit: "kg" },
 ];
 
+// 3 Rooms (2, 2, 3) = 7 Members
+const THREE_ROOMS = [
+  { id: "room-1", name: "Room 101", floor: "1st Floor", type: "Double Bed (2 Seats)", seats: ["A", "B"] },
+  { id: "room-2", name: "Room 102", floor: "1st Floor", type: "Double Bed (2 Seats)", seats: ["A", "B"] },
+  { id: "room-3", name: "Room 103", floor: "1st Floor", type: "Triple Bed (3 Seats)", seats: ["A", "B", "C"] },
+];
+
 const SEVEN_MEMBERS = [
   { id: "member-admin", name: "Admin (You)", email: "admin@messhub.app", role: "ADMIN", room: "room-1", seatLabel: "A" },
   { id: "member-tanvir", name: "Tanvir Ahmed", email: "tanvir@example.com", role: "MEMBER", room: "room-1", seatLabel: "B" },
@@ -29,13 +36,13 @@ const SEVEN_MEMBERS = [
   { id: "member-karim", name: "Karim Hasan", email: "karim@example.com", role: "MEMBER", room: "room-2", seatLabel: "B" },
   { id: "member-nafis", name: "Nafis Iqbal", email: "nafis@example.com", role: "MEMBER", room: "room-3", seatLabel: "A" },
   { id: "member-shakil", name: "Shakil Mahmud", email: "shakil@example.com", role: "MEMBER", room: "room-3", seatLabel: "B" },
-  { id: "member-sifat", name: "Sifat Khan", email: "sifat@example.com", role: "MEMBER", room: "room-4", seatLabel: "A" },
+  { id: "member-sifat", name: "Sifat Khan", email: "sifat@example.com", role: "MEMBER", room: "room-3", seatLabel: "C" },
 ];
 
 const DAY_NAMES = ["রবিবার (Sun)", "সোমবার (Mon)", "মঙ্গলবার (Tue)", "বুধবার (Wed)", "বৃহস্পতিবার (Thu)", "শুক্রবার (Fri)", "শনিবার (Sat)"];
 
 async function main() {
-  console.log("🌱 Seeding MessHub database with 7 members and weekly bazar rotation...");
+  console.log("🌱 Seeding MessHub with 3 Rooms (2, 2, 3) and 7 Members...");
 
   // 1. MessSettings
   await prisma.messSettings.upsert({
@@ -54,28 +61,32 @@ async function main() {
     update: {},
   });
 
-  // 2. Rooms
-  const rooms = ["room-1", "room-2", "room-3", "room-4"];
-  for (let i = 0; i < rooms.length; i++) {
-    await prisma.room.upsert({
-      where: { id: rooms[i] },
-      create: { id: rooms[i], name: `Room 10${i + 1}`, floor: "1st Floor" },
-      update: {},
-    });
-  }
+  // 2. Clean up obsolete rooms/seats if any
+  await prisma.seat.deleteMany({
+    where: { roomId: { notIn: ["room-1", "room-2", "room-3"] } },
+  });
+  await prisma.room.deleteMany({
+    where: { id: { notIn: ["room-1", "room-2", "room-3"] } },
+  });
 
-  // 3. Seats
-  for (const r of rooms) {
-    for (const label of ["A", "B"]) {
+  // 3. Upsert 3 Rooms
+  for (const r of THREE_ROOMS) {
+    await prisma.room.upsert({
+      where: { id: r.id },
+      create: { id: r.id, name: r.name, floor: r.floor },
+      update: { name: r.name, floor: r.floor },
+    });
+
+    for (const label of r.seats) {
       await prisma.seat.upsert({
-        where: { roomId_label: { roomId: r, label } },
-        create: { id: `seat-${r}-${label}`, roomId: r, label, isOccupied: true },
+        where: { roomId_label: { roomId: r.id, label } },
+        create: { id: `seat-${r.id}-${label}`, roomId: r.id, label, isOccupied: true },
         update: { isOccupied: true },
       });
     }
   }
 
-  // 4. Seed 7 Members
+  // 4. Seed 7 Members into the 3 Rooms (2, 2, 3)
   const memberPassword = await bcrypt.hash("member123", 10);
   const createdProfiles: any[] = [];
 
@@ -102,13 +113,19 @@ async function main() {
 
     if (user.member) {
       createdProfiles.push(user.member);
+      // Link member to room & seat
+      await prisma.memberProfile.update({
+        where: { id: user.member.id },
+        data: { roomId: m.room },
+      });
+
       await prisma.seat.updateMany({
         where: { roomId: m.room, label: m.seatLabel },
         data: { currentMemberId: user.member.id, isOccupied: true },
       });
     }
   }
-  console.log(`✅ 7 members and room seats seeded`);
+  console.log(`✅ 3 Rooms (2, 2, 3) & 7 Members seeded perfectly`);
 
   // 5. Default Products
   for (const product of DEFAULT_PRODUCTS) {
@@ -139,7 +156,7 @@ async function main() {
   // 7. Seed 7-Day Weekly Bazar Rotation Schedule
   for (let i = 0; i < 7; i++) {
     const scheduleDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + i));
-    const dayIndex = scheduleDate.getUTCDay(); // 0: Sun, 1: Mon, ... 6: Sat
+    const dayIndex = scheduleDate.getUTCDay();
     const assignedMember = createdProfiles[i % createdProfiles.length];
 
     await prisma.bazarSchedule.upsert({
@@ -157,62 +174,9 @@ async function main() {
       },
     });
   }
-  console.log(`✅ 7-Day Weekly Bazar Schedule created`);
+  console.log(`✅ 7-Day Weekly Bazar Schedule synced`);
 
-  // 8. Sample Bazar
-  const tanvir = createdProfiles.find((m) => m.id === "member-tanvir") ?? createdProfiles[1];
-  if (tanvir) {
-    const existingBazar = await prisma.bazar.findFirst();
-    if (!existingBazar) {
-      await prisma.bazar.create({
-        data: {
-          date: today,
-          buyerId: tanvir.id,
-          totalAmount: 2450,
-          note: "Weekly grocery market",
-          items: {
-            create: [
-              { productName: "Rice", quantity: 25, unit: "kg", unitPrice: 60, totalPrice: 1500 },
-              { productName: "Chicken", quantity: 3, unit: "kg", unitPrice: 220, totalPrice: 660 },
-              { productName: "Onion", quantity: 5, unit: "kg", unitPrice: 58, totalPrice: 290 },
-            ],
-          },
-        },
-      });
-    }
-  }
-
-  // 9. Sample Payments
-  for (const prof of createdProfiles.slice(0, 3)) {
-    const existingPayment = await prisma.payment.findFirst({ where: { memberId: prof.id } });
-    if (!existingPayment) {
-      await prisma.payment.create({
-        data: {
-          memberId: prof.id,
-          amount: 8000,
-          date: today,
-          method: "BKASH",
-          recordedById: "member-admin",
-          note: "Monthly deposit",
-        },
-      });
-    }
-  }
-
-  // 10. Sample Tasks & Notices
-  const existingNotice = await prisma.notice.findFirst();
-  if (!existingNotice) {
-    await prisma.notice.create({
-      data: {
-        title: "Mess Meeting Tonight at 9:00 PM",
-        description: "Monthly meal calculation and settlement discussion in the dining area. Everyone must attend.",
-        priority: "IMPORTANT",
-        authorId: "member-admin",
-      },
-    });
-  }
-
-  console.log("🎉 Seed complete! 7 Members and weekly bazar schedule are ready.");
+  console.log("🎉 Seed complete! 3 Rooms (2, 2, 3) and 7 Members configured.");
 }
 
 main()

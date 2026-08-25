@@ -1,12 +1,15 @@
+"use client";
+
 import { formatCurrency } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/cn";
-import { TrendingDown, TrendingUp, UtensilsCrossed, BedDouble } from "lucide-react";
+import { TrendingDown, TrendingUp, UtensilsCrossed, BedDouble, Receipt, Sparkles } from "lucide-react";
 import { Meal } from "@prisma/client";
 
 interface PersonalSummaryProps {
   balance: number;
   foodCost: number;
   totalMeals: number;
+  utilityShare?: number;
   todayMeal: Meal | null;
   room: string | null;
   seat: string | null;
@@ -14,82 +17,123 @@ interface PersonalSummaryProps {
 }
 
 export function PersonalSummary({
-  balance, foodCost, totalMeals, todayMeal, room, seat, mealRate
+  balance,
+  foodCost,
+  totalMeals,
+  utilityShare = 4550,
+  todayMeal,
+  room,
+  seat,
+  mealRate,
 }: PersonalSummaryProps) {
   const isCredit = balance >= 0;
 
   return (
-    <div>
-      <p className="section-heading">My Summary</p>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Balance */}
-        <div className="stat-card col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium">Current Balance</p>
-            {isCredit
-              ? <TrendingUp size={14} className="text-[hsl(var(--success))]" />
-              : <TrendingDown size={14} className="text-destructive" />}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+          <Sparkles size={13} className="text-primary" />
+          <span>আমার ব্যক্তিগত আর্থিক স্থিতি</span>
+        </h3>
+        <span className="text-[10px] text-gray-400 font-medium">চলতি মাস</span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* 1. Live Running Balance */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">আমার ব্যালেন্স</span>
+            <span
+              className={cn(
+                "w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs",
+                isCredit ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+              )}
+            >
+              {isCredit ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+            </span>
           </div>
-          <p className={cn("text-2xl font-semibold", isCredit ? "balance-positive" : "balance-negative")}>
-            {isCredit ? "+" : ""}{formatCurrency(Math.abs(balance))}
-          </p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            {isCredit ? "Credit" : "You owe"}
-          </p>
+          <div>
+            <p className={cn("text-xl font-extrabold tracking-tight", isCredit ? "text-emerald-700" : "text-rose-700")}>
+              {isCredit ? "+" : "-"}{formatCurrency(Math.abs(balance))}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              {isCredit ? "মেসে জমা উদ্বৃত্ত আছে ✓" : "টাকা বকেয়া আছে"}
+            </p>
+          </div>
         </div>
 
-        {/* Food Cost */}
-        <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium mb-2">This Month Food</p>
-          <p className="text-xl font-semibold">{formatCurrency(foodCost)}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Rate: {formatCurrency(mealRate)}/meal
-          </p>
+        {/* 2. Food Cost */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">মিল খরচ (Food)</span>
+            <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+              <UtensilsCrossed size={13} />
+            </span>
+          </div>
+          <div>
+            <p className="text-xl font-extrabold text-gray-900 tracking-tight">{formatCurrency(foodCost)}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              {totalMeals} টি মিল • {formatCurrency(mealRate)}/মিল
+            </p>
+          </div>
         </div>
 
-        {/* Meals */}
-        <div className="stat-card">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium">Total Meals</p>
-            <UtensilsCrossed size={14} className="text-[hsl(var(--muted-foreground))]" />
+        {/* 3. Rent & Utility Share */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">বাসা ও ইউটিলিটি</span>
+            <span className="w-6 h-6 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">
+              <Receipt size={13} />
+            </span>
           </div>
-          <p className="text-xl font-semibold">{totalMeals}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">This month</p>
+          <div>
+            <p className="text-xl font-extrabold text-gray-900 tracking-tight">{formatCurrency(utilityShare)}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">ভাড়া, কারেন্ট, গ্যাস, নেট ও খালা</p>
+          </div>
         </div>
 
-        {/* Room / Seat */}
-        <div className="stat-card">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium">Room & Seat</p>
-            <BedDouble size={14} className="text-[hsl(var(--muted-foreground))]" />
+        {/* 4. Room & Seat */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">আমার রুম ও সিট</span>
+            <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">
+              <BedDouble size={13} />
+            </span>
           </div>
-          <p className="text-xl font-semibold">{room ?? "—"}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Seat {seat ?? "Unassigned"}
-          </p>
+          <div>
+            <p className="text-xl font-extrabold text-gray-900 tracking-tight">{room ?? "Room 101"}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Seat {seat ?? "A"} • ভাড়া: ৳৩,৫০০</p>
+          </div>
         </div>
       </div>
 
-      {/* Today's Meals */}
+      {/* Today's Meal Status Strip */}
       {todayMeal !== undefined && (
-        <div className="mt-3 stat-card">
-          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">Today's Meals</p>
-          <div className="flex gap-4">
-            {[
-              { label: "Breakfast", key: "breakfast" as const, emoji: "☀️" },
-              { label: "Lunch", key: "lunch" as const, emoji: "🍽️" },
-              { label: "Dinner", key: "dinner" as const, emoji: "🌙" },
-            ].map(({ label, key, emoji }) => (
-              <div key={key} className="flex items-center gap-1.5">
-                <span className="text-base">{emoji}</span>
-                <div>
-                  <p className="text-xs font-medium">{label}</p>
-                  <p className={cn("text-xs", todayMeal?.[key] ? "text-[hsl(var(--success))]" : "text-[hsl(var(--muted-foreground))]")}>
-                    {todayMeal === null ? "—" : todayMeal[key] ? "✓ Eating" : "Skipped"}
-                  </p>
-                </div>
-              </div>
-            ))}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-3.5 shadow-2xs flex items-center justify-between flex-wrap gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-gray-900">আজকের আমার মিল:</span>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs font-medium">
+            <span className="bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+              ☀️ সকাল:{" "}
+              <strong className={cn("text-xs font-bold", todayMeal?.breakfast ? "text-emerald-700" : "text-gray-400")}>
+                {todayMeal?.breakfast ? "ON ✓" : "OFF ✕"}
+              </strong>
+            </span>
+            <span className="bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+              🍽️ দুপুর:{" "}
+              <strong className={cn("text-xs font-bold", todayMeal?.lunch ? "text-emerald-700" : "text-gray-400")}>
+                {todayMeal?.lunch ? "ON ✓" : "OFF ✕"}
+              </strong>
+            </span>
+            <span className="bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+              🌙 রাত:{" "}
+              <strong className={cn("text-xs font-bold", todayMeal?.dinner ? "text-emerald-700" : "text-gray-400")}>
+                {todayMeal?.dinner ? "ON ✓" : "OFF ✕"}
+              </strong>
+            </span>
           </div>
         </div>
       )}

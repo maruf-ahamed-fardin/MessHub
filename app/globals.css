@@ -106,6 +106,12 @@
     min-height: 100dvh;
   }
 
+  /* Smooth Interactive Elements across the entire app */
+  button, a[role="button"], input[type="button"], input[type="submit"] {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
   /* Prevent horizontal overflow */
   html, body {
     overflow-x: hidden;
@@ -186,18 +192,24 @@
     align-items: center;
     gap: 0.625rem;
     padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     font-size: 0.875rem;
     font-weight: 500;
     color: hsl(var(--sidebar-foreground));
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     text-decoration: none;
+    will-change: transform;
   }
 
   .nav-item:hover {
     background-color: hsl(var(--sidebar-accent));
     color: hsl(var(--sidebar-accent-foreground));
+    transform: translateX(2px);
+  }
+
+  .nav-item:active {
+    transform: scale(0.98);
   }
 
   .nav-item.active {
