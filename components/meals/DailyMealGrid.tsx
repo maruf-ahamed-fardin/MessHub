@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/lib/i18n/useT";
 
 interface DailyMealGridProps {
   date: Date;
@@ -27,6 +28,7 @@ const MEAL_KEYS = ["breakfast", "lunch", "dinner"] as const;
 
 export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGridProps) {
   const router = useRouter();
+  const T = useT();
 
   // Initial member meal state
   const initialMap: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
@@ -175,11 +177,11 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
             <Sun size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-amber-900">সকাল (Breakfast)</p>
+            <p className="text-xs font-medium text-amber-900">{T.meals.breakfast}</p>
             <p className="text-xl font-bold text-amber-950">
               {totalBreakfast}{" "}
               <span className="text-xs font-normal text-amber-700">
-                ({memberBreakfast} + {guestBreakfast} গেস্ট)
+                ({memberBreakfast} + {guestBreakfast} {T.meals.guest})
               </span>
             </p>
           </div>
@@ -190,11 +192,11 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
             <Utensils size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-blue-900">দুপুর (Lunch)</p>
+            <p className="text-xs font-medium text-blue-900">{T.meals.lunch}</p>
             <p className="text-xl font-bold text-blue-950">
               {totalLunch}{" "}
               <span className="text-xs font-normal text-blue-700">
-                ({memberLunch} + {guestLunch} গেস্ট)
+                ({memberLunch} + {guestLunch} {T.meals.guest})
               </span>
             </p>
           </div>
@@ -205,11 +207,11 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
             <Moon size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-900">রাত (Dinner)</p>
+            <p className="text-xs font-medium text-indigo-900">{T.meals.dinner}</p>
             <p className="text-xl font-bold text-indigo-950">
               {totalDinner}{" "}
               <span className="text-xs font-normal text-indigo-700">
-                ({memberDinner} + {guestDinner} গেস্ট)
+                ({memberDinner} + {guestDinner} {T.meals.guest})
               </span>
             </p>
           </div>
@@ -220,9 +222,9 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
             <Flame size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-emerald-900">সর্বমোট মিল (Total)</p>
+            <p className="text-xs font-medium text-emerald-900">{T.meals.total}</p>
             <p className="text-xl font-bold text-emerald-950">
-              {grandTotal} <span className="text-xs font-normal text-emerald-700">টি</span>
+              {grandTotal} <span className="text-xs font-normal text-emerald-700">{T.common.total}</span>
             </p>
           </div>
         </div>
@@ -232,20 +234,20 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
       <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] overflow-hidden shadow-xs">
         <div className="px-4 py-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-gray-50/50">
           <div>
-            <p className="text-sm font-semibold text-gray-900">মেম্বারদের মিল তালিকা ({formattedDate})</p>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">মিল অন বা অফ করতে বাটনে চাপুন</p>
+            <p className="text-sm font-semibold text-gray-900">{T.meals.memberMealList} ({formattedDate})</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{T.meals.clickToToggle}</p>
           </div>
           <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-            {members.length} মেম্বার
+            {T.meals.members}
           </span>
         </div>
 
         {/* Table Header */}
         <div className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] border-b border-[hsl(var(--border))] px-4 py-2.5 bg-gray-50/30 text-xs font-semibold text-gray-500">
-          <span>মেম্বারের নাম</span>
-          <span className="text-center">☀️ সকাল</span>
-          <span className="text-center">🍽️ দুপুর</span>
-          <span className="text-center">🌙 রাত</span>
+          <span>{T.meals.memberName}</span>
+          <span className="text-center">{T.meals.breakfast}</span>
+          <span className="text-center">{T.meals.lunch}</span>
+          <span className="text-center">{T.meals.dinner}</span>
         </div>
 
         {/* Members List */}
@@ -275,7 +277,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
                       {member.user?.name ?? member.name}
                     </p>
                     <p className="text-[11px] text-gray-400 truncate">
-                      {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : "Active Member"}
+                      {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : T.meals.activeMember}
                     </p>
                   </div>
                 </div>

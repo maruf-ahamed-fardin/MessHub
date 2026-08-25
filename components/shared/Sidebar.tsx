@@ -10,39 +10,7 @@ import {
   Brush, Bell, Calendar, MessageSquare, Megaphone,
   Settings, LogOut, ChevronRight,
 } from "lucide-react";
-
-const NAV_SECTIONS = [
-  {
-    label: null,
-    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
-  },
-  {
-    label: "Community",
-    items: [
-      { href: "/community", label: "Feed", icon: MessageSquare },
-      { href: "/notices", label: "Notices", icon: Megaphone },
-      { href: "/notifications", label: "Notifications", icon: Bell, badge: "3" },
-      { href: "/calendar", label: "Calendar", icon: Calendar },
-    ],
-  },
-  {
-    label: "Mess",
-    items: [
-      { href: "/rooms", label: "Rooms & Members", icon: BedDouble },
-      { href: "/meals", label: "Meals", icon: UtensilsCrossed },
-      { href: "/bazar", label: "Bazar", icon: ShoppingBasket },
-      { href: "/expenses", label: "Expenses", icon: Receipt },
-      { href: "/payments", label: "Money Transaction", icon: CreditCard },
-      { href: "/settlement", label: "Monthly Settlement", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "House",
-    items: [
-      { href: "/house", label: "House & Tasks", icon: Brush },
-    ],
-  },
-];
+import { useT } from "@/lib/i18n/useT";
 
 interface SidebarProps {
   className?: string;
@@ -50,6 +18,40 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const T = useT();
+
+  const NAV_SECTIONS = [
+    {
+      label: null,
+      items: [{ href: "/dashboard", label: T.nav.home, icon: LayoutDashboard }],
+    },
+    {
+      label: T.nav.feed,
+      items: [
+        { href: "/community", label: T.nav.feed, icon: MessageSquare },
+        { href: "/notices", label: T.sidebar.notices, icon: Megaphone },
+        { href: "/notifications", label: T.sidebar.notifications, icon: Bell, badge: "3" },
+        { href: "/calendar", label: T.sidebar.calendar, icon: Calendar },
+      ],
+    },
+    {
+      label: T.sidebar.messhub,
+      items: [
+        { href: "/rooms", label: T.sidebar.rooms, icon: BedDouble },
+        { href: "/meals", label: T.nav.meals, icon: UtensilsCrossed },
+        { href: "/bazar", label: T.sidebar.bazar, icon: ShoppingBasket },
+        { href: "/expenses", label: T.sidebar.expenses, icon: Receipt },
+        { href: "/payments", label: T.sidebar.payments, icon: CreditCard },
+        { href: "/settlement", label: T.sidebar.settlement, icon: BarChart3 },
+      ],
+    },
+    {
+      label: T.sidebar.house,
+      items: [
+        { href: "/house", label: T.sidebar.house, icon: Brush },
+      ],
+    },
+  ];
 
   return (
     <aside
@@ -59,11 +61,11 @@ export function Sidebar({ className }: SidebarProps) {
         className
       )}
     >
-      {/* Logo (Clickable -> Home / Dashboard) */}
+      {/* Logo */}
       <Link
         href="/dashboard"
         className="flex items-center gap-2.5 px-4 py-5 border-b border-[hsl(var(--sidebar-border))] hover:opacity-90 transition-all cursor-pointer"
-        title="হোম পেজে যান"
+        title="MessHub"
       >
         <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-2xs">
           M
@@ -105,14 +107,14 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="p-2 border-t border-[hsl(var(--sidebar-border))] space-y-0.5">
         <Link href="/settings" className={cn("nav-item", pathname === "/settings" && "active")}>
           <Settings size={16} />
-          <span>Settings</span>
+          <span>{T.nav.settings}</span>
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="nav-item w-full text-left hover:text-red-400"
+          className="nav-item w-full text-left hover:text-red-400 cursor-pointer"
         >
           <LogOut size={16} />
-          <span>Sign out</span>
+          <span>{T.nav.logOut}</span>
         </button>
       </div>
     </aside>

@@ -13,6 +13,7 @@ import {
   ShieldCheck, ArrowRight, Save, Utensils,
 } from "lucide-react";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import { useT } from "@/lib/i18n/useT";
 import { PwaInstallButton } from "@/components/shared/PwaInstallButton";
 import { cn } from "@/lib/utils/cn";
 
@@ -33,6 +34,7 @@ export function SettingsForm({ settings }: { settings: any }) {
   );
 
   const router = useRouter();
+  const T = useT();
   const { theme, setTheme, language, setLanguage } = usePreferences();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -63,15 +65,15 @@ export function SettingsForm({ settings }: { settings: any }) {
   };
 
   return (
-    <div className="max-w-3xl space-y-6 pb-20">
-      {/* 1. TOP APP PREFERENCES (Centered Compact Switches & PWA Banner) */}
+    <div className="max-w-3xl space-y-5 pb-20">
+      {/* 1. TOP APP PREFERENCES (Language & Theme Switches + PWA Banner) */}
       <div className="bg-white border border-gray-200/90 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {/* Language Switcher */}
           <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200/80 flex flex-col items-center justify-center text-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-black text-gray-800">
               <Globe size={14} className="text-indigo-600" />
-              <span>{language === "bn" ? "ভাষা (Language)" : "Language"}</span>
+              <span>{T.settings.language}</span>
             </div>
             <div className="flex items-center p-1 bg-gray-200/80 dark:bg-slate-800 rounded-xl gap-1 border border-gray-300/40 dark:border-slate-700">
               <button
@@ -84,7 +86,7 @@ export function SettingsForm({ settings }: { settings: any }) {
                     : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
                 )}
               >
-                <span>🇧🇩 বাংলা</span>
+                <span>🇧🇩 {T.settings.bengali}</span>
               </button>
               <button
                 type="button"
@@ -96,7 +98,7 @@ export function SettingsForm({ settings }: { settings: any }) {
                     : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
                 )}
               >
-                <span>🇬🇧 English</span>
+                <span>🇬🇧 {T.settings.english}</span>
               </button>
             </div>
           </div>
@@ -105,7 +107,7 @@ export function SettingsForm({ settings }: { settings: any }) {
           <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200/80 flex flex-col items-center justify-center text-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-black text-gray-800">
               {theme === "dark" ? <Moon size={14} className="text-indigo-400" /> : <Sun size={14} className="text-amber-500" />}
-              <span>{language === "bn" ? "ডিসপ্লে থিম" : "Theme Mode"}</span>
+              <span>{T.settings.theme}</span>
             </div>
             <div className="flex items-center p-1 bg-gray-200/80 dark:bg-slate-800 rounded-xl gap-1 border border-gray-300/40 dark:border-slate-700">
               <button
@@ -119,7 +121,7 @@ export function SettingsForm({ settings }: { settings: any }) {
                 )}
               >
                 <Sun size={13} className="text-white" />
-                <span>লাইট</span>
+                <span>{T.settings.light}</span>
               </button>
               <button
                 type="button"
@@ -132,7 +134,7 @@ export function SettingsForm({ settings }: { settings: any }) {
                 )}
               >
                 <Moon size={13} className="text-indigo-200" />
-                <span>নাইট</span>
+                <span>{T.settings.dark}</span>
               </button>
             </div>
           </div>
@@ -142,7 +144,7 @@ export function SettingsForm({ settings }: { settings: any }) {
         <PwaInstallButton variant="card" />
       </div>
 
-      {/* 2. MESS CONFIGURATION HUB (Interactive Modern Design) */}
+      {/* 2. MESS CONFIGURATION HUB */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Navigation Category Tabs */}
         <div className="flex items-center gap-1.5 p-1.5 bg-gray-100/90 rounded-2xl border border-gray-200/80 overflow-x-auto">
@@ -191,7 +193,7 @@ export function SettingsForm({ settings }: { settings: any }) {
 
         {/* Tab 1: General Mess Identity */}
         {activeTab === "general" && (
-          <div className="bg-white border border-gray-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4 animate-in fade-in-0 duration-150">
+          <div className="bg-white border border-gray-200/90 rounded-3xl p-4 sm:p-6 shadow-2xs space-y-4 animate-in fade-in-0 duration-150">
             <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-primary text-white flex items-center justify-center font-black text-lg shadow-md shrink-0">
                 {messName.slice(0, 2).toUpperCase()}
@@ -235,8 +237,8 @@ export function SettingsForm({ settings }: { settings: any }) {
 
         {/* Tab 2: Finance, Seat Rent & Guest Meal Pricing */}
         {activeTab === "finance" && (
-          <div className="bg-white border border-gray-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4 animate-in fade-in-0 duration-150">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white border border-gray-200/90 rounded-3xl p-4 sm:p-6 shadow-2xs space-y-4 animate-in fade-in-0 duration-150">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Default Seat Rent */}
               <div className="space-y-1.5 p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/70">
                 <Label className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
@@ -255,7 +257,7 @@ export function SettingsForm({ settings }: { settings: any }) {
                     {currency}
                   </span>
                 </div>
-                <p className="text-[10px] text-emerald-700">নতুন মেম্বার যুক্ত করার সময় এটি ব্যবহার হবে</p>
+                <p className="text-[10px] text-emerald-700">{language === "bn" ? "নতুন মেম্বার যুক্ত করার সময় এটি ব্যবহার হবে" : "Used as default when adding members"}</p>
               </div>
 
               {/* Currency Selector */}
@@ -280,18 +282,18 @@ export function SettingsForm({ settings }: { settings: any }) {
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-gray-400">ওয়েবসাইটের সকল হিসাব এই প্রতীকে দেখাবে</p>
+                <p className="text-[10px] text-gray-400">{language === "bn" ? "ওয়েবসাইটের সকল হিসাব এই প্রতীকে দেখাবে" : "Used across all site monetary displays"}</p>
               </div>
             </div>
 
             {/* Guest Meal Pricing Rules */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-2.5">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-2.5">
               <Label className="text-xs font-black text-gray-800 flex items-center gap-1.5">
                 <Utensils size={14} className="text-amber-500" />
                 <span>{language === "bn" ? "গেস্ট মিল প্রাইসিং নিয়ম" : "Guest Meal Pricing Mode"}</span>
               </Label>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setGuestMealPricing("DYNAMIC")}
@@ -302,8 +304,8 @@ export function SettingsForm({ settings }: { settings: any }) {
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white"
                   )}
                 >
-                  <p className="font-black text-xs">📊 ডাইনামিক রেট</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">মাসের মিল রেট অনুযায়ী হিসাব</p>
+                  <p className="font-black text-xs">{language === "bn" ? "📊 ডাইনামিক রেট" : "📊 Dynamic Rate"}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{language === "bn" ? "মাসের মিল রেট অনুযায়ী হিসাব" : "Calculated from live month meal rate"}</p>
                 </button>
 
                 <button
@@ -316,15 +318,15 @@ export function SettingsForm({ settings }: { settings: any }) {
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white"
                   )}
                 >
-                  <p className="font-black text-xs">🔒 ফিক্সড রেট</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">প্রতি মিল নির্দিষ্ট টাকা</p>
+                  <p className="font-black text-xs">{language === "bn" ? "🔒 ফিক্সড রেট" : "🔒 Fixed Rate"}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{language === "bn" ? "প্রতি মিল নির্দিষ্ট টাকা" : "Fixed price per guest meal"}</p>
                 </button>
               </div>
 
               {guestMealPricing === "FIXED" && (
                 <div className="pt-2 animate-in fade-in-0 duration-150">
                   <Label className="text-[11px] font-black text-gray-700">
-                    ফিক্সড গেস্ট মিল রেট ({currency})
+                    {language === "bn" ? `ফিক্সড গেস্ট মিল রেট (${currency})` : `Fixed Guest Meal Rate (${currency})`}
                   </Label>
                   <Input
                     type="number"
@@ -341,38 +343,38 @@ export function SettingsForm({ settings }: { settings: any }) {
 
         {/* Tab 3: Mess Rules & Regulations */}
         {activeTab === "rules" && (
-          <div className="bg-white border border-gray-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-3.5 animate-in fade-in-0 duration-150">
+          <div className="bg-white border border-gray-200/90 rounded-3xl p-4 sm:p-6 shadow-2xs space-y-3.5 animate-in fade-in-0 duration-150">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-black text-gray-800 flex items-center gap-1.5">
                 <BookOpen size={14} className="text-amber-600" />
                 <span>{language === "bn" ? "মেস নীতিমালা ও নোটিস বোর্ড রুলস" : "Mess Rules & Regulations"}</span>
               </Label>
-              <span className="text-[10px] text-gray-400">মেম্বারদের ড্যাশবোর্ডে প্রদর্শিত হবে</span>
+              <span className="text-[10px] text-gray-400">{language === "bn" ? "মেম্বারদের ড্যাশবোর্ডে প্রদর্শিত হবে" : "Visible to all members"}</span>
             </div>
 
             {/* Quick Rule Templates */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-bold text-gray-500">💡 কুইক টেমপ্লেট:</span>
+              <span className="text-[11px] font-bold text-gray-500">💡 {language === "bn" ? "কুইক টেমপ্লেট:" : "Quick Templates:"}</span>
               <button
                 type="button"
-                onClick={() => addRuleTemplate("লাইট ও ফ্যান অপ্রয়োজনে বন্ধ রাখুন")}
+                onClick={() => addRuleTemplate(language === "bn" ? "লাইট ও ফ্যান অপ্রয়োজনে বন্ধ রাখুন" : "Turn off lights & fans after use")}
                 className="px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-[10px] font-bold border border-amber-200/80 transition-colors cursor-pointer"
               >
-                + বিদ্যুৎ সাশ্রয়
+                + {language === "bn" ? "বিদ্যুৎ সাশ্রয়" : "Power Saving"}
               </button>
               <button
                 type="button"
-                onClick={() => addRuleTemplate("রাত ১১:৩০ টার পর মেইন গেট বন্ধ থাকবে")}
+                onClick={() => addRuleTemplate(language === "bn" ? "রাত ১১:৩০ টার পর মেইন গেট বন্ধ থাকবে" : "Main gate locked after 11:30 PM")}
                 className="px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-[10px] font-bold border border-indigo-200/80 transition-colors cursor-pointer"
               >
-                + মেইন গেট নিয়ম
+                + {language === "bn" ? "মেইন গেট নিয়ম" : "Main Gate Rule"}
               </button>
               <button
                 type="button"
-                onClick={() => addRuleTemplate("খাবার পর প্লেট ধুয়ে ডাইনিং পরিষ্কার রাখুন")}
+                onClick={() => addRuleTemplate(language === "bn" ? "খাবার পর প্লেট ধুয়ে ডাইনিং পরিষ্কার রাখুন" : "Wash plates and keep dining table clean")}
                 className="px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-bold border border-emerald-200/80 transition-colors cursor-pointer"
               >
-                + ডাইনিং পরিচ্ছন্নতা
+                + {language === "bn" ? "ডাইনিং পরিচ্ছন্নতা" : "Dining Cleanliness"}
               </button>
             </div>
 
@@ -380,7 +382,7 @@ export function SettingsForm({ settings }: { settings: any }) {
               value={messRules}
               onChange={(e) => setMessRules(e.target.value)}
               rows={6}
-              placeholder="1. মেসের নিয়ম লিখুন..."
+              placeholder={language === "bn" ? "1. মেসের নিয়ম লিখুন..." : "1. Enter mess rules..."}
               className="text-xs rounded-2xl leading-relaxed p-3.5 resize-none bg-gray-50/50"
             />
           </div>
@@ -405,7 +407,7 @@ export function SettingsForm({ settings }: { settings: any }) {
           ) : (
             <Save size={16} />
           )}
-          <span>{language === "bn" ? "সেটিংস সংরক্ষণ করুন (Save Changes)" : "Save Changes"}</span>
+          <span>{T.common.save}</span>
         </Button>
       </form>
     </div>

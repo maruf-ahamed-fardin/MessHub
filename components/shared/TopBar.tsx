@@ -27,7 +27,7 @@ const MEMBER_ACTIONS = [
   { hrefKey: "/meals",  labelKey: "meals",     descKey: "dailyMeal",      icon: ShoppingBasket },
   { hrefKey: "/bazar",  labelKey: "addBazar",   descKey: "recordBazar",    icon: ShoppingBasket },
   { hrefKey: "/house",  labelKey: "houseTasks", descKey: "cleaningIssues", icon: Wrench },
-];
+] as const;
 
 const ADMIN_ACTIONS = [
   { hrefKey: "/meals",    labelKey: "meals",           descKey: "dailyMeal",         icon: ShoppingBasket },
@@ -37,7 +37,7 @@ const ADMIN_ACTIONS = [
   { hrefKey: "/members", labelKey: "addMember",        descKey: "createMember",      icon: Users },
   { hrefKey: "/house",   labelKey: "houseTasks",       descKey: "cleaningIssues",    icon: Wrench },
   { hrefKey: "/notices", labelKey: "addNotice",        descKey: "postAnnouncement",  icon: Megaphone },
-];
+] as const;
 
 export function TopBar({ user }: TopBarProps) {
   const { theme, toggleTheme, language, toggleLanguage } = usePreferences();
@@ -114,8 +114,12 @@ export function TopBar({ user }: TopBarProps) {
                         <action.icon size={14} />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold leading-tight">{T.topbar[action.labelKey]}</p>
-                        <p className="text-[10px] text-gray-400 truncate">{T.topbar[action.descKey]}</p>
+                        <p className="font-semibold leading-tight">
+                          {T.topbar[action.labelKey as keyof typeof T.topbar]}
+                        </p>
+                        <p className="text-[10px] text-gray-400 truncate">
+                          {T.topbar[action.descKey as keyof typeof T.topbar]}
+                        </p>
                       </div>
                     </Link>
                   ))}

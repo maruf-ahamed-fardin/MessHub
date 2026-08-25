@@ -309,7 +309,13 @@
   .page-container {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .page-container {
+      padding: 1.5rem 1rem;
+    }
   }
 
   @media (min-width: 768px) {

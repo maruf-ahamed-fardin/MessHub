@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { createPaymentAction, createExpenseAction, deletePaymentAction } from "@/app/actions/finance.actions";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/useT";
 
 interface MoneyTransactionHubProps {
   payments: any[];
@@ -37,6 +38,7 @@ export function MoneyTransactionHub({
   currentUserId,
 }: MoneyTransactionHubProps) {
   const router = useRouter();
+  const T = useT();
   const [payments, setPayments] = useState(initialPayments);
   const [expenses, setExpenses] = useState(initialExpenses);
 
@@ -71,8 +73,8 @@ export function MoneyTransactionHub({
       originalId: p.id,
       type: "IN" as const,
       category: p.method,
-      title: `${p.member?.user?.name ?? "Member"} টাকা জমা দিয়েছেন`,
-      note: p.note || `পেমেন্ট মেথড: ${p.method}`,
+      title: `${p.member?.user?.name ?? "Member"} ${T.payments.deposited}`,
+      note: p.note || `${T.payments.method}: ${p.method}`,
       amount: Number(p.amount) || 0,
       date: new Date(p.date),
       person: p.member?.user?.name ?? "Member",
@@ -83,8 +85,8 @@ export function MoneyTransactionHub({
       originalId: b.id,
       type: "OUT" as const,
       category: "BAZAR",
-      title: `বাজার খরচ (${b.buyerMember?.user?.name ?? "Buyer"})`,
-      note: b.note || (b.items ? b.items.map((it: any) => it.productName).join(", ") : "বাজার সামগ্রী"),
+      title: `${T.sidebar.bazar} (${b.buyerMember?.user?.name ?? "Buyer"})`,
+      note: b.note || (b.items ? b.items.map((it: any) => it.productName).join(", ") : "Items"),
       amount: Number(b.totalAmount) || 0,
       date: new Date(b.date),
       person: b.buyerMember?.user?.name ?? "Buyer",
@@ -96,7 +98,7 @@ export function MoneyTransactionHub({
       type: "OUT" as const,
       category: e.category || "EXPENSE",
       title: `${e.title}`,
-      note: e.note || `পরিশোধকারী: ${e.paidBy?.user?.name ?? "Member"}`,
+      note: e.note || `${T.payments.paidBy}: ${e.paidBy?.user?.name ?? "Member"}`,
       amount: Number(e.amount) || 0,
       date: new Date(e.date),
       person: e.paidBy?.user?.name ?? "Member",
@@ -199,7 +201,7 @@ export function MoneyTransactionHub({
   };
 
   const handleDeletePayment = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this payment record?")) return;
+    if (!confirm(T.payments.deleteConfirm)) return;
     setPayments((prev) => prev.filter((p) => p.id !== id));
     try {
       await deletePaymentAction(id);
@@ -210,41 +212,41 @@ export function MoneyTransactionHub({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* 1. 2-Column Responsive Stat Cashflow Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
         {/* Card 1: Money In */}
         <div className="bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">মোট জমা (Money In)</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">{T.payments.moneyIn}</span>
             <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
               <ArrowDownLeft size={14} />
             </div>
           </div>
           <div className="mt-2">
             <p className="text-lg sm:text-xl font-black text-emerald-700 leading-tight">{formatCurrency(totalIn)}</p>
-            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{payments.length} টি পেমেন্ট রেকর্ড</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{payments.length} {T.payments.paymentRecords}</p>
           </div>
         </div>
 
         {/* Card 2: Money Out */}
         <div className="bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">মোট খরচ (Money Out)</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">{T.payments.moneyOut}</span>
             <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
               <ArrowUpRight size={14} />
             </div>
           </div>
           <div className="mt-2">
             <p className="text-lg sm:text-xl font-black text-rose-700 leading-tight">{formatCurrency(totalOut)}</p>
-            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">বাজার ও অন্যান্য সব ব্যয়</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{T.payments.bazarAndOthers}</p>
           </div>
         </div>
 
         {/* Card 3: Fund Balance */}
         <div className="col-span-2 sm:col-span-1 bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1">
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">হাতে জমা ফান্ড (Fund Balance)</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 truncate">{T.payments.fundBalance}</span>
             <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
               <Wallet size={14} />
             </div>
@@ -253,14 +255,14 @@ export function MoneyTransactionHub({
             <p className={cn("text-lg sm:text-xl font-black leading-tight", netFund >= 0 ? "text-indigo-900" : "text-rose-600")}>
               {formatCurrency(netFund)}
             </p>
-            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{netFund >= 0 ? "মেস ফান্ডে অবশিষ্ট আছে" : "ফান্ড শর্টেজ"}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{netFund >= 0 ? T.payments.fundRemains : T.payments.fundShortage}</p>
           </div>
         </div>
       </div>
 
-      {/* 2. Centered Action Buttons & Filter */}
+      {/* 2. Action Buttons & Filter */}
       <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 text-center">
-        {/* Filter Pills Centered */}
+        {/* Filter Pills */}
         <div className="flex items-center justify-center gap-1 p-1 bg-gray-100/90 rounded-xl overflow-x-auto max-w-full">
           <button
             type="button"
@@ -270,7 +272,7 @@ export function MoneyTransactionHub({
               activeTab === "all" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
             )}
           >
-            সব লেনদেন ({allTransactions.length})
+            {T.payments.allTab} ({allTransactions.length})
           </button>
           <button
             type="button"
@@ -280,7 +282,7 @@ export function MoneyTransactionHub({
               activeTab === "in" ? "bg-white text-gray-900 shadow-xs font-black" : "hover:text-emerald-800 opacity-80"
             )}
           >
-            টাকা জমা ({payments.length})
+            {T.payments.inTab} ({payments.length})
           </button>
           <button
             type="button"
@@ -290,50 +292,50 @@ export function MoneyTransactionHub({
               activeTab === "out" ? "bg-white text-gray-900 shadow-xs font-black" : "hover:text-rose-800 opacity-80"
             )}
           >
-            টাকা খরচ ({bazars.length + expenses.length})
+            {T.payments.outTab} ({bazars.length + expenses.length})
           </button>
         </div>
 
-        {/* Centered Action Dialogs */}
+        {/* Action Dialogs */}
         <div className="flex items-center justify-center gap-2 flex-wrap w-full sm:w-auto">
           {isAdmin && (
             <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="h-8.5 px-3.5 text-xs font-bold gap-1.5 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl shadow-2xs cursor-pointer">
                   <Plus size={14} />
-                  <span>টাকা খরচ রেকর্ড</span>
+                  <span>{T.payments.addExpense}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-xs">
                 <DialogHeader>
-                  <DialogTitle className="text-sm">টাকা খরচ / ব্যয় যুক্ত করুন</DialogTitle>
+                  <DialogTitle className="text-sm">{T.payments.addExpense}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleAddExpense} className="space-y-3 mt-2">
                   <div className="space-y-1">
-                    <Label htmlFor="exp-title" className="text-xs">খরচের খাত / শিরোনাম *</Label>
-                    <Input id="exp-title" name="title" placeholder="যেমন: গ্যাস সিলিন্ডার, ফিল্টার..." className="h-9 text-xs" required />
+                    <Label htmlFor="exp-title" className="text-xs">{T.common.name} *</Label>
+                    <Input id="exp-title" name="title" placeholder="Gas cylinder, Filter..." className="h-9 text-xs" required />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label htmlFor="exp-amt" className="text-xs">টাকার পরিমাণ *</Label>
+                      <Label htmlFor="exp-amt" className="text-xs">{T.payments.amount} *</Label>
                       <Input id="exp-amt" name="amount" type="number" min="1" placeholder="0" className="h-9 text-xs" required />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">ক্যাটাগরি</Label>
+                      <Label className="text-xs">{T.payments.category}</Label>
                       <Select name="category" defaultValue="HOUSEHOLD">
                         <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="HOUSEHOLD">বাসার খরচ</SelectItem>
-                          <SelectItem value="CLEANING">ক্লিনিং</SelectItem>
-                          <SelectItem value="REPAIR">মেরামত</SelectItem>
-                          <SelectItem value="OTHER">অন্যান্য</SelectItem>
+                          <SelectItem value="HOUSEHOLD">Household</SelectItem>
+                          <SelectItem value="CLEANING">Cleaning</SelectItem>
+                          <SelectItem value="REPAIR">Repair</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">টাকা প্রদানকারী *</Label>
+                      <Label className="text-xs">{T.payments.paidBy} *</Label>
                       <Select name="paidById" defaultValue={members[0]?.id ?? ""}>
                         <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -344,18 +346,18 @@ export function MoneyTransactionHub({
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="exp-date" className="text-xs">তারিখ *</Label>
+                      <Label htmlFor="exp-date" className="text-xs">{T.payments.date} *</Label>
                       <Input id="exp-date" name="date" type="date" defaultValue={new Date().toISOString().split("T")[0]} className="h-9 text-xs" required />
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="exp-note" className="text-xs">নোট / মেমো</Label>
-                    <Input id="exp-note" name="note" placeholder="বিস্তারিত..." className="h-9 text-xs" />
+                    <Label htmlFor="exp-note" className="text-xs">{T.payments.note}</Label>
+                    <Input id="exp-note" name="note" placeholder="Details..." className="h-9 text-xs" />
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => setExpenseDialogOpen(false)} className="flex-1 text-xs">বাতিল</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setExpenseDialogOpen(false)} className="flex-1 text-xs">{T.common.cancel}</Button>
                     <Button type="submit" size="sm" className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs" disabled={submitting}>
-                      {submitting ? <Loader2 size={12} className="animate-spin mr-1" /> : null}সেভ করুন
+                      {submitting ? <Loader2 size={12} className="animate-spin mr-1" /> : null}{T.common.save}
                     </Button>
                   </div>
                 </form>
@@ -368,16 +370,16 @@ export function MoneyTransactionHub({
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8.5 px-3.5 text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs cursor-pointer">
                   <Plus size={14} />
-                  <span>টাকা জমা রেকর্ড</span>
+                  <span>{T.payments.addDeposit}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-xs">
                 <DialogHeader>
-                  <DialogTitle className="text-sm">টাকা জমা (Deposit) রেকর্ড করুন</DialogTitle>
+                  <DialogTitle className="text-sm">{T.payments.addDeposit}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleAddDeposit} className="space-y-3 mt-2">
                   <div className="space-y-1">
-                    <Label className="text-xs">মেম্বারের নাম *</Label>
+                    <Label className="text-xs">{T.payments.member} *</Label>
                     <Select name="memberId" defaultValue={members[0]?.id ?? ""}>
                       <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -389,35 +391,35 @@ export function MoneyTransactionHub({
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label htmlFor="dep-amt" className="text-xs">টাকার পরিমাণ *</Label>
+                      <Label htmlFor="dep-amt" className="text-xs">{T.payments.amount} *</Label>
                       <Input id="dep-amt" name="amount" type="number" min="1" placeholder="8000" className="h-9 text-xs" required />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">পেমেন্ট মেথড</Label>
+                      <Label className="text-xs">{T.payments.method}</Label>
                       <Select name="method" defaultValue="BKASH">
                         <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="BKASH">বিকাশ (bKash)</SelectItem>
-                          <SelectItem value="NAGAD">নগদ (Nagad)</SelectItem>
-                          <SelectItem value="ROCKET">রকেট (Rocket)</SelectItem>
-                          <SelectItem value="CASH">ক্যাশ (Cash)</SelectItem>
-                          <SelectItem value="BANK_TRANSFER">ব্যাংক ট্রান্সফার</SelectItem>
+                          <SelectItem value="BKASH">bKash</SelectItem>
+                          <SelectItem value="NAGAD">Nagad</SelectItem>
+                          <SelectItem value="ROCKET">Rocket</SelectItem>
+                          <SelectItem value="CASH">Cash</SelectItem>
+                          <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="dep-date" className="text-xs">জমার তারিখ *</Label>
+                    <Label htmlFor="dep-date" className="text-xs">{T.payments.date} *</Label>
                     <Input id="dep-date" name="date" type="date" defaultValue={new Date().toISOString().split("T")[0]} className="h-9 text-xs" required />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="dep-note" className="text-xs">মন্তব্য / TrxID</Label>
-                    <Input id="dep-note" name="note" placeholder="যেমন: TrxID: 9X738... বা ক্যাশ জমা" className="h-9 text-xs" />
+                    <Label htmlFor="dep-note" className="text-xs">{T.payments.note}</Label>
+                    <Input id="dep-note" name="note" placeholder="TrxID..." className="h-9 text-xs" />
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => setDepositDialogOpen(false)} className="flex-1 text-xs">বাতিল</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setDepositDialogOpen(false)} className="flex-1 text-xs">{T.common.cancel}</Button>
                     <Button type="submit" size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs" disabled={submitting}>
-                      {submitting ? <Loader2 size={12} className="animate-spin mr-1" /> : null}জমা সেভ করুন
+                      {submitting ? <Loader2 size={12} className="animate-spin mr-1" /> : null}{T.common.save}
                     </Button>
                   </div>
                 </form>
@@ -433,11 +435,11 @@ export function MoneyTransactionHub({
           <div className="flex items-center gap-2">
             <Users size={15} className="text-primary" />
             <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">
-              ৭ জন মেম্বারের মোট জমা দেওয়া টাকার তালিকা
+              {T.payments.memberDeposit}
             </h4>
           </div>
           <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-            মোট জমা: {formatCurrency(totalIn)}
+            {T.dashboard.totalDeposit}: {formatCurrency(totalIn)}
           </span>
         </div>
 
@@ -462,7 +464,7 @@ export function MoneyTransactionHub({
                   <p className="text-xs font-bold text-emerald-700 mt-1">
                     {formatCurrency(totalGiven)}
                   </p>
-                  <p className="text-[9px] text-gray-400">জমা দিয়েছে</p>
+                  <p className="text-[9px] text-gray-400">{T.payments.deposited}</p>
                 </div>
               </div>
             );
@@ -474,15 +476,15 @@ export function MoneyTransactionHub({
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs space-y-0">
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/70 flex items-center justify-between">
           <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">
-            লেনদেনের বিস্তারিত স্টেটমেন্ট (Transaction Statement)
+            {T.payments.title}
           </h4>
           <span className="text-[11px] font-semibold text-gray-500">
-            {filteredTransactions.length} টি লেনদেন
+            {filteredTransactions.length} {T.payments.records}
           </span>
         </div>
 
         {filteredTransactions.length === 0 ? (
-          <p className="text-center py-8 text-xs text-gray-400">কোনো লেনদেন রেকর্ড পাওয়া যায়নি।</p>
+          <p className="text-center py-8 text-xs text-gray-400">{T.payments.noTransactions}</p>
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredTransactions.map((tx) => {
