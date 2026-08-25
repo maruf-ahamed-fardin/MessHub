@@ -21,6 +21,15 @@ export async function updateMealAction(formData: {
     const [y, m, d] = formData.date.split("-").map(Number);
     const dateObj = new Date(Date.UTC(y, m - 1, d));
 
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const targetDate = new Date(dateObj);
+    targetDate.setUTCHours(0, 0, 0, 0);
+
+    if (targetDate < today && session.user.role !== "ADMIN") {
+      throw new Error("Past meals can only be edited by an Admin.");
+    }
+
     await upsertMeal({
       memberId: formData.memberId,
       date: dateObj,
@@ -47,6 +56,16 @@ export async function toggleMealAction(
     assertCanModifyMember(session, memberId);
 
     const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const targetDate = new Date(d);
+    targetDate.setUTCHours(0, 0, 0, 0);
+
+    if (targetDate < today && session.user.role !== "ADMIN") {
+      throw new Error("Past meals can only be edited by an Admin.");
+    }
+
     const existing = await prisma.meal.findUnique({
       where: { memberId_date: { memberId, date: d } },
     });

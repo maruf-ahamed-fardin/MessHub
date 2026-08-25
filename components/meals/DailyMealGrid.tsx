@@ -26,9 +26,15 @@ interface DailyMealGridProps {
 
 const MEAL_KEYS = ["breakfast", "lunch", "dinner"] as const;
 
-export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGridProps) {
+export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberId, isAdmin }: DailyMealGridProps) {
   const router = useRouter();
   const T = useT();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+  const isPastDate = checkDate.getTime() < today.getTime();
 
   // Initial member meal state
   const initialMap: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
@@ -285,23 +291,35 @@ export function DailyMealGrid({ date, members, meals, guestMeals }: DailyMealGri
                 {MEAL_KEYS.map((field) => {
                   const on = state[field];
                   const isLoading = loadingKey === `${member.id}-${field}`;
+                  const canEditThisMeal = isAdmin || (!isPastDate && member.id === currentMemberId);
 
                   return (
                     <div key={field} className="flex justify-center">
                       <button
                         type="button"
+                        disabled={!canEditThisMeal || isLoading}
                         onClick={() => handleToggle(member.id, field)}
                         className={cn(
-                          "w-16 sm:w-20 h-7 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 select-none active:scale-95 cursor-pointer shadow-xs",
+                          "w-16 sm:w-20 h-7 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 select-none shadow-xs",
+                          canEditThisMeal ? "active:scale-95 cursor-pointer" : "opacity-60 cursor-not-allowed",
                           on
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
-                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200",
+                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800",
                           isLoading && "opacity-60"
                         )}
-                        title={on ? "Click to turn OFF" : "Click to turn ON"}
+                        title={
+                          !canEditThisMeal
+                            ? isPastDate
+                              ? "অতীতের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন"
+                              : "অন্য মেম্বারের মিল পরিবর্তন করা যাবে না"
+                            : on
+                            ? "Click to turn OFF"
+                            : "Click to turn ON"
+                        }
                       >
                         <span>{on ? "ON" : "OFF"}</span>
                         <span className="text-[10px]">{on ? "✓" : "✕"}</span>
+                        {!canEditThisMeal && isPastDate && <span className="text-[9px]">🔒</span>}
                       </button>
                     </div>
                   );

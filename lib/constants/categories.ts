@@ -25,13 +25,19 @@ export const UTILITY_TYPES = {
   GAS: "GAS",
   WATER: "WATER",
   INTERNET: "INTERNET",
+  COOK: "COOK",
+  WASTE: "WASTE",
+  OTHER: "OTHER",
 } as const;
 
 export const UTILITY_LABELS: Record<string, string> = {
-  ELECTRICITY: "Electricity",
-  GAS: "Gas",
-  WATER: "Water",
-  INTERNET: "Internet",
+  ELECTRICITY: "Electricity (বিদ্যুৎ বিল)",
+  GAS: "Gas (গ্যাস বিল)",
+  WATER: "Water (পানি বিল)",
+  INTERNET: "Internet (ইন্টারনেট/ওয়াইফাই বিল)",
+  COOK: "Cook / Bua Bill (বুয়া / বাবুর্চি বিল)",
+  WASTE: "Waste Management (ময়লা বিল)",
+  OTHER: "Other Utility (অন্যান্য ইউটিলিটি)",
 };
 
 export const PAYMENT_METHODS = {

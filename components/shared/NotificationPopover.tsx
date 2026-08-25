@@ -19,7 +19,7 @@ export function NotificationPopover() {
       time: "10 mins ago",
       href: "/notices",
       icon: AlertTriangle,
-      color: "bg-rose-50 text-rose-600 border-rose-200",
+      color: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
     },
     {
       id: "n2",
@@ -29,7 +29,7 @@ export function NotificationPopover() {
       time: "Today",
       href: "/bazar",
       icon: ShoppingBasket,
-      color: "bg-amber-50 text-amber-600 border-amber-200",
+      color: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
     },
     {
       id: "n3",
@@ -39,11 +39,18 @@ export function NotificationPopover() {
       time: "1 hour ago",
       href: "/payments",
       icon: CreditCard,
-      color: "bg-emerald-50 text-emerald-600 border-emerald-200",
+      color: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
     },
   ];
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem("messhub_unread_notifs");
+      if (saved !== null) {
+        setUnreadCount(Number(saved));
+      }
+    } catch {}
+
     function handleClickOutside(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         setIsOpen(false);
@@ -55,6 +62,9 @@ export function NotificationPopover() {
 
   const handleMarkAllRead = () => {
     setUnreadCount(0);
+    try {
+      localStorage.setItem("messhub_unread_notifs", "0");
+    } catch {}
   };
 
   return (
@@ -65,7 +75,9 @@ export function NotificationPopover() {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "relative h-9 w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer select-none",
-          isOpen ? "bg-gray-100 text-gray-900 shadow-2xs" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          isOpen
+            ? "bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-slate-100 shadow-2xs"
+            : "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100"
         )}
         title="নোটিফিকেশন ও অ্যালার্ট"
       >
@@ -79,15 +91,15 @@ export function NotificationPopover() {
 
       {/* Floating Notification Popover - 100% Mobile Responsive */}
       {isOpen && (
-        <div className="fixed sm:absolute top-14 sm:top-full right-3 sm:right-0 w-[calc(100vw-24px)] sm:w-88 max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 py-0 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
+        <div className="fixed sm:absolute top-14 sm:top-full right-3 sm:right-0 w-[calc(100vw-24px)] sm:w-88 max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 py-0 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/70 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">
+              <span className="font-extrabold text-xs text-gray-900 dark:text-slate-100 uppercase tracking-wider">
                 নোটিফিকেশন ও অ্যালার্ট
               </span>
               {unreadCount > 0 && (
-                <span className="bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                <span className="bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
                   {unreadCount} নতুন
                 </span>
               )}
@@ -96,7 +108,7 @@ export function NotificationPopover() {
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="text-[11px] font-semibold text-gray-500 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <CheckCheck size={13} />
                 <span>পঠিত</span>
@@ -105,7 +117,7 @@ export function NotificationPopover() {
           </div>
 
           {/* List */}
-          <div className="divide-y divide-gray-100 max-h-[60vh] sm:max-h-80 overflow-y-auto">
+          <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[60vh] sm:max-h-80 overflow-y-auto">
             {notifications.map((n) => {
               const Icon = n.icon;
               return (
@@ -114,8 +126,8 @@ export function NotificationPopover() {
                   href={n.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-start gap-3 p-3.5 hover:bg-gray-50/80 transition-colors",
-                    n.type === "URGENT" && "bg-rose-50/30"
+                    "flex items-start gap-3 p-3.5 hover:bg-gray-50/80 dark:hover:bg-slate-800/50 transition-colors",
+                    n.type === "URGENT" && "bg-rose-50/30 dark:bg-rose-950/20"
                   )}
                 >
                   <div className={cn("w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5", n.color)}>
@@ -123,10 +135,10 @@ export function NotificationPopover() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <p className="text-xs font-bold text-gray-900 truncate leading-tight">{n.title}</p>
-                      <span className="text-[9px] text-gray-400 shrink-0">{n.time}</span>
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate leading-tight">{n.title}</p>
+                      <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">{n.time}</span>
                     </div>
-                    <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{n.desc}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.desc}</p>
                   </div>
                 </Link>
               );
@@ -134,7 +146,7 @@ export function NotificationPopover() {
           </div>
 
           {/* Footer */}
-          <div className="p-2.5 border-t border-gray-100 bg-gray-50/50 text-center">
+          <div className="p-2.5 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/40 text-center">
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}

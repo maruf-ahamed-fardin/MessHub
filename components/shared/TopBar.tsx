@@ -62,7 +62,7 @@ export function TopBar({ user }: TopBarProps) {
 
   return (
     <>
-      <header className="h-14 border-b border-[hsl(var(--border))] bg-white flex items-center justify-between px-4 shrink-0 relative z-30">
+      <header className="h-14 border-b border-[hsl(var(--border))] bg-white dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between px-4 shrink-0 relative z-30">
         {/* Mobile logo (Clickable -> Home / Dashboard) */}
         <Link
           href="/dashboard"
@@ -72,7 +72,7 @@ export function TopBar({ user }: TopBarProps) {
           <div className="w-7.5 h-7.5 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-2xs">
             M
           </div>
-          <span className="font-extrabold text-sm tracking-tight text-gray-900">MessHub</span>
+          <span className="font-extrabold text-sm tracking-tight text-gray-900 dark:text-slate-100">MessHub</span>
         </Link>
 
         {/* Desktop spacer */}
@@ -98,9 +98,9 @@ export function TopBar({ user }: TopBarProps) {
             </Button>
 
             {quickAddOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-[hsl(var(--border))] py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
-                <div className="px-3 py-1.5 border-b border-gray-100">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{T.topbar.quickActions}</p>
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-[hsl(var(--border))] dark:border-slate-800 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100">
+                <div className="px-3 py-1.5 border-b border-gray-100 dark:border-slate-800">
+                  <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{T.topbar.quickActions}</p>
                 </div>
                 <div className="py-1">
                   {actions.map((action) => (
@@ -108,16 +108,16 @@ export function TopBar({ user }: TopBarProps) {
                       key={action.hrefKey + action.labelKey}
                       href={action.hrefKey}
                       onClick={() => setQuickAddOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors cursor-pointer"
+                      className="flex items-center gap-3 px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800/60 hover:text-primary dark:hover:text-primary transition-colors cursor-pointer"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-600 dark:text-slate-300 shrink-0">
                         <action.icon size={14} />
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold leading-tight">
                           {T.topbar[action.labelKey as keyof typeof T.topbar]}
                         </p>
-                        <p className="text-[10px] text-gray-400 truncate">
+                        <p className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
                           {T.topbar[action.descKey as keyof typeof T.topbar]}
                         </p>
                       </div>
@@ -135,7 +135,7 @@ export function TopBar({ user }: TopBarProps) {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-all cursor-pointer active:scale-95"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-800 dark:hover:text-slate-100 transition-all cursor-pointer active:scale-95"
             aria-label="Open menu"
           >
             <Menu size={20} strokeWidth={2.2} />

@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth/config";
+import { prisma } from "@/lib/db/prisma";
 import { getMemberById } from "@/backend/members/member.repository";
 import { getAllRooms, getAvailableSeats } from "@/backend/rooms/room.repository";
 import { calculateMemberFoodCost, calculateMealRate } from "@/backend/services/meal-calculation.service";
-import { calculateMemberRunningBalance } from "@/backend/services/balance.service";
-import { getCurrentMonthYear } from "@/lib/utils/date";
-import { formatCurrency } from "@/lib/utils/currency";
+import { calculateGuestMealCost } from "@/backend/services/guest-meal.service";
+import { calculateMemberExpenseShare } from "@/backend/services/expense-calculation.service";
+import { calculateUtilityShare } from "@/backend/services/utility.service";
+import { getCurrentMonthYear, getMonthRange } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { notFound } from "next/navigation";
 import { MemberManageForm } from "@/components/members/MemberManageForm";
+import { PersonalBalanceSheet } from "@/components/members/PersonalBalanceSheet";
 import { getServerT } from "@/lib/i18n/serverT";
 
-export const metadata: Metadata = { title: "Manage Member" };
+export const metadata: Metadata = { title: "Manage Member & Statement" };
 
 export default async function ManageMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,67 +25,66 @@ export default async function ManageMemberPage({ params }: { params: Promise<{ i
   if (!member) notFound();
 
   const { month, year } = getCurrentMonthYear();
-  const mealRate = await calculateMealRate(month, year);
-  const { foodCost, totalMeals } = await calculateMemberFoodCost(member.id, month, year, mealRate);
-  const balance = await calculateMemberRunningBalance(member.id);
+  const { startDate, endDate } = getMonthRange(month, year);
+  const seatRent = Number(member.seatRent) || 0;
 
-  const [rooms, availableSeats] = await Promise.all([
+  const totalMembers = (await prisma.memberProfile.count({ where: { isActive: true } })) || 7;
+
+  const mealRate = await calculateMealRate(month, year);
+
+  const [
+    rooms,
+    availableSeats,
+    guestData,
+    utilityData,
+    otherCost,
+    paymentsList,
+    paidAgg,
+    rawUtilityBills,
+  ] = await Promise.all([
     getAllRooms(),
     getAvailableSeats(),
+    calculateGuestMealCost(member.id, month, year, mealRate),
+    calculateUtilityShare(month, year, totalMembers),
+    calculateMemberExpenseShare(member.id, month, year, totalMembers),
+    prisma.payment.findMany({
+      where: { memberId: member.id, date: { gte: startDate, lte: endDate } },
+      orderBy: { date: "desc" },
+    }),
+    prisma.payment.aggregate({
+      where: { memberId: member.id, date: { gte: startDate, lte: endDate } },
+      _sum: { amount: true },
+    }),
+    prisma.utilityBill.findMany({ where: { month, year } }),
   ]);
+  const { foodCost, totalMeals } = await calculateMemberFoodCost(member.id, month, year, mealRate);
+  const totalPaid = Number(paidAgg._sum.amount) || 0;
+  const utilityShare = utilityData.perMemberShare;
+
+  const billByType: Record<string, number> = {};
+  for (const b of rawUtilityBills) {
+    billByType[b.type] = Number(b.amount) || 0;
+  }
+  const utilityDetails = {
+    buaBill: Math.round((billByType["COOK"] || 2100) / totalMembers),
+    electricity: Math.round((billByType["ELECTRICITY"] || 2100) / totalMembers),
+    gas: Math.round((billByType["GAS"] || 1050) / totalMembers),
+    water: Math.round((billByType["WATER"] || 700) / totalMembers),
+    internet: Math.round((billByType["INTERNET"] || 1050) / totalMembers),
+    waste: Math.round((billByType["WASTE"] || 350) / totalMembers),
+  };
+
+  const totalCost = foodCost + guestData.guestMealCost + utilityShare + seatRent + otherCost;
+  const balance = Math.round((totalPaid - totalCost) * 100) / 100;
 
   const T = await getServerT();
-  const initials = (member.user.name ?? "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <PageHeader
-        title={member.user.name ?? "Member"}
-        description={`Manage seat, rent, and status`}
+        title={member.user.name ?? "Member Profile"}
+        description="সদস্যের সিট ব্যবস্থাপনা, ভাড়ার হার এবং ব্যক্তিগত হিসাব খাতা"
       />
-
-      <div className="stat-card flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={member.user.image ?? member.avatar ?? undefined} />
-            <AvatarFallback className="text-xl bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{member.user.name}</h2>
-              <Badge variant={member.isActive ? "default" : "outline"} className={member.isActive ? "bg-green-600" : ""}>
-                {member.isActive ? "Active" : "Inactive"}
-              </Badge>
-              {member.user.role === "ADMIN" && <Badge className="bg-[hsl(var(--primary))]">Admin</Badge>}
-            </div>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">{member.user.email}</p>
-            {member.phone && <p className="text-sm text-[hsl(var(--muted-foreground))]">{member.phone}</p>}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.common.room} / {T.common.seat}</p>
-          <p className="font-semibold">{member.seat ? `${member.seat.room?.name} - ${member.seat.label}` : "None"}</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.common.seatRent}</p>
-          <p className="font-semibold">{formatCurrency(Number(member.seatRent))}</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.profile.mealsMonth}</p>
-          <p className="font-semibold">{totalMeals}</p>
-        </div>
-        <div className={`stat-card ${balance >= 0 ? "bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-800/60" : "bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800/60"}`}>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">{T.common.currentBalance}</p>
-          <p className={`font-semibold ${balance >= 0 ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}>
-            {balance >= 0 ? "+" : ""}{formatCurrency(Math.abs(balance))}
-          </p>
-        </div>
-      </div>
 
       {isAdmin && (
         <MemberManageForm
@@ -93,6 +93,24 @@ export default async function ManageMemberPage({ params }: { params: Promise<{ i
           availableSeats={availableSeats}
         />
       )}
+
+      <PersonalBalanceSheet
+        member={member}
+        totalPaid={totalPaid}
+        totalMeals={totalMeals}
+        mealRate={mealRate}
+        foodCost={foodCost}
+        guestMealCost={guestData.guestMealCost}
+        totalGuestMeals={guestData.totalGuestMeals}
+        utilityShare={utilityShare}
+        utilityDetails={utilityDetails}
+        seatRent={seatRent}
+        otherExpenseShare={otherCost}
+        balance={balance}
+        paymentHistory={paymentsList}
+        month={month}
+        year={year}
+      />
     </div>
   );
 }

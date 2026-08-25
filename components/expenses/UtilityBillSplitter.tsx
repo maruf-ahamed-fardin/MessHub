@@ -24,13 +24,13 @@ interface UtilityBillSplitterProps {
 }
 
 const BILL_CONFIG: Record<string, { label: string; icon: any; defaultAmt: number }> = {
-  RENT: { label: "বাসা ভাড়া", icon: Home, defaultAmt: 24500 },
-  ELECTRICITY: { label: "কারেন্ট বিল", icon: Zap, defaultAmt: 2100 },
-  GAS: { label: "গ্যাস বিল", icon: Flame, defaultAmt: 1050 },
-  WATER: { label: "পানি বিল", icon: Droplets, defaultAmt: 700 },
-  INTERNET: { label: "ইন্টারনেট", icon: Wifi, defaultAmt: 1050 },
-  COOK: { label: "খালা বিল", icon: ChefHat, defaultAmt: 2100 },
-  WASTE: { label: "ময়লা ও অন্যান্য", icon: Trash2, defaultAmt: 350 },
+  RENT: { label: "বাসা ভাড়া (House Rent)", icon: Home, defaultAmt: 24500 },
+  COOK: { label: "বুয়া / কুক বিল (Bua / Cook Bill)", icon: ChefHat, defaultAmt: 2100 },
+  ELECTRICITY: { label: "কারেন্ট বিল (Electricity)", icon: Zap, defaultAmt: 2100 },
+  GAS: { label: "গ্যাস বিল (Gas)", icon: Flame, defaultAmt: 1050 },
+  WATER: { label: "পানি বিল (Water)", icon: Droplets, defaultAmt: 700 },
+  INTERNET: { label: "ইন্টারনেট / ওয়াইফাই", icon: Wifi, defaultAmt: 1050 },
+  WASTE: { label: "ময়লা ও অন্যান্য ইউটিলিটি", icon: Trash2, defaultAmt: 350 },
 };
 
 export function UtilityBillSplitter({
