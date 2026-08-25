@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth/config";
 import { calculateMonthlySettlement } from "@/backend/services/settlement.service";
+import { getMonthlyMealAnalytics } from "@/backend/services/meal-calculation.service";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SettlementOverview } from "@/components/settlement/SettlementOverview";
 import { MemberSettlementCard } from "@/components/settlement/MemberSettlementCard";
 import { FinalizationControls } from "@/components/settlement/FinalizationControls";
+import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
 import { SettlementSummary } from "@/types";
 
 export const metadata: Metadata = { title: "Monthly Settlement" };
@@ -44,7 +46,7 @@ export default async function SettlementPage() {
       },
       {
         memberId: "m2",
-        memberName: "Tanvir Ahmed",
+        memberName: "Rahim Chowdhury",
         avatar: null,
         totalMeals: 58,
         foodCost: 3799,
@@ -53,12 +55,12 @@ export default async function SettlementPage() {
         seatRent: 3500,
         otherCost: 200,
         totalCost: 8299,
-        totalPaid: 8000,
-        balance: -299,
+        totalPaid: 8500,
+        balance: 201,
       },
       {
         memberId: "m3",
-        memberName: "Rahim Chowdhury",
+        memberName: "Karim Ahmed",
         avatar: null,
         totalMeals: 60,
         foodCost: 3930,
@@ -67,12 +69,12 @@ export default async function SettlementPage() {
         seatRent: 3500,
         otherCost: 200,
         totalCost: 8495.5,
-        totalPaid: 8500,
-        balance: 4.5,
+        totalPaid: 8000,
+        balance: -495.5,
       },
       {
         memberId: "m4",
-        memberName: "Karim Hassan",
+        memberName: "Tanvir Hasan",
         avatar: null,
         totalMeals: 60,
         foodCost: 3930,
@@ -81,19 +83,22 @@ export default async function SettlementPage() {
         seatRent: 3500,
         otherCost: 200,
         totalCost: 8430,
-        totalPaid: 7000,
-        balance: -1430,
-      }
-    ]
+        totalPaid: 8000,
+        balance: -430,
+      },
+    ],
   };
 
   let isFinalized = false;
+  let mealAnalytics: any = null;
 
   try {
-    const [dbSummary, existing] = await Promise.all([
+    const [dbSummary, existing, analytics] = await Promise.all([
       calculateMonthlySettlement(month, year),
       prisma.monthlySettlement.findUnique({ where: { month_year: { month, year } } }),
+      getMonthlyMealAnalytics(month, year),
     ]);
+    mealAnalytics = analytics;
     if (dbSummary.memberSummaries.length > 0) {
       summary = dbSummary;
       isFinalized = existing?.isFinalized ?? false;
@@ -110,8 +115,15 @@ export default async function SettlementPage() {
         ) : undefined}
       />
       <SettlementOverview summary={summary} isFinalized={isFinalized} />
+      
+      {mealAnalytics && (
+        <div className="pt-2">
+          <MonthlyMealAnalyticsSheet analytics={mealAnalytics} />
+        </div>
+      )}
+
       <div>
-        <p className="section-heading">Per Member Breakdown</p>
+        <p className="section-heading">Per Member Final Settlement</p>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {summary.memberSummaries.map((ms) => (
             <MemberSettlementCard key={ms.memberId} data={ms} />

@@ -50,3 +50,34 @@ describe("Month-End Date Boundaries", () => {
     expect(april30.endDate.getDate()).toBe(30);
   });
 });
+
+describe("Meal Rate Engine & Food Cost Calculations", () => {
+  it("calculates exact meal rate = Total Bazar Expense / Total Mess Meals", () => {
+    const totalBazar = 15720; // Includes rice, oil, meat, vegetables, fish, spices
+    const totalMeals = 240;
+    const mealRate = roundMoney(totalBazar / totalMeals);
+    expect(mealRate).toBe(65.5);
+  });
+
+  it("calculates individual member food cost and bazar surplus/due", () => {
+    const mealRate = 65.5;
+
+    // Member A had 62 meals and did 10000 tk bazar
+    const memberAMeals = 62;
+    const memberAFoodCost = roundMoney(memberAMeals * mealRate); // 4061
+    const memberABazarDone = 10000;
+    const memberABalance = roundMoney(memberABazarDone - memberAFoodCost); // +5939 (Surplus from bazar)
+
+    expect(memberAFoodCost).toBe(4061);
+    expect(memberABalance).toBe(5939);
+
+    // Member B had 58 meals and did 0 tk bazar
+    const memberBMeals = 58;
+    const memberBFoodCost = roundMoney(memberBMeals * mealRate); // 3799
+    const memberBBazarDone = 0;
+    const memberBBalance = roundMoney(memberBBazarDone - memberBFoodCost); // -3799 (Owes for food)
+
+    expect(memberBFoodCost).toBe(3799);
+    expect(memberBBalance).toBe(-3799);
+  });
+});
