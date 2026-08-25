@@ -78,7 +78,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full w-60 shrink-0 border-r overflow-y-auto",
+        "flex flex-col h-full w-60 shrink-0 border-r overflow-y-auto no-scrollbar",
         "bg-[hsl(var(--sidebar))] border-[hsl(var(--sidebar-border))]",
         className
       )}

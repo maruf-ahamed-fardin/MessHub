@@ -96,33 +96,31 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-[300px] max-w-[90vw] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 z-50 h-full w-[300px] max-w-[90vw] bg-white dark:bg-slate-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-800",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-sm">
               M
             </div>
-            <span className="font-extrabold text-sm tracking-tight text-gray-900">MessHub</span>
+            <span className="font-extrabold text-sm tracking-tight text-gray-900 dark:text-slate-100">MessHub</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Close menu"
           >
             <X size={18} />
           </button>
         </div>
 
-
-
         {/* Nav Items */}
-        <div className="flex-1 overflow-y-auto py-2 px-2">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pt-2 pb-1.5">
+        <div className="flex-1 overflow-y-auto no-scrollbar py-2 px-2">
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider px-3 pt-2 pb-1.5">
             {T.sidebar.features}
           </p>
           <div className="space-y-0.5">
