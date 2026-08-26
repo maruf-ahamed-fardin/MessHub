@@ -548,6 +548,8 @@ export function CommunityFeedHub({
                     <img
                       src={post.imageUrl}
                       alt="Post attachment"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover max-h-96 hover:scale-[1.01] transition-transform duration-300"
                     />
                   </div>
@@ -818,7 +820,7 @@ export function CommunityFeedHub({
           {/* Floating Media Previews */}
           {imageUrl && (
             <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 max-h-44 bg-gray-50 dark:bg-slate-800 flex items-center justify-center">
-              <img src={imageUrl} alt="Attached Preview" className="max-h-44 object-contain" />
+              <img src={imageUrl} alt="Attached Preview" loading="lazy" decoding="async" className="max-h-44 object-contain" />
               <div className="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
                 <div className="bg-black/75 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                   <ImageIcon size={11} />

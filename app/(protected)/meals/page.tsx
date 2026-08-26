@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { auth } from "@/lib/auth/config";
 import { getMealsCalendar, getAllMealsForDate } from "@/backend/meals/meal.repository";
 import { getGuestMealsForDate } from "@/backend/guest-meals/guest-meal.repository";
@@ -8,9 +9,17 @@ import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MealCalendar } from "@/components/meals/MealCalendar";
 import { DailyMealGrid } from "@/components/meals/DailyMealGrid";
-import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
-import { MealBookingSheet } from "@/components/meals/MealBookingSheet";
 import { getServerT } from "@/lib/i18n/serverT";
+
+const MonthlyMealAnalyticsSheet = dynamic(
+  () => import("@/components/meals/MonthlyMealAnalyticsSheet").then((mod) => mod.MonthlyMealAnalyticsSheet),
+  { ssr: true }
+);
+
+const MealBookingSheet = dynamic(
+  () => import("@/components/meals/MealBookingSheet").then((mod) => mod.MealBookingSheet),
+  { ssr: true }
+);
 
 export const metadata: Metadata = { title: "Meals & Rate Engine" };
 

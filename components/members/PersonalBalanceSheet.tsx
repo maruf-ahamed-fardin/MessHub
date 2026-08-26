@@ -142,7 +142,7 @@ function EditProfileDialog({
             <div className="relative group">
               <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 shadow-lg">
                 {avatarPreview ? (
-                  <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+                  <img src={avatarPreview} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-tr from-primary to-violet-600 flex items-center justify-center text-white text-2xl font-black">
                     {initials}
@@ -362,7 +362,13 @@ export function PersonalBalanceSheet({
             <div className="relative group">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-4 border-white/30 shadow-lg">
                 {localAvatar ? (
-                  <img src={localAvatar} alt={localName} className="w-full h-full object-cover" />
+                  <img
+                    src={localAvatar}
+                    alt={localName}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-3xl font-black">
                     {initials}
