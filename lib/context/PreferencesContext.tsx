@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Theme = "light" | "dark";
 type Language = "bn" | "en";
@@ -20,6 +21,7 @@ const PreferencesContext = createContext<PreferencesContextType | undefined>(und
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [language, setLanguageState] = useState<Language>("bn");
+  const router = useRouter();
 
   // Load preferences from localStorage on mount
   useEffect(() => {
@@ -72,6 +74,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       localStorage.setItem("messhub_lang", newLang);
       // Also save to cookie so server components can read it
       document.cookie = `messhub_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
+      router.refresh();
     } catch {}
   };
 

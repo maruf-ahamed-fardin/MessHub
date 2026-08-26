@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UtensilsCrossed, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface MealTrendChartProps {
   data: { day: string; date: string; meals: number; isToday?: boolean }[];
@@ -11,25 +12,30 @@ interface MealTrendChartProps {
 }
 
 export function MealTrendChart({ data, todayTotal, averageMeals }: MealTrendChartProps) {
+  const { t } = usePreferences();
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const maxMeals = Math.max(...data.map((d) => d.meals), 25);
 
   return (
-    <div className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
+    <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
             <UtensilsCrossed size={16} />
           </div>
           <div>
-            <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">সাপ্তাহিক মিলের ট্রেন্ড (Meal Trend)</h4>
-            <p className="text-[11px] text-gray-400">গত ৭ দিনের মেসের মোট মিলের পরিসংখ্যান</p>
+            <h4 className="font-bold text-xs text-gray-900 dark:text-slate-100 uppercase tracking-wider">
+              {t("সাপ্তাহিক মিলের ট্রেন্ড", "Weekly Meal Trend")}
+            </h4>
+            <p className="text-[11px] text-gray-400 dark:text-slate-500">
+              {t("গত ৭ দিনের মেসের মোট মিলের পরিসংখ্যান", "Total meal stats of past 7 days")}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2.5 py-1 rounded-lg text-xs font-bold">
+        <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 px-2.5 py-1 rounded-lg text-xs font-bold">
           <TrendingUp size={13} />
-          <span>গড় {averageMeals} মিল/দিন</span>
+          <span>{t(`গড় ${averageMeals} মিল/দিন`, `Avg ${averageMeals} meals/day`)}</span>
         </div>
       </div>
 
@@ -49,8 +55,8 @@ export function MealTrendChart({ data, todayTotal, averageMeals }: MealTrendChar
               >
                 {/* Floating Tooltip */}
                 {isHovered && (
-                  <div className="absolute -top-9 bg-gray-900 text-white text-[10px] font-bold py-1 px-2 rounded-lg shadow-lg whitespace-nowrap z-20 animate-in fade-in zoom-in-95 duration-100">
-                    {item.date}: {item.meals} টি মিল
+                  <div className="absolute -top-9 bg-gray-900 dark:bg-slate-100 text-white dark:text-gray-900 text-[10px] font-bold py-1 px-2 rounded-lg shadow-lg whitespace-nowrap z-20 animate-in fade-in zoom-in-95 duration-100">
+                    {item.date}: {t(`${item.meals} টি মিল`, `${item.meals} meals`)}
                   </div>
                 )}
 

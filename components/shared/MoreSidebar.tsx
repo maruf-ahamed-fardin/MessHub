@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   X, BedDouble, ShoppingBasket, Receipt, CreditCard, BarChart3,
   Brush, Bell, Calendar, Settings, Megaphone, LogOut,
-  LayoutGrid,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils/cn";
@@ -34,7 +33,6 @@ const NAV_ITEMS = [
   { labelKey: "notices",       href: "/notices",       icon: Megaphone,      colorStyle: "bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-200/80 dark:border-red-800/60",        activeColor: "bg-red-600 text-white shadow-xs" },
   { labelKey: "notifications", href: "/notifications", icon: Bell,           colorStyle: "bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60",      activeColor: "bg-blue-600 text-white shadow-xs" },
   { labelKey: "calendar",      href: "/calendar",      icon: Calendar,       colorStyle: "bg-orange-100 dark:bg-orange-950/80 text-orange-800 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800/60",  activeColor: "bg-orange-600 text-white shadow-xs" },
-  { labelKey: "moreFeatures",  href: "/more",          icon: LayoutGrid,     colorStyle: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300/80 dark:border-slate-700",   activeColor: "bg-slate-700 text-white shadow-xs" },
 ] as const;
 
 export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {

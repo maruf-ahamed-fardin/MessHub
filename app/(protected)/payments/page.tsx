@@ -7,11 +7,12 @@ import { getAllMembers } from "@/backend/members/member.repository";
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MoneyTransactionHub } from "@/components/payments/MoneyTransactionHub";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Money Transaction" };
 
 export default async function PaymentsPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
   const { month, year } = getCurrentMonthYear();
 
@@ -25,8 +26,8 @@ export default async function PaymentsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Money Transaction"
-        description="কে কত টাকা জমা দিয়েছে, কোন খাতে কী খরচ হয়েছে এবং মেস ফান্ডের হিসাব"
+        title={T.pages.payments.title}
+        description={T.pages.payments.description}
       />
 
       <MoneyTransactionHub

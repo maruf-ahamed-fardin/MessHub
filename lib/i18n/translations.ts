@@ -205,16 +205,114 @@ export const translations = {
     langPref:    { bn: "ভাষার পছন্দ",     en: "Language Preference" },
   },
 
-  // ─── More page ────────────────────────────────────────────────
+  // ─── More page items ──────────────────────────────────────────
   more: {
-    title:       { bn: "আরও",              en: "More" },
-    description: { bn: "মেসের সকল ফিচার ও সেটিংসের এক ক্লিকে তালিকা", en: "Quick access to all mess features and settings" },
+    title:                   { bn: "আরও",                              en: "More" },
+    description:             { bn: "মেসের সকল ফিচার ও সেটিংসের এক ক্লিকে তালিকা", en: "Quick access to all mess features and settings" },
+    roomsSubtitle:           { bn: "রুম ও মেম্বার তালিকা",           en: "Rooms & seat details" },
+    roomsDesc:               { bn: "রুমের সিট বিবরণ ও মেম্বারদের প্রোফাইল", en: "Room seats and member profiles" },
+    roomsBadge:              { bn: "৩ রুম",                           en: "3 Rooms" },
+    bazarSubtitle:           { bn: "বাজারের হিসাব ও শিডিউল",         en: "Bazar records & schedule" },
+    bazarDesc:               { bn: "দৈনিক বাজার খরচ, ভাউচার ও মেম্বারদের বাজার রোটেশন", en: "Daily bazar costs, vouchers & member rotation" },
+    expensesSubtitle:        { bn: "বাসা ভাড়া ও ইউটিলিটি বিল",      en: "Rent & utility bills" },
+    expensesDesc:            { bn: "ফ্ল্যাট ভাড়া, বিদ্যুৎ, ওয়াইফাই, পানি ও গ্যাস বিল বণ্টন", en: "Flat rent, electricity, wifi, water & gas bill distribution" },
+    paymentsSubtitle:        { bn: "টাকা লেনদেন ও মেস ফান্ড",        en: "Money transaction & fund" },
+    paymentsDesc:            { bn: "মেম্বারদের টাকা জমা, মোট ব্যয় ও ব্যালেন্স স্থিতি", en: "Member deposits, total expenses & balance status" },
+    paymentsBadge:           { bn: "টাকা ইন/আউট",                    en: "In / Out" },
+    settlementSubtitle:      { bn: "মাসিক চূড়ান্ত মিল ও বিল সেটেলমেন্ট", en: "Monthly final settlement" },
+    settlementDesc:          { bn: "মাস শেষের মিল রেট ও লেনদেন নিষ্পত্তি", en: "Month-end meal rate & transaction settlement" },
+    houseSubtitle:           { bn: "বাসার ডিউটি ও মেইনটেন্যান্স",    en: "House duties & maintenance" },
+    houseDesc:               { bn: "ক্লিনিং শিডিউল, গ্যাস সিলিন্ডার ও সার্ভিসিং টাস্ক", en: "Cleaning schedule, gas cylinder & servicing tasks" },
+    noticesSubtitle:         { bn: "মেস নোটিশ ও জরুরি মিটিং",       en: "Mess notices & urgent meetings" },
+    noticesDesc:             { bn: "জরুরি নোটিশ, মেস মিটিং ও অফিশিয়াল ঘোষণা", en: "Urgent notices, mess meetings & official announcements" },
+    noticesBadge:            { bn: "অ্যালার্ট",                      en: "Alert" },
+    notificationsSubtitle:   { bn: "নোটিফিকেশন সেন্টার",             en: "Notification center" },
+    notificationsDesc:       { bn: "বাজার, টাকা জমা, মিল ও ডিউটির সকল আপডেট", en: "All updates for bazar, payments, meals & duties" },
+    calendarSubtitle:        { bn: "ক্যালেন্ডার ও ইভেন্ট শিডিউল",   en: "Calendar & event schedule" },
+    calendarDesc:            { bn: "বাজারের শিডিউল, মিটিং ও গুরুত্বপূর্ণ তারিখ", en: "Bazar schedule, meetings & important dates" },
+    settingsSubtitle:        { bn: "মেস কনফিগারেশন ও সেটিংস",       en: "Mess configuration & settings" },
+    settingsDesc:            { bn: "মেসের নাম, অ্যাডমিন নিয়ন্ত্রণ ও রুলস সেটআপ", en: "Mess name, admin control & rules setup" },
+  },
+
+  // ─── Page headers ─────────────────────────────────────────────
+  pages: {
+    bazar: {
+      title:       { bn: "বাজার ব্যবস্থাপনা",    en: "Bazar Management" },
+      description: { bn: "এই মাসের মোট বাজার খরচ", en: "Total bazar expense this month" },
+    },
+    meals: {
+      title:           { bn: "মিলস ও রেট ইঞ্জিন",    en: "Meals & Rate Engine" },
+      description:     { bn: "দৈনিক মিল বুকিং, গেস্ট মিল ও লাইভ মিল রেট হিসাব", en: "Daily meal booking, guest meals & live meal rate calculation" },
+      monthlyCalendar: { bn: "মাসিক ক্যালেন্ডার",    en: "Monthly Calendar" },
+    },
+    expenses: {
+      title:       { bn: "খরচ ও ইউটিলিটি",       en: "Expenses & Utilities" },
+      description: { bn: "বাসা ভাড়া, কারেন্ট, গ্যাস, পানি ও ইন্টারনেট বিল বণ্টন", en: "Rent, electricity, gas, water & internet bill distribution" },
+    },
+    payments: {
+      title:       { bn: "টাকা লেনদেন",           en: "Money Transaction" },
+      description: { bn: "কে কত টাকা জমা দিয়েছে, কোন খাতে খরচ হয়েছে ও মেস ফান্ডের হিসাব", en: "Deposits, expense categories & mess fund balance" },
+    },
+    rooms: {
+      title:       { bn: "রুম ও মেম্বার",          en: "Rooms & Members" },
+      description: { bn: "মেসের রুম, সিট ও মেম্বারদের বিবরণ এবং সিট বণ্টন", en: "Room, seat & member details with seat allocation" },
+    },
+    house: {
+      title:       { bn: "বাসা ব্যবস্থাপনা",       en: "House Management" },
+      description: { bn: "ক্লিনিং শিডিউল, মেরামত খরচ ও শেয়ার্ড শপিং লিস্ট", en: "Cleaning schedule, maintenance costs & shared shopping list" },
+      loading:     { bn: "লোড হচ্ছে...",            en: "Loading..." },
+    },
+    notices: {
+      title:         { bn: "নোটিশ",                    en: "Notices" },
+      activeNotices: { bn: "টি সক্রিয় নোটিশ",        en: "active notices" },
+      activeNotice:  { bn: "টি সক্রিয় নোটিশ",        en: "active notice" },
+      noNotices:     { bn: "কোনো নোটিশ নেই",          en: "No active notices" },
+      allClear:      { bn: "এই মুহূর্তে কোনো সক্রিয় নোটিশ নেই", en: "All clear! No notices at this time." },
+    },
+    notifications: {
+      title:       { bn: "নোটিফিকেশন",              en: "Notifications" },
+      description: { bn: "বাজার, টাকা জমা, মিল, ডিউটি ও নোটিশের সকল লাইভ নোটিফিকেশন", en: "All live notifications for bazar, payments, meals, duties & notices" },
+    },
+    settlement: {
+      title:       { bn: "মাসিক সেটেলমেন্ট",        en: "Monthly Settlement" },
+      description: { bn: "চলতি মাসের চূড়ান্ত মিল ও বিল সেটেলমেন্ট হিসাব", en: "Calculated settlement for the current month" },
+      perMember:   { bn: "প্রতি মেম্বারের চূড়ান্ত সেটেলমেন্ট", en: "Per Member Final Settlement" },
+    },
+    calendar: {
+      title:       { bn: "মেস ক্যালেন্ডার",          en: "Mess Calendar" },
+      description: { bn: "প্রতিদিনের বাজার, মিল সংখ্যা, ক্লিনিং শিডিউল ও পেমেন্ট রেকর্ড", en: "Daily bazar, meal count, cleaning schedule & payment records" },
+    },
+    community: {
+      title:       { bn: "কমিউনিটি ফিড",             en: "Community Feed" },
+      description: { bn: "মেসের সকল মেম্বারদের মেসেজ, আলোচনা ও রিপ্লাই থ্রেড", en: "Messages, discussions & reply threads from all mess members" },
+    },
+    settings: {
+      title:       { bn: "সেটিংস",                  en: "Settings" },
+      description: { bn: "মেসের পছন্দ ও কনফিগারেশন সেটআপ করুন", en: "Configure your mess preferences" },
+    },
+  },
+
+  // ─── Days of week ──────────────────────────────────────────────
+  days: {
+    sun: { bn: "রবি",       en: "Sun" },
+    mon: { bn: "সোম",       en: "Mon" },
+    tue: { bn: "মঙ্গল",    en: "Tue" },
+    wed: { bn: "বুধ",       en: "Wed" },
+    thu: { bn: "বৃহস্পতি", en: "Thu" },
+    fri: { bn: "শুক্র",    en: "Fri" },
+    sat: { bn: "শনি",       en: "Sat" },
+  },
+
+  // ─── Activity strings ──────────────────────────────────────────
+  activity: {
+    boughtBazar:    { bn: "বাজার করেছেন",      en: "bought bazar" },
+    depositedMoney: { bn: "টাকা জমা দিয়েছেন", en: "deposited money" },
   },
 
   // ─── Profile ──────────────────────────────────────────────────
   profile: {
-    title:        { bn: "আমার প্রোফাইল", en: "My Profile" },
-    mealsMonth:   { bn: "মাসের মিল",     en: "Meals (This Month)" },
+    title:      { bn: "আমার প্রোফাইল", en: "My Profile" },
+    mealsMonth: { bn: "মাসের মিল",     en: "Meals (This Month)" },
   },
 } as const;
 

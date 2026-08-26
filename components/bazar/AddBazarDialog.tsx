@@ -10,6 +10,7 @@ import { Plus, Loader2, Trash2 } from "lucide-react";
 import { createBazarAction } from "@/app/actions/finance.actions";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/currency";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 export function AddBazarDialog({ products, members, currentMemberId }: { products: any[]; members: any[]; currentMemberId: string }) {
   const [open, setOpen] = useState(false);
@@ -17,6 +18,7 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
   const [items, setItems] = useState([{ productName: "", quantity: "", unitPrice: "", unit: "kg" }]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { t } = usePreferences();
 
   const addItem = () => setItems([...items, { productName: "", quantity: "", unitPrice: "", unit: "kg" }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
@@ -48,7 +50,7 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
       setItems([{ productName: "", quantity: "", unitPrice: "", unit: "kg" }]);
       router.refresh();
     } catch (err: any) {
-      setError(err.message ?? "Failed to add bazar");
+      setError(err.message ?? t("বাজার যোগ করতে ব্যর্থ হয়েছে", "Failed to add bazar"));
     } finally {
       setLoading(false);
     }
@@ -57,20 +59,24 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5 h-8 text-xs"><Plus size={14} /> Add Bazar</Button>
+        <Button size="sm" className="gap-1.5 h-8 text-xs">
+          <Plus size={14} /> {t("বাজার যোগ করুন", "Add Bazar")}
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Add Bazar Entry</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t("বাজারের নতুন এন্ট্রি", "Add Bazar Entry")}</DialogTitle>
+        </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="date">Date *</Label>
+              <Label htmlFor="date">{t("তারিখ *", "Date *")}</Label>
               <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split("T")[0]} required />
             </div>
             <div className="space-y-1">
-              <Label>Buyer *</Label>
+              <Label>{t("বাজার করেছে *", "Buyer *")}</Label>
               <Select name="buyerId" defaultValue={currentMemberId}>
-                <SelectTrigger><SelectValue placeholder="Select buyer" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("মেম্বার বেছে নিন", "Select buyer")} /></SelectTrigger>
                 <SelectContent>
                   {members.map((m: any) => (
                     <SelectItem key={m.id} value={m.id}>{m.user.name}</SelectItem>
@@ -83,9 +89,9 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
           {/* Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label>Items *</Label>
+              <Label>{t("বাজারের আইটেমসমূহ *", "Items *")}</Label>
               <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 text-xs gap-1">
-                <Plus size={12} />Add Item
+                <Plus size={12} /> {t("আইটেম যোগ করুন", "Add Item")}
               </Button>
             </div>
             <div className="space-y-2">
@@ -93,7 +99,7 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
                 <div key={i} className="grid grid-cols-[1fr_70px_80px_28px] gap-1.5 items-start">
                   <div>
                     <Input
-                      placeholder="Product name"
+                      placeholder={t("পণ্যের নাম", "Product name")}
                       value={item.productName}
                       onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, productName: e.target.value } : it))}
                       list="product-list"
@@ -104,7 +110,7 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
                     </datalist>
                   </div>
                   <Input
-                    placeholder="Qty"
+                    placeholder={t("পরিমাণ", "Qty")}
                     type="number"
                     min="0"
                     step="0.1"
@@ -113,7 +119,7 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
                     className="h-8 text-sm"
                   />
                   <Input
-                    placeholder="৳ Price"
+                    placeholder={t("৳ মূল্য", "৳ Price")}
                     type="number"
                     min="0"
                     value={item.unitPrice}
@@ -129,20 +135,22 @@ export function AddBazarDialog({ products, members, currentMemberId }: { product
           </div>
 
           <div className="flex items-center justify-between py-2 border-t border-[hsl(var(--border))]">
-            <span className="text-sm font-medium">Total</span>
+            <span className="text-sm font-medium">{t("মোট", "Total")}</span>
             <span className="text-sm font-semibold">{formatCurrency(total)}</span>
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="note">Note (optional)</Label>
-            <Input id="note" name="note" placeholder="Any notes..." />
+            <Label htmlFor="note">{t("নোট (ঐচ্ছিক)", "Note (optional)")}</Label>
+            <Input id="note" name="note" placeholder={t("কোনো বিশেষ নোট...", "Any notes...")} />
           </div>
 
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1" disabled={loading}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1" disabled={loading}>
+              {t("বাতিল", "Cancel")}
+            </Button>
             <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? <><Loader2 size={14} className="animate-spin mr-1" />Saving...</> : "Add Bazar"}
+              {loading ? <><Loader2 size={14} className="animate-spin mr-1" />{t("সেভ হচ্ছে...", "Saving...")}</> : t("বাজার সংরক্ষণ করুন", "Add Bazar")}
             </Button>
           </div>
         </form>

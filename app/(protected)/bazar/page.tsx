@@ -10,11 +10,12 @@ import { BazarScheduleSection } from "@/components/bazar/BazarScheduleSection";
 import { BazarExplorer } from "@/components/bazar/BazarExplorer";
 import { toNumber } from "@/backend/services/meal-calculation.service";
 import { formatCurrency } from "@/lib/utils/currency";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Bazar" };
 
 export default async function BazarPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const { month, year } = getCurrentMonthYear();
   const isAdmin = session?.user.role === "ADMIN";
 
@@ -30,8 +31,8 @@ export default async function BazarPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Bazar Management"
-        description={`এই মাসের মোট বাজার খরচ: ${formatCurrency(totalAmount)}`}
+        title={T.pages.bazar.title}
+        description={`${T.pages.bazar.description}: ${formatCurrency(totalAmount)}`}
         action={
           <AddBazarDialog
             products={products}

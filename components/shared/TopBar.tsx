@@ -67,7 +67,7 @@ export function TopBar({ user }: TopBarProps) {
         <Link
           href="/dashboard"
           className="flex items-center gap-2 md:hidden hover:opacity-85 active:scale-95 transition-all cursor-pointer select-none"
-          title="হোম পেজে যান"
+          title={T.topbar.goHome}
         >
           <div className="w-7.5 h-7.5 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-2xs">
             M
@@ -93,7 +93,7 @@ export function TopBar({ user }: TopBarProps) {
               className="gap-1.5 h-8 text-xs font-semibold shadow-xs cursor-pointer"
             >
               <Plus size={15} />
-              <span>Quick Add</span>
+              <span>{T.topbar.quickAdd}</span>
               <ChevronDown size={12} className={`transition-transform ${quickAddOpen ? "rotate-180" : ""}`} />
             </Button>
 
@@ -136,7 +136,7 @@ export function TopBar({ user }: TopBarProps) {
             type="button"
             onClick={() => setSidebarOpen(true)}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-800 dark:hover:text-slate-100 transition-all cursor-pointer active:scale-95"
-            aria-label="Open menu"
+            aria-label={T.topbar.openMenu}
           >
             <Menu size={20} strokeWidth={2.2} />
           </button>

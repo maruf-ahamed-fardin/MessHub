@@ -4,11 +4,12 @@ import { prisma } from "@/lib/db/prisma";
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { CalendarView } from "@/components/community/CalendarView";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Calendar" };
 
 export default async function CalendarPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const { month, year } = getCurrentMonthYear();
   const isAdmin = session?.user.role === "ADMIN";
 
@@ -56,8 +57,8 @@ export default async function CalendarPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Mess Calendar"
-        description="প্রতিদিনের বাজার, মিল সংখ্যা, ক্লিনিং শিডিউল ও পেমেন্ট রেকর্ড"
+        title={T.pages.calendar.title}
+        description={T.pages.calendar.description}
       />
       <CalendarView
         month={month}

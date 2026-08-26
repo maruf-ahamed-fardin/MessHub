@@ -9,11 +9,12 @@ import { getMonthlyHouseExpense } from "@/backend/services/expense-calculation.s
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { HouseHub } from "@/components/house/HouseHub";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "House & Tasks" };
 
 export default async function HousePage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
   const { month, year } = getCurrentMonthYear();
 
@@ -28,11 +29,11 @@ export default async function HousePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="House Management"
-        description="ক্লিনিং শিডিউল, মেরামত খরচ ও শেয়ার্ড শপিং লিস্ট"
+        title={T.pages.house.title}
+        description={T.pages.house.description}
       />
 
-      <Suspense fallback={<div className="py-20 text-center text-xs text-muted-foreground">লোড হচ্ছে...</div>}>
+      <Suspense fallback={<div className="py-20 text-center text-xs text-muted-foreground">{T.pages.house.loading}</div>}>
         <HouseHub
           cleaningTasks={cleaningTasks}
           maintenanceReports={maintenanceReports}

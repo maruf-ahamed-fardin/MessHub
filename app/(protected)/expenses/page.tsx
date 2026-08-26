@@ -6,11 +6,12 @@ import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { ExpensesTabContainer } from "@/components/expenses/ExpensesTabContainer";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Expenses & Utilities" };
 
 export default async function ExpensesPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
   const { month, year } = getCurrentMonthYear();
 
@@ -23,8 +24,8 @@ export default async function ExpensesPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Expenses & Utilities"
-        description="বাসা ভাড়া, কারেন্ট, গ্যাস, পানি, ইন্টারনেট বিল ও ৭ জনের সমান বণ্টন"
+        title={T.pages.expenses.title}
+        description={T.pages.expenses.description}
         action={isAdmin ? <AddExpenseDialog members={members} /> : undefined}
       />
 

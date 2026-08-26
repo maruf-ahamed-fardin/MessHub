@@ -6,15 +6,17 @@ import { calculateMemberRunningBalance } from "@/backend/services/balance.servic
 import { getActiveNotices } from "@/backend/community/community.repository";
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { ModernDashboard } from "@/components/dashboard/ModernDashboard";
+import { getServerT, getServerLanguage } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const BN_DAYS = ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহস্পতি", "শুক্র", "শনি"];
-
 export default async function DashboardPage() {
-  const session = await auth();
+  const [session, T, lang] = await Promise.all([auth(), getServerT(), getServerLanguage()]);
   const { month, year } = getCurrentMonthYear();
   const today = new Date();
+
+  const DAYS = [T.days.sun, T.days.mon, T.days.tue, T.days.wed, T.days.thu, T.days.fri, T.days.sat];
+  const dateLocale = lang === "bn" ? "bn-BD" : "en-US";
   today.setHours(0, 0, 0, 0);
 
   const startDate = new Date(year, month - 1, 1);
@@ -186,8 +188,8 @@ export default async function DashboardPage() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dayName = BN_DAYS[d.getDay()];
-      const dateStr = d.toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
+      const dayName = DAYS[d.getDay()];
+      const dateStr = d.toLocaleDateString(dateLocale, { day: "numeric", month: "short" });
 
       const dayMeals = weeklyMealsList.filter(
         (m) => new Date(m.date).toDateString() === d.toDateString()
@@ -207,8 +209,8 @@ export default async function DashboardPage() {
 
     // 8. Recent activities
     recentActivities = [
-      ...dbBazar.map((b) => ({ id: `b-${b.id}`, title: `${b.buyerMember?.user?.name ?? "Member"} বাজার করেছেন`, amount: Number(b.totalAmount), time: b.createdAt })),
-      ...dbPayments.map((p) => ({ id: `p-${p.id}`, title: `${p.member?.user?.name ?? "Member"} টাকা জমা দিয়েছেন`, amount: Number(p.amount), time: p.createdAt })),
+      ...dbBazar.map((b) => ({ id: `b-${b.id}`, title: `${b.buyerMember?.user?.name ?? "Member"} ${T.activity.boughtBazar}`, amount: Number(b.totalAmount), time: b.createdAt })),
+      ...dbPayments.map((p) => ({ id: `p-${p.id}`, title: `${p.member?.user?.name ?? "Member"} ${T.activity.depositedMoney}`, amount: Number(p.amount), time: p.createdAt })),
     ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
     // 9. Urgent notice

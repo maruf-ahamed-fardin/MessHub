@@ -9,11 +9,12 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { MealCalendar } from "@/components/meals/MealCalendar";
 import { DailyMealGrid } from "@/components/meals/DailyMealGrid";
 import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Meals & Rate Engine" };
 
 export default async function MealsPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const { month, year } = getCurrentMonthYear();
   const isAdmin = session?.user.role === "ADMIN";
 
@@ -31,8 +32,8 @@ export default async function MealsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Meals & Rate Engine"
-        description="দৈনিক মিল বুকিং, গেস্ট মিল, মেসের বাজার খরচ ও প্রতি মিলের লাইভ রেট হিসাব"
+        title={T.pages.meals.title}
+        description={T.pages.meals.description}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -49,7 +50,7 @@ export default async function MealsPage() {
           />
         </div>
         <div className="lg:col-span-1 space-y-4">
-          <p className="section-heading">মাসিক ক্যালেন্ডার</p>
+          <p className="section-heading">{T.pages.meals.monthlyCalendar}</p>
           <MealCalendar calendarData={calendarData} month={month} year={year} />
         </div>
       </div>

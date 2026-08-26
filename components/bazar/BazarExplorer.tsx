@@ -8,10 +8,10 @@ import {
   ShoppingBasket, Calendar as CalendarIcon, ChevronDown,
   ChevronLeft, ChevronRight, Trash2, Receipt, Plus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { deleteBazarAction } from "@/app/actions/finance.actions";
 import { useRouter } from "next/navigation";
 import { AddBazarDialog } from "@/components/bazar/AddBazarDialog";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface BazarExplorerProps {
   items: any[];
@@ -33,6 +33,7 @@ export function BazarExplorer({
   currentMemberId,
 }: BazarExplorerProps) {
   const router = useRouter();
+  const { t, language } = usePreferences();
   const today = new Date();
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
@@ -69,8 +70,9 @@ export function BazarExplorer({
     }
   }
 
+  const dateLocale = language === "bn" ? "bn-BD" : "en-US";
   const selectedDateObj = new Date(year, month - 1, selectedDay);
-  const formattedSelectedDate = selectedDateObj.toLocaleDateString("en-US", {
+  const formattedSelectedDate = selectedDateObj.toLocaleDateString(dateLocale, {
     weekday: "short",
     month: "long",
     day: "numeric",
@@ -81,7 +83,7 @@ export function BazarExplorer({
   const displayItems = viewAll ? items : dailyItems;
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this bazar entry?")) return;
+    if (!confirm(t("আপনি কি নিশ্চিত এই বাজার এন্ট্রিটি মুছতে চান?", "Are you sure you want to delete this bazar entry?"))) return;
     try {
       await deleteBazarAction(id);
       router.refresh();
@@ -103,13 +105,17 @@ export function BazarExplorer({
   const handleSelectDate = (day: number) => {
     setSelectedDay(day);
     setViewAll(false);
-    setCalendarOpen(false); // Close calendar popup automatically!
+    setCalendarOpen(false);
   };
+
+  const dayHeaders = language === "bn"
+    ? ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি"]
+    : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   return (
     <div className="space-y-4">
       {/* 1. Date Selector Bar with Popover Calendar */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-3.5 shadow-xs flex items-center justify-between flex-wrap gap-3">
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex items-center justify-between flex-wrap gap-3">
         {/* Date Button (Click to open Mini Calendar) */}
         <div className="relative" ref={popoverRef}>
           <div className="flex items-center gap-1.5">
@@ -119,12 +125,12 @@ export function BazarExplorer({
               className={cn(
                 "h-9 px-3.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all cursor-pointer",
                 calendarOpen
-                  ? "bg-amber-50 border-amber-400 text-amber-900 shadow-xs ring-2 ring-amber-300/40"
-                  : "bg-gray-50/80 hover:bg-gray-100 border-gray-200 text-gray-900"
+                  ? "bg-amber-50 dark:bg-amber-950/30 border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 shadow-xs ring-2 ring-amber-300/40"
+                  : "bg-gray-50/80 dark:bg-slate-800/80 hover:bg-gray-100 dark:hover:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-100"
               )}
             >
               <CalendarIcon size={15} className="text-amber-600" />
-              <span>{viewAll ? "সব তারিখ (All Month)" : formattedSelectedDate}</span>
+              <span>{viewAll ? t("পুরো মাসের হিসাব", "All Month Records") : formattedSelectedDate}</span>
               <ChevronDown size={14} className={cn("text-gray-400 transition-transform", calendarOpen && "rotate-180")} />
             </button>
 
@@ -133,8 +139,8 @@ export function BazarExplorer({
               <button
                 type="button"
                 onClick={handlePrevDay}
-                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer border border-gray-200"
-                title="Previous Day"
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100 transition-colors cursor-pointer border border-gray-200 dark:border-slate-700"
+                title={t("আগের দিন", "Previous Day")}
               >
                 <ChevronLeft size={14} />
               </button>
@@ -148,16 +154,16 @@ export function BazarExplorer({
                   "h-8 px-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer",
                   !viewAll && selectedDay === today.getDate()
                     ? "bg-primary text-white border-primary"
-                    : "border-gray-200 text-gray-700 hover:bg-gray-100"
+                    : "border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                 )}
               >
-                আজ
+                {t("আজ", "Today")}
               </button>
               <button
                 type="button"
                 onClick={handleNextDay}
-                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer border border-gray-200"
-                title="Next Day"
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100 transition-colors cursor-pointer border border-gray-200 dark:border-slate-700"
+                title={t("পরের দিন", "Next Day")}
               >
                 <ChevronRight size={14} />
               </button>
@@ -166,17 +172,19 @@ export function BazarExplorer({
 
           {/* FLOATING MINI CALENDAR POPUP */}
           {calendarOpen && (
-            <div className="absolute top-11 left-0 z-50 w-64 bg-white border border-gray-200 rounded-2xl shadow-xl p-3.5 space-y-2.5 animate-in fade-in zoom-in-95 duration-100">
-              <div className="flex items-center justify-between pb-1 border-b border-gray-100">
-                <span className="text-xs font-bold text-gray-900">
-                  {new Date(year, month - 1).toLocaleString("en", { month: "long", year: "numeric" })}
+            <div className="absolute top-11 left-0 z-50 w-64 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl p-3.5 space-y-2.5 animate-in fade-in zoom-in-95 duration-100">
+              <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-slate-800">
+                <span className="text-xs font-bold text-gray-900 dark:text-slate-100">
+                  {new Date(year, month - 1).toLocaleString(dateLocale, { month: "long", year: "numeric" })}
                 </span>
-                <span className="text-[10px] text-gray-400 font-medium">তারিখ বেছে নিন</span>
+                <span className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">
+                  {t("তারিখ বেছে নিন", "Select Date")}
+                </span>
               </div>
 
               {/* Day headers */}
-              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400">
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 dark:text-slate-500">
+                {dayHeaders.map((d) => (
                   <div key={d}>{d}</div>
                 ))}
               </div>
@@ -204,10 +212,10 @@ export function BazarExplorer({
                         isSelected
                           ? "bg-amber-500 text-white font-bold shadow-xs"
                           : hasBazar
-                          ? "bg-amber-100 text-amber-900 font-bold border border-amber-300 hover:bg-amber-200"
+                          ? "bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-700 hover:bg-amber-200"
                           : isToday
-                          ? "bg-gray-100 text-primary font-bold hover:bg-gray-200"
-                          : "text-gray-700 hover:bg-gray-100"
+                          ? "bg-gray-100 dark:bg-slate-800 text-primary font-bold hover:bg-gray-200 dark:hover:bg-slate-700"
+                          : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                       )}
                     >
                       <span className="leading-none text-[11px]">{day}</span>
@@ -224,9 +232,9 @@ export function BazarExplorer({
                 })}
               </div>
 
-              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
+              <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-gray-500 dark:text-slate-400">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> বাজার হয়েছে
+                  <span className="w-2 h-2 rounded-full bg-amber-500" /> {t("বাজার হয়েছে", "Bazar done")}
                 </span>
                 <button
                   type="button"
@@ -236,7 +244,7 @@ export function BazarExplorer({
                   }}
                   className="font-bold text-primary hover:underline cursor-pointer"
                 >
-                  সব দেখুন
+                  {t("সব দেখুন", "View All")}
                 </button>
               </div>
             </div>
@@ -250,20 +258,20 @@ export function BazarExplorer({
             onClick={() => setViewAll(false)}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer",
-              !viewAll ? "bg-amber-500 text-white shadow-xs" : "bg-gray-100 text-gray-600 hover:text-gray-900"
+              !viewAll ? "bg-amber-500 text-white shadow-xs" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100"
             )}
           >
-            তারিখের বাজার ({dailyItems.length})
+            {t(`তারিখের বাজার (${dailyItems.length})`, `Daily Bazar (${dailyItems.length})`)}
           </button>
           <button
             type="button"
             onClick={() => setViewAll(true)}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer",
-              viewAll ? "bg-amber-500 text-white shadow-xs" : "bg-gray-100 text-gray-600 hover:text-gray-900"
+              viewAll ? "bg-amber-500 text-white shadow-xs" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100"
             )}
           >
-            পুরো মাস ({items.length})
+            {t(`পুরো মাস (${items.length})`, `Full Month (${items.length})`)}
           </button>
         </div>
       </div>
@@ -271,16 +279,16 @@ export function BazarExplorer({
       {/* 2. Daily Bazar Receipts & Item Breakdown */}
       <div className="space-y-3">
         {displayItems.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center space-y-3 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-8 text-center space-y-3 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center mx-auto">
               <ShoppingBasket size={22} />
             </div>
             <div>
-              <p className="font-bold text-sm text-gray-900">
-                {formattedSelectedDate} তারিখে কোনো বাজার করা হয়নি
+              <p className="font-bold text-sm text-gray-900 dark:text-slate-100">
+                {t(`${formattedSelectedDate} তারিখে কোনো বাজার করা হয়নি`, `No bazar record found for ${formattedSelectedDate}`)}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                উপরে তারিখের উপর ক্লিক করে অন্য কোনো দিন বেছে নিন অথবা নতুন বাজার যোগ করুন।
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                {t("উপরে তারিখের উপর ক্লিক করে অন্য কোনো দিন বেছে নিন অথবা নতুন বাজার যোগ করুন।", "Click date above to select another day or add a new bazar entry.")}
               </p>
             </div>
             <div className="pt-1">
@@ -299,34 +307,34 @@ export function BazarExplorer({
             return (
               <div
                 key={bazar.id}
-                className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs hover:border-gray-300 transition-all space-y-0"
+                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:border-gray-300 dark:hover:border-slate-700 transition-all space-y-0"
               >
                 {/* Header */}
-                <div className="px-4 py-3 bg-gray-50/70 border-b border-gray-100 flex items-center justify-between gap-3">
+                <div className="px-4 py-3 bg-gray-50/70 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                       <Receipt size={16} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 truncate">
-                        বাজার করেছে: {buyerName}
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate">
+                        {t(`বাজার করেছে: ${buyerName}`, `Buyer: ${buyerName}`)}
                       </p>
-                      <p className="text-[11px] text-gray-400">
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500">
                         {formatShortDate(bazar.date)} {bazar.note ? `• ${bazar.note}` : ""}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/50">
                       {formatCurrency(total)}
                     </span>
                     {(isAdmin || bazar.buyerId === currentMemberId) && (
                       <button
                         type="button"
                         onClick={() => handleDelete(bazar.id)}
-                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                        title="Delete bazar"
+                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title={t("বাজার মুছুন", "Delete bazar")}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -335,29 +343,31 @@ export function BazarExplorer({
                 </div>
 
                 {/* Items Breakdown Table */}
-                <div className="px-4 py-2.5 divide-y divide-gray-100">
+                <div className="px-4 py-2.5 divide-y divide-gray-100 dark:divide-slate-800">
                   {bazar.items && bazar.items.length > 0 ? (
                     bazar.items.map((item: any) => (
                       <div
                         key={item.id}
                         className="py-1.5 flex items-center justify-between text-xs first:pt-0 last:pb-0"
                       >
-                        <span className="font-semibold text-gray-800">{item.productName}</span>
-                        <div className="flex items-center gap-3 text-gray-500 font-medium">
-                          <span className="text-[11px] bg-gray-100 px-2 py-0.5 rounded-md">
+                        <span className="font-semibold text-gray-800 dark:text-slate-200">{item.productName}</span>
+                        <div className="flex items-center gap-3 text-gray-500 dark:text-slate-400 font-medium">
+                          <span className="text-[11px] bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                             {Number(item.quantity)} {item.unit}
                           </span>
-                          <span className="text-[11px] text-gray-400">
+                          <span className="text-[11px] text-gray-400 dark:text-slate-500">
                             @ {formatCurrency(Number(item.unitPrice))}
                           </span>
-                          <span className="font-bold text-gray-900 w-16 text-right">
+                          <span className="font-bold text-gray-900 dark:text-slate-100 w-16 text-right">
                             {formatCurrency(Number(item.totalPrice))}
                           </span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-gray-400 py-1">আইটেম বিবরণ পাওয়া যায়নি।</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 py-1">
+                      {t("আইটেম বিবরণ পাওয়া যায়নি।", "No item breakdown found.")}
+                    </p>
                   )}
                 </div>
               </div>

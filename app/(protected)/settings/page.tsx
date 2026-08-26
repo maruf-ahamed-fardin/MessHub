@@ -3,11 +3,12 @@ import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SettingsForm } from "@/components/settings/SettingsForm";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
 
   let settings: any = {
     messName: "MessHub Flat 4B",
@@ -27,7 +28,7 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Settings" description="Configure your mess preferences" />
+      <PageHeader title={T.pages.settings.title} description={T.pages.settings.description} />
       <SettingsForm settings={settings} />
     </div>
   );

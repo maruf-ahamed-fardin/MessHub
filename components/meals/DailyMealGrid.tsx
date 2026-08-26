@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useT } from "@/lib/i18n/useT";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface DailyMealGridProps {
   date: Date;
@@ -28,7 +28,7 @@ const MEAL_KEYS = ["breakfast", "lunch", "dinner"] as const;
 
 export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberId, isAdmin }: DailyMealGridProps) {
   const router = useRouter();
-  const T = useT();
+  const { t, language } = usePreferences();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -168,7 +168,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
     }
   };
 
-  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  const formattedDate = new Date(date).toLocaleDateString(language === "bn" ? "bn-BD" : "en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -176,88 +176,92 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
   return (
     <div className="space-y-4">
-      {/* 1. Live Meal Summary Cards (Member + Guest combined) */}
+      {/* 1. Live Meal Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+        <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-300 shrink-0">
             <Sun size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-amber-900">{T.meals.breakfast}</p>
-            <p className="text-xl font-bold text-amber-950">
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">{t("সকালের মিল", "Breakfast")}</p>
+            <p className="text-xl font-bold text-amber-950 dark:text-amber-100">
               {totalBreakfast}{" "}
-              <span className="text-xs font-normal text-amber-700">
-                ({memberBreakfast} + {guestBreakfast} {T.meals.guest})
+              <span className="text-xs font-normal text-amber-700 dark:text-amber-300">
+                ({memberBreakfast} + {guestBreakfast} {t("গেস্ট", "Guest")})
               </span>
             </p>
           </div>
         </div>
 
-        <div className="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+        <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-700 dark:text-blue-300 shrink-0">
             <Utensils size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-blue-900">{T.meals.lunch}</p>
-            <p className="text-xl font-bold text-blue-950">
+            <p className="text-xs font-medium text-blue-900 dark:text-blue-200">{t("দুপুরের মিল", "Lunch")}</p>
+            <p className="text-xl font-bold text-blue-950 dark:text-blue-100">
               {totalLunch}{" "}
-              <span className="text-xs font-normal text-blue-700">
-                ({memberLunch} + {guestLunch} {T.meals.guest})
+              <span className="text-xs font-normal text-blue-700 dark:text-blue-300">
+                ({memberLunch} + {guestLunch} {t("গেস্ট", "Guest")})
               </span>
             </p>
           </div>
         </div>
 
-        <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
+        <div className="bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/40 rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-700 dark:text-indigo-300 shrink-0">
             <Moon size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-900">{T.meals.dinner}</p>
-            <p className="text-xl font-bold text-indigo-950">
+            <p className="text-xs font-medium text-indigo-900 dark:text-indigo-200">{t("রাতের মিল", "Dinner")}</p>
+            <p className="text-xl font-bold text-indigo-950 dark:text-indigo-100">
               {totalDinner}{" "}
-              <span className="text-xs font-normal text-indigo-700">
-                ({memberDinner} + {guestDinner} {T.meals.guest})
+              <span className="text-xs font-normal text-indigo-700 dark:text-indigo-300">
+                ({memberDinner} + {guestDinner} {t("গেস্ট", "Guest")})
               </span>
             </p>
           </div>
         </div>
 
-        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-xl p-3.5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-700 dark:text-emerald-300 shrink-0">
             <Flame size={20} />
           </div>
           <div>
-            <p className="text-xs font-medium text-emerald-900">{T.meals.total}</p>
-            <p className="text-xl font-bold text-emerald-950">
-              {grandTotal} <span className="text-xs font-normal text-emerald-700">{T.common.total}</span>
+            <p className="text-xs font-medium text-emerald-900 dark:text-emerald-200">{t("মোট মিল", "Total Meals")}</p>
+            <p className="text-xl font-bold text-emerald-950 dark:text-emerald-100">
+              {grandTotal}
             </p>
           </div>
         </div>
       </div>
 
       {/* 2. Main Member Meal Table */}
-      <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-gray-50/50">
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/40">
           <div>
-            <p className="text-sm font-semibold text-gray-900">{T.meals.memberMealList} ({formattedDate})</p>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">{T.meals.clickToToggle}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+              {t(`মেম্বারদের মিল তালিকা (${formattedDate})`, `Member Meal List (${formattedDate})`)}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">
+              {t("মিল অন বা অফ করতে বাটনে চাপুন", "Click button to toggle meal")}
+            </p>
           </div>
           <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-            {T.meals.members}
+            {t(`${members.length} জন মেম্বার`, `${members.length} Members`)}
           </span>
         </div>
 
         {/* Table Header */}
-        <div className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] border-b border-[hsl(var(--border))] px-4 py-2.5 bg-gray-50/30 text-xs font-semibold text-gray-500">
-          <span>{T.meals.memberName}</span>
-          <span className="text-center">{T.meals.breakfast}</span>
-          <span className="text-center">{T.meals.lunch}</span>
-          <span className="text-center">{T.meals.dinner}</span>
+        <div className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] border-b border-gray-100 dark:border-slate-800 px-4 py-2.5 bg-gray-50/30 dark:bg-slate-800/20 text-xs font-semibold text-gray-500 dark:text-slate-400">
+          <span>{t("মেম্বারের নাম", "Member Name")}</span>
+          <span className="text-center">{t("সকাল", "Breakfast")}</span>
+          <span className="text-center">{t("দুপুর", "Lunch")}</span>
+          <span className="text-center">{t("রাত", "Dinner")}</span>
         </div>
 
         {/* Members List */}
-        <div className="divide-y divide-[hsl(var(--border))]">
+        <div className="divide-y divide-gray-100 dark:divide-slate-800">
           {members.map((member) => {
             const state = mealState[member.id] ?? { breakfast: true, lunch: true, dinner: true };
             const initials = (member.user?.name ?? member.name ?? "?")
@@ -270,20 +274,20 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
             return (
               <div
                 key={member.id}
-                className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] items-center px-4 py-3 hover:bg-gray-50/50 transition-colors"
+                className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] items-center px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className="text-xs font-semibold bg-gray-100 text-gray-700">
+                    <AvatarFallback className="text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">
                       {member.user?.name ?? member.name}
                     </p>
-                    <p className="text-[11px] text-gray-400 truncate">
-                      {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : T.meals.activeMember}
+                    <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">
+                      {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সক্রিয় মেম্বার", "Active Member")}
                     </p>
                   </div>
                 </div>
@@ -304,20 +308,20 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                           canEditThisMeal ? "active:scale-95 cursor-pointer" : "opacity-60 cursor-not-allowed",
                           on
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
-                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800",
+                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300",
                           isLoading && "opacity-60"
                         )}
                         title={
                           !canEditThisMeal
                             ? isPastDate
-                              ? "অতীতের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন"
-                              : "অন্য মেম্বারের মিল পরিবর্তন করা যাবে না"
+                              ? t("অতীতের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Past meals can only be edited by Admin")
+                              : t("অন্য মেম্বারের মিল পরিবর্তন করা যাবে না", "Cannot edit another member's meal")
                             : on
-                            ? "Click to turn OFF"
-                            : "Click to turn ON"
+                            ? t("বন্ধ করতে চাপুন", "Click to turn OFF")
+                            : t("চালু করতে চাপুন", "Click to turn ON")
                         }
                       >
-                        <span>{on ? "ON" : "OFF"}</span>
+                        <span>{on ? t("চালু", "ON") : t("বন্ধ", "OFF")}</span>
                         <span className="text-[10px]">{on ? "✓" : "✕"}</span>
                         {!canEditThisMeal && isPastDate && <span className="text-[9px]">🔒</span>}
                       </button>
@@ -330,14 +334,18 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         </div>
       </div>
 
-      {/* 3. Integrated Guest Meals Section (Right below Today's Meals) */}
-      <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-indigo-50/40">
+      {/* 3. Integrated Guest Meals Section */}
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-indigo-50/40 dark:bg-indigo-950/20">
           <div className="flex items-center gap-2">
-            <UserPlus size={16} className="text-indigo-600" />
+            <UserPlus size={16} className="text-indigo-600 dark:text-indigo-400" />
             <div>
-              <p className="text-sm font-semibold text-gray-900">আজকের গেস্ট মিল (Guest Meals)</p>
-              <p className="text-xs text-indigo-700">মেম্বারের মেহমানের মিল যুক্ত করুন ও টোটাল মিলের সাথে কাউন্ট হবে</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+                {t("আজকের গেস্ট মিল", "Today's Guest Meals")}
+              </p>
+              <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                {t("মেহমানের মিল যুক্ত করুন, মোট মিলের সাথে যোগ হবে", "Add guest meals to include in total meal count")}
+              </p>
             </div>
           </div>
 
@@ -345,16 +353,16 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5 h-8 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white">
                 <Plus size={14} />
-                <span>+ Add Guest Meal</span>
+                <span>{t("+ গেস্ট মিল যোগ করুন", "+ Add Guest Meal")}</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>গেস্ট মিল যুক্ত করুন</DialogTitle>
+                <DialogTitle>{t("গেস্ট মিল যুক্ত করুন", "Add Guest Meal")}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleAddGuestMeal} className="space-y-3.5 mt-2">
                 <div className="space-y-1">
-                  <Label>মেম্বার (কার গেস্ট) *</Label>
+                  <Label>{t("মেম্বার (কার গেস্ট) *", "Host Member *")}</Label>
                   <Select name="memberId" defaultValue={members[0]?.id ?? ""}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -369,17 +377,17 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label htmlFor="guestName">গেস্টের নাম / পরিচয়</Label>
-                    <Input id="guestName" name="guestName" placeholder="যেমন: কাজিন, বন্ধু..." defaultValue="Guest" required />
+                    <Label htmlFor="guestName">{t("গেস্টের নাম / পরিচয়", "Guest Name / Identifier")}</Label>
+                    <Input id="guestName" name="guestName" placeholder={t("যেমন: বন্ধু, ভাই...", "e.g. Friend, Brother...")} defaultValue="Guest" required />
                   </div>
                   <div className="space-y-1">
-                    <Label>মিলের সময় *</Label>
+                    <Label>{t("মিলের সময় *", "Meal Time *")}</Label>
                     <Select name="mealType" defaultValue="LUNCH">
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="BREAKFAST">☀️ সকাল (Breakfast)</SelectItem>
-                        <SelectItem value="LUNCH">🍽️ দুপুর (Lunch)</SelectItem>
-                        <SelectItem value="DINNER">🌙 রাত (Dinner)</SelectItem>
+                        <SelectItem value="BREAKFAST">{t("☀️ সকাল", "☀️ Breakfast")}</SelectItem>
+                        <SelectItem value="LUNCH">{t("🍽️ দুপুর", "🍽️ Lunch")}</SelectItem>
+                        <SelectItem value="DINNER">{t("🌙 রাত", "🌙 Dinner")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -387,22 +395,22 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label htmlFor="quantity">মিল সংখ্যা *</Label>
+                    <Label htmlFor="quantity">{t("মিল সংখ্যা *", "Quantity *")}</Label>
                     <Input id="quantity" name="quantity" type="number" min="1" max="10" defaultValue="1" required />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="note">নোট (ঐচ্ছিক)</Label>
-                    <Input id="note" name="note" placeholder="নোট..." />
+                    <Label htmlFor="note">{t("নোট (ঐচ্ছিক)", "Note (optional)")}</Label>
+                    <Input id="note" name="note" placeholder={t("নোট...", "Notes...")} />
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">
                   <Button type="button" variant="outline" onClick={() => setGuestDialogOpen(false)} className="flex-1">
-                    বাতিল
+                    {t("বাতিল", "Cancel")}
                   </Button>
                   <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white" disabled={addingGuest}>
                     {addingGuest ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                    গেস্ট মিল যোগ করুন
+                    {t("গেস্ট মিল যোগ করুন", "Save Guest Meal")}
                   </Button>
                 </div>
               </form>
@@ -412,41 +420,43 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
         {/* Guest Meal List */}
         {guestList.length === 0 ? (
-          <div className="py-6 text-center text-xs text-gray-400">
-            আজকের জন্য কোনো গেস্ট মিল যোগ করা হয়নি। প্রয়োজনে উপরে <span className="font-semibold text-indigo-600">+ Add Guest Meal</span> চাপুন।
+          <div className="py-6 text-center text-xs text-gray-400 dark:text-slate-500">
+            {t("আজকের জন্য কোনো গেস্ট মিল যোগ করা হয়নি।", "No guest meals recorded for today.")}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-slate-800">
             {guestList.map((g) => {
               const hostName = g.member?.user?.name ?? g.member?.name ?? "Member";
               const mealLabel =
-                g.mealType === "BREAKFAST" ? "☀️ সকাল" : g.mealType === "LUNCH" ? "🍽️ দুপুর" : "🌙 রাত";
+                g.mealType === "BREAKFAST" ? t("☀️ সকাল", "☀️ Breakfast") : g.mealType === "LUNCH" ? t("🍽️ দুপুর", "🍽️ Lunch") : t("🌙 রাত", "🌙 Dinner");
 
               return (
-                <div key={g.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50/60 transition-colors">
+                <div key={g.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold shrink-0">
                       G
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-gray-900">{g.guestName}</p>
-                        <span className="text-[11px] font-medium bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{g.guestName}</p>
+                        <span className="text-[11px] font-medium bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 px-2 py-0.5 rounded-full">
                           {mealLabel}
                         </span>
-                        <span className="text-[11px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                          {g.quantity} টি মিল
+                        <span className="text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">
+                          {t(`${g.quantity} টি মিল`, `${g.quantity} Meals`)}
                         </span>
                       </div>
-                      <p className="text-[11px] text-gray-400">মেম্বার: {hostName} {g.note ? `• ${g.note}` : ""}</p>
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500">
+                        {t(`মেম্বার: ${hostName}`, `Host: ${hostName}`)} {g.note ? `• ${g.note}` : ""}
+                      </p>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleDeleteGuestMeal(g.id)}
-                    className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                    title="Delete Guest Meal"
+                    className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title={t("গেস্ট মিল মুছুন", "Delete Guest Meal")}
                   >
                     <Trash2 size={14} />
                   </button>

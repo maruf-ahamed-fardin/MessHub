@@ -20,6 +20,17 @@ export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+export const EXPENSE_CATEGORY_LABELS_BN: Record<string, string> = {
+  ELECTRICITY: "বিদ্যুৎ বিল",
+  GAS: "গ্যাস বিল",
+  WATER: "পানি বিল",
+  INTERNET: "ইন্টারনেট বিল",
+  CLEANING: "ক্লিনিং সামগ্রী",
+  REPAIR: "মেরামত খরচ",
+  FURNITURE: "আসবাবপত্র",
+  OTHER: "অন্যান্য",
+};
+
 export const UTILITY_TYPES = {
   ELECTRICITY: "ELECTRICITY",
   GAS: "GAS",
@@ -31,13 +42,23 @@ export const UTILITY_TYPES = {
 } as const;
 
 export const UTILITY_LABELS: Record<string, string> = {
-  ELECTRICITY: "Electricity (বিদ্যুৎ বিল)",
-  GAS: "Gas (গ্যাস বিল)",
-  WATER: "Water (পানি বিল)",
-  INTERNET: "Internet (ইন্টারনেট/ওয়াইফাই বিল)",
-  COOK: "Cook / Bua Bill (বুয়া / বাবুর্চি বিল)",
-  WASTE: "Waste Management (ময়লা বিল)",
-  OTHER: "Other Utility (অন্যান্য ইউটিলিটি)",
+  ELECTRICITY: "Electricity",
+  GAS: "Gas",
+  WATER: "Water",
+  INTERNET: "Internet / Wifi",
+  COOK: "Cook / House Maid",
+  WASTE: "Waste Management",
+  OTHER: "Other Utility",
+};
+
+export const UTILITY_LABELS_BN: Record<string, string> = {
+  ELECTRICITY: "বিদ্যুৎ বিল",
+  GAS: "গ্যাস বিল",
+  WATER: "পানি বিল",
+  INTERNET: "ইন্টারনেট ও ওয়াইফাই",
+  COOK: "বুয়া / বাবুর্চি বিল",
+  WASTE: "ময়লা ও সার্ভিস বিল",
+  OTHER: "অন্যান্য ইউটিলিটি",
 };
 
 export const PAYMENT_METHODS = {
@@ -54,6 +75,13 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+export const PAYMENT_METHOD_LABELS_BN: Record<string, string> = {
+  CASH: "নগদ ক্যাশ",
+  BKASH: "বিকাশ",
+  BANK: "ব্যাংক ট্রান্সফার",
+  OTHER: "অন্যান্য",
+};
+
 export const SHARING_METHODS = {
   EQUAL: "EQUAL",
   MEAL_BASED: "MEAL_BASED",
@@ -64,6 +92,12 @@ export const SHARING_METHOD_LABELS: Record<string, string> = {
   EQUAL: "Equal Split",
   MEAL_BASED: "Meal Based",
   SELECTED_MEMBERS: "Selected Members",
+};
+
+export const SHARING_METHOD_LABELS_BN: Record<string, string> = {
+  EQUAL: "সমান বণ্টন",
+  MEAL_BASED: "মিল অনুপাতে বণ্টন",
+  SELECTED_MEMBERS: "নির্দিষ্ট মেম্বার বণ্টন",
 };
 
 export const NOTICE_PRIORITIES = {
@@ -78,6 +112,12 @@ export const NOTICE_PRIORITY_LABELS: Record<string, string> = {
   URGENT: "Urgent",
 };
 
+export const NOTICE_PRIORITY_LABELS_BN: Record<string, string> = {
+  NORMAL: "সাধারণ",
+  IMPORTANT: "জরুরি",
+  URGENT: "অতি জরুরি",
+};
+
 export const MAINTENANCE_PRIORITIES = {
   LOW: "LOW",
   MEDIUM: "MEDIUM",
@@ -90,6 +130,13 @@ export const MAINTENANCE_PRIORITY_LABELS: Record<string, string> = {
   MEDIUM: "Medium",
   HIGH: "High",
   URGENT: "Urgent",
+};
+
+export const MAINTENANCE_PRIORITY_LABELS_BN: Record<string, string> = {
+  LOW: "কম",
+  MEDIUM: "মাঝারি",
+  HIGH: "উচ্চ",
+  URGENT: "জরুরি",
 };
 
 export const POST_TYPES = {
@@ -108,6 +155,14 @@ export const POST_TYPE_LABELS: Record<string, string> = {
   IMPORTANT: "Important",
 };
 
+export const POST_TYPE_LABELS_BN: Record<string, string> = {
+  GENERAL: "সাধারণ",
+  ANNOUNCEMENT: "ঘোষণা",
+  BAZAR_UPDATE: "বাজার আপডেট",
+  EVENT: "ইভেন্ট",
+  IMPORTANT: "জরুরি নোটিশ",
+};
+
 export const RECURRENCE_TYPES = {
   DAILY: "DAILY",
   EVERY_2_DAYS: "EVERY_2_DAYS",
@@ -122,6 +177,14 @@ export const RECURRENCE_LABELS: Record<string, string> = {
   EVERY_3_DAYS: "Every 3 days",
   WEEKLY: "Weekly",
   CUSTOM: "Custom",
+};
+
+export const RECURRENCE_LABELS_BN: Record<string, string> = {
+  DAILY: "প্রতিদিন",
+  EVERY_2_DAYS: "প্রতি ২ দিন পর",
+  EVERY_3_DAYS: "প্রতি ৩ দিন পর",
+  WEEKLY: "সাপ্তাহিক",
+  CUSTOM: "কাস্টম",
 };
 
 export const DEFAULT_PRODUCTS = [

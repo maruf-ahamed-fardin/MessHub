@@ -5,11 +5,12 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { NoticeCard } from "@/components/community/NoticeCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Bell } from "lucide-react";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Notices" };
 
 export default async function NoticesPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
 
   let notices: any[] = [
@@ -36,11 +37,20 @@ export default async function NoticesPage() {
     if (dbNotices.length > 0) notices = dbNotices;
   } catch {}
 
+  const count = notices.length;
+  const descriptionText = count === 0
+    ? T.pages.notices.noNotices
+    : `${count} ${count === 1 ? T.pages.notices.activeNotice : T.pages.notices.activeNotices}`;
+
   return (
     <div>
-      <PageHeader title="Notices" description={`${notices.length} active notice${notices.length !== 1 ? "s" : ""}`} />
+      <PageHeader title={T.pages.notices.title} description={descriptionText} />
       {notices.length === 0 ? (
-        <EmptyState icon={Bell} title="No active notices" description="All clear! No notices at this time." />
+        <EmptyState
+          icon={Bell}
+          title={T.pages.notices.noNotices}
+          description={T.pages.notices.allClear}
+        />
       ) : (
         <div className="space-y-3">
           {notices.map((notice) => (

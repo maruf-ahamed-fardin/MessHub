@@ -13,3 +13,12 @@ export async function getServerT() {
   const lang = (cookieStore.get("messhub_lang")?.value ?? "bn") as Language;
   return getT(lang);
 }
+
+/**
+ * Returns the current server-side language ("bn" | "en").
+ * Useful when you need the language string itself (e.g. for date locale).
+ */
+export async function getServerLanguage(): Promise<Language> {
+  const cookieStore = await cookies();
+  return (cookieStore.get("messhub_lang")?.value ?? "bn") as Language;
+}

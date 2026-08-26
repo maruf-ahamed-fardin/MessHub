@@ -10,11 +10,12 @@ import { MemberSettlementCard } from "@/components/settlement/MemberSettlementCa
 import { FinalizationControls } from "@/components/settlement/FinalizationControls";
 import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
 import { SettlementSummary } from "@/types";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Monthly Settlement" };
 
 export default async function SettlementPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
   const { month, year } = getCurrentMonthYear();
 
@@ -108,14 +109,14 @@ export default async function SettlementPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Monthly Settlement"
-        description="Calculated settlement for the current month"
+        title={T.pages.settlement.title}
+        description={T.pages.settlement.description}
         action={isAdmin ? (
           <FinalizationControls month={month} year={year} isFinalized={isFinalized} />
         ) : undefined}
       />
       <SettlementOverview summary={summary} isFinalized={isFinalized} />
-      
+
       {mealAnalytics && (
         <div className="pt-2">
           <MonthlyMealAnalyticsSheet analytics={mealAnalytics} />
@@ -123,7 +124,7 @@ export default async function SettlementPage() {
       )}
 
       <div>
-        <p className="section-heading">Per Member Final Settlement</p>
+        <p className="section-heading">{T.pages.settlement.perMember}</p>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {summary.memberSummaries.map((ms) => (
             <MemberSettlementCard key={ms.memberId} data={ms} />

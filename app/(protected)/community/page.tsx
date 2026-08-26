@@ -4,11 +4,12 @@ import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth/config";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { CommunityFeedHub } from "@/components/community/CommunityFeedHub";
+import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Community Feed" };
 
 export default async function CommunityPage() {
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
 
   let posts: any[] = [];
@@ -67,8 +68,8 @@ export default async function CommunityPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Community Feed"
-        description="মেসের সকল মেম্বারদের ফটো, ভিডিও, মেসেজ, আলোচনা ও রিপ্লাই থ্রেড"
+        title={T.pages.community.title}
+        description={T.pages.community.description}
       />
 
       <CommunityFeedHub
