@@ -1,7 +1,7 @@
 "use client";
 
 import { formatCurrency } from "@/lib/utils/currency";
-import { formatMonthYear } from "@/lib/utils/date";
+import { formatMonthYear, getCurrentMonthYear } from "@/lib/utils/date";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
 import { SettlementSummary } from "@/types";
@@ -10,11 +10,17 @@ import { Utensils, PieChart, Users, Zap, HelpCircle, Calculator } from "lucide-r
 
 export function SettlementOverview({ summary, isFinalized }: { summary: SettlementSummary; isFinalized: boolean }) {
   const { t } = usePreferences();
+  const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
+  const isCurrent = summary.month === currentMonth && summary.year === currentYear;
+
+  const mealRateLabel = isCurrent
+    ? t("চলতি মিল রেট", "Current Meal Rate")
+    : t("চূড়ান্ত মিল রেট", "Final Meal Rate");
 
   const metrics = [
     { label: t("খাবার / বাজার খরচ", "Food Expense"), value: formatCurrency(summary.totalFoodExpense), icon: Utensils, color: "text-amber-500 bg-amber-50 dark:bg-amber-950/60" },
     { label: t("মোট খাওয়া মিল", "Total Meals"), value: t(`${summary.totalNormalMeals} টি`, `${summary.totalNormalMeals} meals`), icon: PieChart, color: "text-blue-500 bg-blue-50 dark:bg-blue-950/60" },
-    { label: t("লাইভ মিল রেট", "Live Meal Rate"), value: `${formatCurrency(summary.mealRate)}`, sub: t("/মিল", "/meal"), icon: Calculator, color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60" },
+    { label: mealRateLabel, value: `${formatCurrency(summary.mealRate)}`, sub: t("/মিল", "/meal"), icon: Calculator, color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60" },
     { label: t("মোট ইউটিলিটি বিল", "Total Utility"), value: formatCurrency(summary.totalUtility), icon: Zap, color: "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/60" },
     { label: t("সক্রিয় মেম্বার", "Active Members"), value: t(`${summary.activeMembers} জন`, `${summary.activeMembers} members`), icon: Users, color: "text-purple-500 bg-purple-50 dark:bg-purple-950/60" },
   ];
@@ -67,4 +73,5 @@ export function SettlementOverview({ summary, isFinalized }: { summary: Settleme
     </div>
   );
 }
+
 

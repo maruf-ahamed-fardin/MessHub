@@ -3,11 +3,12 @@ import { auth } from "@/lib/auth/config";
 import { calculateMonthlySettlement } from "@/backend/services/settlement.service";
 import { getMonthlyMealAnalytics } from "@/backend/services/meal-calculation.service";
 import { prisma } from "@/lib/db/prisma";
-import { getCurrentMonthYear } from "@/lib/utils/date";
+import { getCurrentMonthYear, formatMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SettlementOverview } from "@/components/settlement/SettlementOverview";
 import { MySettlementSummaryCard } from "@/components/settlement/MySettlementSummaryCard";
 import { MemberSettlementList } from "@/components/settlement/MemberSettlementList";
+import { SettlementMonthSelector } from "@/components/settlement/SettlementMonthSelector";
 import { FinalizationControls } from "@/components/settlement/FinalizationControls";
 import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
 import { SettlementSummary } from "@/types";
@@ -15,10 +16,22 @@ import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Monthly Settlement" };
 
-export default async function SettlementPage() {
-  const [session, T] = await Promise.all([auth(), getServerT()]);
+interface SettlementPageProps {
+  searchParams?: Promise<{ month?: string; year?: string }>;
+}
+
+export default async function SettlementPage({ searchParams }: SettlementPageProps) {
+  const [session, T, rawParams] = await Promise.all([
+    auth(),
+    getServerT(),
+    searchParams ? searchParams : Promise.resolve({} as { month?: string; year?: string }),
+  ]);
   const isAdmin = session?.user.role === "ADMIN";
-  const { month, year } = getCurrentMonthYear();
+  const { month: currMonth, year: currYear } = getCurrentMonthYear();
+
+  const month = rawParams.month ? Math.max(1, Math.min(12, parseInt(rawParams.month, 10))) : currMonth;
+  const year = rawParams.year ? parseInt(rawParams.year, 10) : currYear;
+  const isCurrentMonth = month === currMonth && year === currYear;
 
   let summary: SettlementSummary = {
     month,
@@ -123,14 +136,28 @@ export default async function SettlementPage() {
     <div className="space-y-6 pb-12">
       <PageHeader
         title={T.pages.settlement.title}
-        description={T.pages.settlement.description}
-        action={isAdmin ? (
-          <FinalizationControls month={month} year={year} isFinalized={isFinalized} />
-        ) : undefined}
+        description={
+          isCurrentMonth
+            ? T.pages.settlement.description
+            : `${formatMonthYear(month, year)} - এর হিসাব রেকর্ড`
+        }
+        action={
+          <div className="flex items-center gap-2 flex-wrap">
+            <SettlementMonthSelector selectedMonth={month} selectedYear={year} />
+            {isAdmin && (
+              <FinalizationControls month={month} year={year} isFinalized={isFinalized} />
+            )}
+          </div>
+        }
       />
 
       {/* 1. Hero Card: User's Personal Settlement Status (Refund vs Due) */}
-      <MySettlementSummaryCard mySummary={mySummary} mealRate={summary.mealRate} />
+      <MySettlementSummaryCard
+        mySummary={mySummary}
+        mealRate={summary.mealRate}
+        selectedMonth={month}
+        selectedYear={year}
+      />
 
       {/* 2. Overview of the whole mess */}
       <SettlementOverview summary={summary} isFinalized={isFinalized} />
@@ -146,20 +173,23 @@ export default async function SettlementPage() {
         </div>
       )}
 
-      {/* 4. Members Breakdown Cards with Search & Filters */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="section-heading mb-0">
-            {T.pages.settlement.perMember}
-          </h3>
+      {/* 4. Admin All Members Ledger Grid with Search & Filters */}
+      {isAdmin && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="section-heading mb-0">
+              {T.pages.settlement.perMember}
+            </h3>
+          </div>
+          <MemberSettlementList
+            memberSummaries={summary.memberSummaries}
+            currentMemberId={currentMemberId}
+            isAdmin={isAdmin}
+          />
         </div>
-        <MemberSettlementList
-          memberSummaries={summary.memberSummaries}
-          currentMemberId={currentMemberId}
-          isAdmin={isAdmin}
-        />
-      </div>
+      )}
     </div>
   );
 }
+
 

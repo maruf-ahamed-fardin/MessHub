@@ -11,19 +11,36 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+import { formatMonthYear, getCurrentMonthYear } from "@/lib/utils/date";
+
 interface MySettlementSummaryCardProps {
   mySummary: MemberSettlementSummary | null;
   mealRate: number;
+  selectedMonth?: number;
+  selectedYear?: number;
 }
 
-export function MySettlementSummaryCard({ mySummary, mealRate }: MySettlementSummaryCardProps) {
+export function MySettlementSummaryCard({
+  mySummary,
+  mealRate,
+  selectedMonth,
+  selectedYear,
+}: MySettlementSummaryCardProps) {
   const { t } = usePreferences();
+  const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
 
   if (!mySummary) return null;
+
+  const isCurrentMonth =
+    !selectedMonth || !selectedYear || (selectedMonth === currentMonth && selectedYear === currentYear);
 
   const isCredit = mySummary.balance >= 0;
   const isZero = Math.abs(mySummary.balance) < 1;
   const otherAndRentCost = (mySummary.seatRent || 0) + (mySummary.utilityCost || 0) + (mySummary.otherCost || 0) + (mySummary.guestMealCost || 0);
+
+  const monthTitle = isCurrentMonth
+    ? t("আপনার চলতি মাসের ব্যক্তিগত হিসাব", "My Personal Monthly Settlement")
+    : `${formatMonthYear(selectedMonth, selectedYear)} ${t("- এর ব্যক্তিগত হিসাব", "Personal Settlement")}`;
 
   return (
     <div
@@ -60,7 +77,7 @@ export function MySettlementSummaryCard({ mySummary, mealRate }: MySettlementSum
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300">
-                {t("আপনার চলতি মাসের ব্যক্তিগত হিসাব", "My Personal Monthly Settlement")}
+                {monthTitle}
               </span>
               <span
                 className={cn(
@@ -78,7 +95,7 @@ export function MySettlementSummaryCard({ mySummary, mealRate }: MySettlementSum
 
             <h2 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-slate-100 mt-1">
               {isZero ? (
-                t("আপনার চলতি মাসের কোনো দেনা বা পাওনা নেই।", "You have zero dues or balance for this month.")
+                t("আপনার এই মাসের কোনো দেনা বা পাওনা নেই।", "You have zero dues or balance for this month.")
               ) : isCredit ? (
                 <span>
                   {t("মেস আপনাকে ফেরত দিবে:", "The mess owes you:")}{" "}
