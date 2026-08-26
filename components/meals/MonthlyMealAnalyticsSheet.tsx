@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { formatCurrency } from "@/lib/utils/currency";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  UtensilsCrossed, ShoppingBasket, Calculator, UserPlus,
+  UtensilsCrossed, ShoppingBasket, Calculator, UserPlus, Users, User
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { usePreferences } from "@/lib/context/PreferencesContext";
@@ -34,10 +35,17 @@ export interface MonthlyMealAnalyticsSheetProps {
       bazarBalance: number;
     }>;
   };
+  currentMemberId?: string | null;
+  isAdmin?: boolean;
 }
 
-export function MonthlyMealAnalyticsSheet({ analytics }: MonthlyMealAnalyticsSheetProps) {
+export function MonthlyMealAnalyticsSheet({
+  analytics,
+  currentMemberId = null,
+  isAdmin = false,
+}: MonthlyMealAnalyticsSheetProps) {
   const { t } = usePreferences();
+  const [viewMode, setViewMode] = useState<"my" | "all">(isAdmin ? "all" : "my");
 
   const {
     totalBazarExpense,
@@ -47,6 +55,17 @@ export function MonthlyMealAnalyticsSheet({ analytics }: MonthlyMealAnalyticsShe
     mealRate,
     memberBreakdowns,
   } = analytics;
+
+  // Filter list to only current user unless admin chooses "all"
+  const myBreakdown =
+    memberBreakdowns.find((m) => m.memberId === currentMemberId) ||
+    memberBreakdowns[0] ||
+    null;
+
+  const displayList =
+    viewMode === "my" && myBreakdown
+      ? [myBreakdown]
+      : memberBreakdowns;
 
   return (
     <div className="space-y-5">
@@ -109,10 +128,12 @@ export function MonthlyMealAnalyticsSheet({ analytics }: MonthlyMealAnalyticsShe
 
       {/* 2. Member-by-Member Breakdown Table */}
       <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/70 dark:bg-slate-800/60">
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2.5 bg-gray-50/70 dark:bg-slate-800/60">
           <div>
             <h4 className="text-sm font-black text-gray-900 dark:text-slate-100">
-              {t("সদস্যদের মিল ও বাজার হিসাবের তালিকা", "Member Meal & Bazar Breakdown")}
+              {viewMode === "my"
+                ? t("আপনার মিল ও বাজার হিসাব", "Your Meal & Bazar Breakdown")
+                : t("সদস্যদের মিল ও বাজার হিসাবের তালিকা", "Member Meal & Bazar Breakdown")}
             </h4>
             <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
               {t(
@@ -121,9 +142,41 @@ export function MonthlyMealAnalyticsSheet({ analytics }: MonthlyMealAnalyticsShe
               )}
             </p>
           </div>
-          <span className="text-xs font-bold text-gray-500 dark:text-slate-400 bg-gray-200/60 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-            {t(`মোট মেম্বার: ${memberBreakdowns.length} জন`, `Total Members: ${memberBreakdowns.length}`)}
-          </span>
+
+          {isAdmin ? (
+            <div className="flex items-center gap-1 p-0.5 bg-gray-200/80 dark:bg-slate-700/80 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setViewMode("my")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer select-none flex items-center gap-1",
+                  viewMode === "my"
+                    ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-2xs"
+                    : "text-gray-600 dark:text-slate-400"
+                )}
+              >
+                <User size={12} />
+                <span>{t("আমার হিসাব", "My Breakdown")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("all")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer select-none flex items-center gap-1",
+                  viewMode === "all"
+                    ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-2xs"
+                    : "text-gray-600 dark:text-slate-400"
+                )}
+              >
+                <Users size={12} />
+                <span>{t("সব মেম্বার", "All Members")}</span>
+              </button>
+            </div>
+          ) : (
+            <span className="text-xs font-bold text-gray-500 dark:text-slate-400 bg-gray-200/60 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+              {t("ব্যক্তিগত হিসাব", "Personal Breakdown")}
+            </span>
+          )}
         </div>
 
         {/* Desktop Table */}
@@ -143,7 +196,7 @@ export function MonthlyMealAnalyticsSheet({ analytics }: MonthlyMealAnalyticsShe
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium">
-              {memberBreakdowns.map((m) => {
+              {displayList.map((m) => {
                 const initials = m.memberName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
                 const isBazarSurplus = m.bazarBalance >= 0;
 
@@ -195,35 +248,37 @@ export function MonthlyMealAnalyticsSheet({ analytics }: MonthlyMealAnalyticsShe
               })}
             </tbody>
             {/* Totals Footer */}
-            <tfoot>
-              <tr className="border-t-2 border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/80 font-black text-xs">
-                <td className="py-3 px-4 text-gray-900 dark:text-slate-100">{t("সর্বমোট", "Total")}</td>
-                <td className="py-3 px-3 text-center text-amber-700 dark:text-amber-400">
-                  {memberBreakdowns.reduce((s, m) => s + m.breakfastCount, 0)}
-                </td>
-                <td className="py-3 px-3 text-center text-blue-700 dark:text-blue-400">
-                  {memberBreakdowns.reduce((s, m) => s + m.lunchCount, 0)}
-                </td>
-                <td className="py-3 px-3 text-center text-indigo-700 dark:text-indigo-400">
-                  {memberBreakdowns.reduce((s, m) => s + m.dinnerCount, 0)}
-                </td>
-                <td className="py-3 px-3 text-center text-purple-700 dark:text-purple-400">{totalGuestMeals}</td>
-                <td className="py-3 px-3 text-center text-gray-900 dark:text-slate-100">{totalMeals}</td>
-                <td className="py-3 px-4 text-right text-gray-900 dark:text-slate-100">
-                  {formatCurrency(memberBreakdowns.reduce((s, m) => s + m.foodCost, 0))}
-                </td>
-                <td className="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(totalBazarExpense)}
-                </td>
-                <td className="py-3 px-4 text-right text-gray-500 dark:text-slate-400">—</td>
-              </tr>
-            </tfoot>
+            {viewMode === "all" && (
+              <tfoot>
+                <tr className="border-t-2 border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/80 font-black text-xs">
+                  <td className="py-3 px-4 text-gray-900 dark:text-slate-100">{t("সর্বমোট", "Total")}</td>
+                  <td className="py-3 px-3 text-center text-amber-700 dark:text-amber-400">
+                    {memberBreakdowns.reduce((s, m) => s + m.breakfastCount, 0)}
+                  </td>
+                  <td className="py-3 px-3 text-center text-blue-700 dark:text-blue-400">
+                    {memberBreakdowns.reduce((s, m) => s + m.lunchCount, 0)}
+                  </td>
+                  <td className="py-3 px-3 text-center text-indigo-700 dark:text-indigo-400">
+                    {memberBreakdowns.reduce((s, m) => s + m.dinnerCount, 0)}
+                  </td>
+                  <td className="py-3 px-3 text-center text-purple-700 dark:text-purple-400">{totalGuestMeals}</td>
+                  <td className="py-3 px-3 text-center text-gray-900 dark:text-slate-100">{totalMeals}</td>
+                  <td className="py-3 px-4 text-right text-gray-900 dark:text-slate-100">
+                    {formatCurrency(memberBreakdowns.reduce((s, m) => s + m.foodCost, 0))}
+                  </td>
+                  <td className="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(totalBazarExpense)}
+                  </td>
+                  <td className="py-3 px-4 text-right text-gray-500 dark:text-slate-400">—</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
 
         {/* Mobile Stacked Card View */}
         <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
-          {memberBreakdowns.map((m) => {
+          {displayList.map((m) => {
             const initials = m.memberName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
             const isBazarSurplus = m.bazarBalance >= 0;
 

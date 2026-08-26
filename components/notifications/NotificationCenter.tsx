@@ -110,8 +110,8 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
   return (
     <div className="space-y-4 max-w-4xl pb-20">
       {/* 1. Filter and Actions Bar */}
-      <div className="flex items-center justify-between flex-wrap gap-2.5">
-        <div className="flex items-center gap-1.5 p-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-2xl border border-gray-200/80 dark:border-slate-700/80 overflow-x-auto max-w-full">
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-slate-800/80 rounded-2xl border border-gray-200/80 dark:border-slate-700/80 overflow-x-auto max-w-full no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveCategory("all")}
@@ -187,15 +187,17 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
         </div>
 
         {unreadCount > 0 && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleMarkAllRead}
-            className="h-8 text-xs font-bold gap-1.5 shrink-0 rounded-xl"
-          >
-            <CheckCheck size={14} />
-            <span>{t("সবগুলো পঠিত করুন", "Mark All as Read")}</span>
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleMarkAllRead}
+              className="h-8 px-3 text-xs font-bold gap-1.5 rounded-xl bg-white dark:bg-slate-800/90 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer shadow-2xs"
+            >
+              <CheckCheck size={14} className="text-indigo-600 dark:text-indigo-400" />
+              <span>{t("সবগুলো পঠিত করুন", "Mark All as Read")}</span>
+            </Button>
+          </div>
         )}
       </div>
 

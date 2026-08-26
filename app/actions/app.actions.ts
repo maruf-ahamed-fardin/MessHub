@@ -371,9 +371,6 @@ export async function purchaseShoppingItemAction(id: string, cost?: number) {
   revalidatePath("/dashboard");
   return { success: true };
 }
-  revalidatePath("/dashboard");
-  return { success: true };
-}
 
 export async function deleteShoppingItemAction(id: string) {
   try {

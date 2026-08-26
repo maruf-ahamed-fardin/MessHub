@@ -6,7 +6,8 @@ import { prisma } from "@/lib/db/prisma";
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SettlementOverview } from "@/components/settlement/SettlementOverview";
-import { MemberSettlementCard } from "@/components/settlement/MemberSettlementCard";
+import { MySettlementSummaryCard } from "@/components/settlement/MySettlementSummaryCard";
+import { MemberSettlementList } from "@/components/settlement/MemberSettlementList";
 import { FinalizationControls } from "@/components/settlement/FinalizationControls";
 import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
 import { SettlementSummary } from "@/types";
@@ -92,8 +93,14 @@ export default async function SettlementPage() {
 
   let isFinalized = false;
   let mealAnalytics: any = null;
+  let currentMemberId = session?.user.memberId ?? null;
 
   try {
+    if (!currentMemberId && session?.user.id) {
+      const profile = await prisma.memberProfile.findUnique({ where: { userId: session.user.id } });
+      currentMemberId = profile?.id ?? null;
+    }
+
     const [dbSummary, existing, analytics] = await Promise.all([
       calculateMonthlySettlement(month, year),
       prisma.monthlySettlement.findUnique({ where: { month_year: { month, year } } }),
@@ -106,8 +113,14 @@ export default async function SettlementPage() {
     }
   } catch {}
 
+  // Resolve user's personal summary
+  const mySummary =
+    summary.memberSummaries.find((ms) => ms.memberId === currentMemberId) ||
+    summary.memberSummaries[0] ||
+    null;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       <PageHeader
         title={T.pages.settlement.title}
         description={T.pages.settlement.description}
@@ -115,22 +128,38 @@ export default async function SettlementPage() {
           <FinalizationControls month={month} year={year} isFinalized={isFinalized} />
         ) : undefined}
       />
+
+      {/* 1. Hero Card: User's Personal Settlement Status (Refund vs Due) */}
+      <MySettlementSummaryCard mySummary={mySummary} mealRate={summary.mealRate} />
+
+      {/* 2. Overview of the whole mess */}
       <SettlementOverview summary={summary} isFinalized={isFinalized} />
 
+      {/* 3. Detailed Meal & Bazar Analytics */}
       {mealAnalytics && (
-        <div className="pt-2">
-          <MonthlyMealAnalyticsSheet analytics={mealAnalytics} />
+        <div className="pt-1">
+          <MonthlyMealAnalyticsSheet
+            analytics={mealAnalytics}
+            currentMemberId={currentMemberId}
+            isAdmin={isAdmin}
+          />
         </div>
       )}
 
-      <div>
-        <p className="section-heading">{T.pages.settlement.perMember}</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {summary.memberSummaries.map((ms) => (
-            <MemberSettlementCard key={ms.memberId} data={ms} />
-          ))}
+      {/* 4. Members Breakdown Cards with Search & Filters */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="section-heading mb-0">
+            {T.pages.settlement.perMember}
+          </h3>
         </div>
+        <MemberSettlementList
+          memberSummaries={summary.memberSummaries}
+          currentMemberId={currentMemberId}
+          isAdmin={isAdmin}
+        />
       </div>
     </div>
   );
 }
+
