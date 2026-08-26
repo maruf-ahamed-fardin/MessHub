@@ -757,6 +757,28 @@ model MessSettings {
   @@map("mess_settings")
 }
 
+// ============================================================
+// CONTACTS DIRECTORY
+// ============================================================
+
+model ContactEntry {
+  id        String   @id @default(cuid())
+  name      String
+  role      String   // e.g. "বুয়া", "মালিক", "WiFi Provider", "Caretaker", "পানি সরবরাহকারী"
+  phone     String?
+  phone2    String?
+  email     String?
+  address   String?
+  note      String?
+  emoji     String?  // e.g. "🧹", "🏠", "📡", "🔑", "💧"
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_entries")
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String

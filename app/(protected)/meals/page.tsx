@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { MealCalendar } from "@/components/meals/MealCalendar";
 import { DailyMealGrid } from "@/components/meals/DailyMealGrid";
 import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
+import { MealBookingSheet } from "@/components/meals/MealBookingSheet";
 import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Meals & Rate Engine" };
@@ -53,12 +54,18 @@ export default async function MealsPage({ searchParams }: MealsPageProps) {
         title={T.pages.meals.title}
         description={T.pages.meals.description}
         action={
-          <MealCalendar
-            calendarData={calendarData}
-            month={selectedMonth}
-            year={selectedYear}
-            selectedDate={selectedDate}
-          />
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <MealBookingSheet
+              currentMemberId={session?.user.memberId ?? null}
+              isAdmin={isAdmin}
+            />
+            <MealCalendar
+              calendarData={calendarData}
+              month={selectedMonth}
+              year={selectedYear}
+              selectedDate={selectedDate}
+            />
+          </div>
         }
       />
 

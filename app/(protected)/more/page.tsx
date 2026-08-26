@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   BedDouble, ShoppingBasket, Receipt, CreditCard, BarChart3,
-  Brush, Bell, Calendar, Settings, Megaphone, ChevronRight,
+  Brush, Bell, Calendar, Settings, Megaphone, ChevronRight, BookUser,
 } from "lucide-react";
 import { auth } from "@/lib/auth/config";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -107,6 +107,15 @@ export default async function MorePage() {
       icon: Settings,
       badge: undefined as string | undefined,
       colorStyle: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300/80 dark:border-slate-700",
+    },
+    {
+      label: "কন্ট্যাক্ট ডিরেক্টরি",
+      subtitle: "বুয়া • মালিক • WiFi • পানি",
+      desc: "গুরুত্বপূর্ণ নম্বর সমূহ",
+      href: "/contacts",
+      icon: BookUser,
+      badge: undefined as string | undefined,
+      colorStyle: "bg-cyan-100 dark:bg-cyan-950/80 text-cyan-800 dark:text-cyan-300 border-cyan-200/80 dark:border-cyan-800/60",
     },
   ];
 
