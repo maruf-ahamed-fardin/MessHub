@@ -12,6 +12,7 @@ export default async function CalendarPage() {
   const [session, T] = await Promise.all([auth(), getServerT()]);
   const { month, year } = getCurrentMonthYear();
   const isAdmin = session?.user.role === "ADMIN";
+  const currentUserId = session?.user?.id ?? "";
 
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59);
@@ -50,7 +51,11 @@ export default async function CalendarPage() {
       },
     }),
     prisma.calendarEvent.findMany({
-      where: { date: { gte: startDate, lte: endDate } },
+      where: {
+        date: { gte: startDate, lte: endDate },
+        createdById: currentUserId,
+      },
+      orderBy: { date: "asc" },
     }),
   ]);
 
@@ -64,6 +69,7 @@ export default async function CalendarPage() {
         month={month}
         year={year}
         isAdmin={isAdmin}
+        currentUserId={currentUserId}
         bazars={bazars}
         meals={meals}
         cleanings={cleanings}

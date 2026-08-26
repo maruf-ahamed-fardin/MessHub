@@ -115,11 +115,14 @@ export async function deleteNotice(id: string) {
   return prisma.notice.delete({ where: { id } });
 }
 
-export async function getCalendarEvents(month: number, year: number) {
+export async function getCalendarEvents(month: number, year: number, userId?: string) {
   const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
+  const endDate = new Date(year, month, 0, 23, 59, 59);
   return prisma.calendarEvent.findMany({
-    where: { date: { gte: startDate, lte: endDate } },
+    where: {
+      date: { gte: startDate, lte: endDate },
+      ...(userId ? { createdById: userId } : {}),
+    },
     include: { createdBy: { select: { name: true } } },
     orderBy: { date: "asc" },
   });
@@ -133,4 +136,12 @@ export async function createCalendarEvent(data: {
   createdById: string;
 }) {
   return prisma.calendarEvent.create({ data });
+}
+
+export async function deleteCalendarEvent(id: string, userId: string) {
+  const event = await prisma.calendarEvent.findUnique({ where: { id } });
+  if (!event || event.createdById !== userId) {
+    throw new Error("Unauthorized to delete this personal schedule.");
+  }
+  return prisma.calendarEvent.delete({ where: { id } });
 }

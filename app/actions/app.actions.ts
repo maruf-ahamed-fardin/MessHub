@@ -7,7 +7,7 @@ import { finalizeMonthlySettlement, reopenMonthlySettlement } from "@/backend/se
 import { createMember, updateMember, deactivateMember, assignSeat } from "@/backend/members/member.repository";
 import { createRoom, createSeat, deleteRoom, deleteSeat } from "@/backend/rooms/room.repository";
 import { createMemberSchema } from "@/backend/members/member.validation";
-import { createPost, deletePost, togglePin, createNotice, deleteNotice } from "@/backend/community/community.repository";
+import { createPost, deletePost, togglePin, createNotice, deleteNotice, createCalendarEvent, deleteCalendarEvent } from "@/backend/community/community.repository";
 import {
   createCleaningTask, updateCleaningTaskStatus, createHouseholdTask, updateHouseholdTaskStatus,
 } from "@/backend/cleaning/cleaning.repository";
@@ -257,15 +257,40 @@ export async function createCleaningTaskAction(data: unknown) {
   return { success: true };
 }
 
+async function getActiveMemberId(session: any): Promise<string> {
+  if (session?.user?.memberId) {
+    const exists = await prisma.memberProfile.findUnique({ where: { id: session.user.memberId } });
+    if (exists) return exists.id;
+  }
+  if (session?.user?.id) {
+    const profile = await prisma.memberProfile.findUnique({ where: { userId: session.user.id } });
+    if (profile) return profile.id;
+  }
+  const firstMember = await prisma.memberProfile.findFirst({ where: { isActive: true } });
+  if (firstMember) return firstMember.id;
+  if (session?.user?.id) {
+    const created = await prisma.memberProfile.create({
+      data: {
+        userId: session.user.id,
+        seatRent: 0,
+        isActive: true,
+      },
+    });
+    return created.id;
+  }
+  return "m1";
+}
+
 export async function completeCleaningTaskAction(id: string) {
   try {
     const session = await auth();
-    const memberId = session?.user?.memberId ?? "m1";
+    const memberId = await getActiveMemberId(session);
     await completeCleaningTask(id, memberId);
   } catch (err) {
     console.warn("DB offline (demo mode completeCleaningTask):", err);
   }
   revalidatePath("/cleaning");
+  revalidatePath("/house");
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -274,7 +299,7 @@ export async function completeCleaningTaskAction(id: string) {
 export async function createMaintenanceAction(data: unknown) {
   try {
     const session = await auth();
-    const memberId = session?.user?.memberId ?? "admin-member-1";
+    const memberId = await getActiveMemberId(session);
     const schema = z.object({
       title: z.string().min(1),
       description: z.string().optional(),
@@ -316,7 +341,7 @@ export async function updateMaintenanceStatusAction(id: string, status: string, 
 export async function addShoppingItemAction(data: { name: string; quantity?: string; unit?: string; cost?: number; note?: string }) {
   try {
     const session = await auth();
-    const memberId = session?.user?.memberId ?? "admin-member-1";
+    const memberId = await getActiveMemberId(session);
     await createShoppingItem({ ...data, addedById: memberId });
   } catch (err) {
     console.warn("DB offline (demo mode addShoppingItem):", err);
@@ -329,7 +354,7 @@ export async function addShoppingItemAction(data: { name: string; quantity?: str
 export async function purchaseShoppingItemAction(id: string, cost?: number) {
   try {
     const session = await auth();
-    const memberId = session?.user?.memberId ?? "admin-member-1";
+    const memberId = await getActiveMemberId(session);
     await prisma.shoppingItem.update({
       where: { id },
       data: {
@@ -343,6 +368,9 @@ export async function purchaseShoppingItemAction(id: string, cost?: number) {
     console.warn("DB offline (demo mode purchaseShoppingItem):", err);
   }
   revalidatePath("/house");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -389,3 +417,45 @@ export async function updateSettingsAction(data: unknown) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+// ---- Personal Calendar Schedules & Events ----
+export async function createCalendarEventAction(data: {
+  title: string;
+  date: string;
+  type?: string;
+  description?: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
+    const userId = session.user.id;
+    const [y, m, d] = data.date.split("-").map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+
+    await createCalendarEvent({
+      title: data.title,
+      type: data.type || "PERSONAL",
+      date: dateObj,
+      description: data.description || undefined,
+      createdById: userId,
+    });
+  } catch (err) {
+    console.warn("DB error in createCalendarEventAction:", err);
+  }
+  revalidatePath("/calendar");
+  return { success: true };
+}
+
+export async function deleteCalendarEventAction(id: string) {
+  try {
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
+    const userId = session.user.id;
+    await deleteCalendarEvent(id, userId);
+  } catch (err) {
+    console.warn("DB error in deleteCalendarEventAction:", err);
+  }
+  revalidatePath("/calendar");
+  return { success: true };
+}
+

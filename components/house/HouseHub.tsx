@@ -220,7 +220,7 @@ export function HouseHub({
   return (
     <div className="space-y-6">
       {/* 1. KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab("cleaning")}
@@ -298,62 +298,95 @@ export function HouseHub({
         </div>
       </div>
 
-      {/* 2. Unified Tab Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-2 overflow-x-auto gap-2">
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 dark:bg-slate-800 rounded-xl">
+      {/* 2. Unified Tab Navigation Bar & Action Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 dark:border-slate-800 pb-3">
+        {/* Scrollable Segmented Tabs Track */}
+        <div className="flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-slate-800/90 rounded-2xl overflow-x-auto no-scrollbar max-w-full">
           <button
             type="button"
             onClick={() => setActiveTab("all")}
             className={cn(
-              "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-              activeTab === "all" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
+              activeTab === "all"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs"
+                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
             {t("সব একত্রে", "All Tasks")}
           </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("cleaning")}
             className={cn(
-              "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-              activeTab === "cleaning" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0",
+              activeTab === "cleaning"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs"
+                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            <Brush size={13} />
-            {t(`ক্লিনিং (${pendingCleaningCount})`, `Cleaning (${pendingCleaningCount})`)}
+            <Brush size={13} className="text-teal-600 dark:text-teal-400" />
+            <span>{t("ক্লিনিং", "Cleaning")}</span>
+            <span className={cn(
+              "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+              activeTab === "cleaning" ? "bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400"
+            )}>
+              {pendingCleaningCount}
+            </span>
           </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("maintenance")}
             className={cn(
-              "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-              activeTab === "maintenance" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0",
+              activeTab === "maintenance"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs"
+                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            <Wrench size={13} />
-            {t(`মেরামত (${pendingMaintCount})`, `Maintenance (${pendingMaintCount})`)}
+            <Wrench size={13} className="text-amber-600 dark:text-amber-400" />
+            <span>{t("মেরামত", "Maintenance")}</span>
+            <span className={cn(
+              "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+              activeTab === "maintenance" ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400"
+            )}>
+              {pendingMaintCount}
+            </span>
           </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("shopping")}
             className={cn(
-              "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-              activeTab === "shopping" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0",
+              activeTab === "shopping"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs"
+                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            <ShoppingCart size={13} />
-            {t(`শপিং লিস্ট (${pendingShopCount})`, `Shopping (${pendingShopCount})`)}
+            <ShoppingCart size={13} className="text-indigo-600 dark:text-indigo-400" />
+            <span>{t("শপিং লিস্ট", "Shopping")}</span>
+            <span className={cn(
+              "text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+              activeTab === "shopping" ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-400"
+            )}>
+              {pendingShopCount}
+            </span>
           </button>
         </div>
 
         {/* Action Buttons based on active tab */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto">
           {(activeTab === "all" || activeTab === "cleaning") && isAdmin && (
             <Dialog open={cleanDialogOpen} onOpenChange={setCleanDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 text-xs gap-1.5 bg-teal-600 hover:bg-teal-700 text-white">
+                <Button
+                  size="sm"
+                  className="h-8.5 px-3 rounded-xl text-xs font-bold gap-1.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
+                >
                   <Plus size={14} />
-                  {t("ক্লিনিং টাস্ক যোগ করুন", "Add Cleaning Task")}
+                  <span>{activeTab === "all" ? t("ক্লিনিং টাস্ক", "Cleaning Task") : t("ক্লিনিং টাস্ক যোগ করুন", "Add Cleaning Task")}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -414,9 +447,12 @@ export function HouseHub({
           {(activeTab === "all" || activeTab === "maintenance") && (
             <Dialog open={maintDialogOpen} onOpenChange={setMaintDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 text-xs gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
+                <Button
+                  size="sm"
+                  className="h-8.5 px-3 rounded-xl text-xs font-bold gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
+                >
                   <Plus size={14} />
-                  {t("সমস্যা রিপোর্ট করুন", "Report Issue")}
+                  <span>{activeTab === "all" ? t("সমস্যা রিপোর্ট", "Report Issue") : t("সমস্যা রিপোর্ট করুন", "Report Issue")}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -471,9 +507,12 @@ export function HouseHub({
           {(activeTab === "all" || activeTab === "shopping") && (
             <Dialog open={shopDialogOpen} onOpenChange={setShopDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
+                <Button
+                  size="sm"
+                  className="h-8.5 px-3 rounded-xl text-xs font-bold gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-2xs cursor-pointer whitespace-nowrap shrink-0"
+                >
                   <Plus size={14} />
-                  {t("মালামাল যোগ করুন", "Add Shopping Item")}
+                  <span>{activeTab === "all" ? t("শপিং আইটেম", "Shopping Item") : t("মালামাল যোগ করুন", "Add Shopping Item")}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -525,20 +564,20 @@ export function HouseHub({
         </div>
       </div>
 
-      {/* 3. Section 1: Cleaning Schedule */}
+      {/* 3. Section 1: Cleaning Schedule (Teal / Cyan theme) */}
       {(activeTab === "all" || activeTab === "cleaning") && (
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="bg-teal-50/30 dark:bg-teal-950/10 border border-teal-200/80 dark:border-teal-900/50 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold shadow-2xs">
                 <Brush size={16} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">{t("ক্লিনিং শিডিউল ও দায়িত্ব", "Cleaning Tasks & Schedule")}</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-500">{t("মেম্বারদের ক্লিনিং দায়িত্ব সম্পন্ন হলে Done চাপুন", "Click Done when a cleaning task is completed")}</p>
+                <h3 className="font-bold text-sm text-gray-900 dark:text-slate-100">{t("ক্লিনিং শিডিউল ও দায়িত্ব", "Cleaning Tasks & Schedule")}</h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400">{t("মেম্বারদের ক্লিনিং দায়িত্ব সম্পন্ন হলে Done চাপুন", "Click Done when a cleaning task is completed")}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold bg-teal-100/80 dark:bg-teal-950 text-teal-800 dark:text-teal-300 px-3 py-1 rounded-full border border-teal-200 dark:border-teal-800">
               {t(`${pendingCleaningCount} টি বাকি`, `${pendingCleaningCount} pending`)}
             </span>
           </div>
@@ -556,19 +595,21 @@ export function HouseHub({
                   <div
                     key={task.id}
                     className={cn(
-                      "p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3",
-                      isDone ? "bg-gray-50/70 dark:bg-slate-800/40 border-gray-200 dark:border-slate-800 opacity-60" : "bg-white dark:bg-slate-900 border-teal-100 dark:border-teal-900/60 hover:border-teal-200 shadow-xs"
+                      "p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3",
+                      isDone
+                        ? "bg-white/60 dark:bg-slate-900/60 border-teal-100 dark:border-slate-800 opacity-65"
+                        : "bg-white dark:bg-slate-900 border-teal-200/90 dark:border-teal-900/80 hover:border-teal-400 dark:hover:border-teal-700 shadow-2xs"
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="text-xs font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300">{initials}</AvatarFallback>
+                      <Avatar className="h-8.5 w-8.5 shrink-0 ring-2 ring-teal-200/60 dark:ring-teal-900/60">
+                        <AvatarFallback className="text-xs font-bold bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300">{initials}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className={cn("text-xs font-semibold text-gray-900 dark:text-slate-100 truncate", isDone && "line-through")}>
+                        <p className={cn("text-xs font-bold text-gray-900 dark:text-slate-100 truncate", isDone && "line-through text-gray-500 dark:text-slate-400")}>
                           {task.title}
                         </p>
-                        <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
                           {task.location} • {memberName} {task.recurrence ? `(${task.recurrence})` : ""}
                         </p>
                       </div>
@@ -580,14 +621,14 @@ export function HouseHub({
                         size="sm"
                         onClick={() => handleCompleteCleaning(task.id)}
                         disabled={loadingId === task.id}
-                        className="h-7 px-3 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-full shrink-0 gap-1"
+                        className="h-7.5 px-3 text-xs font-bold bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white rounded-full shrink-0 gap-1 shadow-2xs cursor-pointer"
                       >
                         {loadingId === task.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                         {t("সম্পন্ন", "Done")}
                       </Button>
                     ) : (
-                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 shrink-0">
-                        <CheckCircle2 size={14} /> {t("সম্পন্ন", "Done")}
+                      <span className="text-[11px] font-bold text-teal-700 dark:text-teal-300 bg-teal-100/70 dark:bg-teal-950/80 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 border border-teal-200 dark:border-teal-800">
+                        <CheckCircle2 size={13} /> {t("সম্পন্ন", "Done")}
                       </span>
                     )}
                   </div>
@@ -598,20 +639,20 @@ export function HouseHub({
         </div>
       )}
 
-      {/* 4. Section 2: Maintenance Issues */}
+      {/* 4. Section 2: Maintenance Issues (Amber / Orange theme) */}
       {(activeTab === "all" || activeTab === "maintenance") && (
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="bg-amber-50/30 dark:bg-amber-950/10 border border-amber-200/80 dark:border-amber-900/50 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold shadow-2xs">
                 <Wrench size={16} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">{t("মেরামত ও রক্ষণাবেক্ষণ", "Maintenance & Repairs")}</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-500">{t("বাসার যেকোনো মেরামত খরচ সরাসরি ড্যাশবোর্ডে যুক্ত হবে", "Repair costs are directly linked to shared mess finances")}</p>
+                <h3 className="font-bold text-sm text-gray-900 dark:text-slate-100">{t("মেরামত ও রক্ষণাবেক্ষণ", "Maintenance & Repairs")}</h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400">{t("বাসার যেকোনো মেরামত খরচ সরাসরি ড্যাশবোর্ডে যুক্ত হবে", "Repair costs are directly linked to shared mess finances")}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold bg-amber-100/80 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
               {t(`${pendingMaintCount} টি ওপেন`, `${pendingMaintCount} open`)}
             </span>
           </div>
@@ -619,17 +660,25 @@ export function HouseHub({
           {maintenanceList.length === 0 ? (
             <p className="text-center py-6 text-xs text-gray-400 dark:text-slate-500">{t("কোনো সমস্যা রিপোর্ট করা নেই।", "No maintenance issues reported.")}</p>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-slate-800">
+            <div className="grid grid-cols-1 gap-2.5">
               {maintenanceList.map((item) => {
                 const isResolved = item.status === "RESOLVED";
                 const reportedName = item.reportedBy?.user?.name ?? "Member";
                 const cost = Number(item.cost) || 0;
 
                 return (
-                  <div key={item.id} className="py-3 flex items-center justify-between gap-3 first:pt-0 last:pb-0">
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3",
+                      isResolved
+                        ? "bg-white/60 dark:bg-slate-900/60 border-amber-100 dark:border-slate-800 opacity-65"
+                        : "bg-white dark:bg-slate-900 border-amber-200/90 dark:border-amber-900/80 hover:border-amber-400 dark:hover:border-amber-700 shadow-2xs"
+                    )}
+                  >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={cn("text-xs font-semibold text-gray-900 dark:text-slate-100", isResolved && "line-through text-gray-400")}>
+                        <p className={cn("text-xs font-bold text-gray-900 dark:text-slate-100", isResolved && "line-through text-gray-400")}>
                           {item.title}
                         </p>
                         <Badge
@@ -638,27 +687,27 @@ export function HouseHub({
                             "text-[10px] py-0 px-2 rounded-full font-bold",
                             item.priority === "URGENT" || item.priority === "HIGH"
                               ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
-                              : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                              : "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                           )}
                         >
                           {item.priority}
                         </Badge>
                         {cost > 0 && (
-                          <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-0 text-[10px]">
+                          <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-0 text-[10px] font-bold">
                             {t(`খরচ: ${formatCurrency(cost)}`, `Cost: ${formatCurrency(cost)}`)}
                           </Badge>
                         )}
                         <Badge
                           variant="outline"
                           className={cn(
-                            "text-[10px] py-0 px-2 rounded-full",
-                            isResolved ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                            "text-[10px] py-0 px-2 rounded-full font-bold",
+                            isResolved ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                           )}
                         >
                           {item.status}
                         </Badge>
                       </div>
-                      <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
                         {item.location ? `${item.location} • ` : ""}{t(`রিপোর্টকারী: ${reportedName}`, `Reported by: ${reportedName}`)}
                         {item.description ? ` — ${item.description}` : ""}
                       </p>
@@ -676,7 +725,7 @@ export function HouseHub({
                               handleUpdateMaintStatus(item.id, "RESOLVED", finalCost);
                             }}
                             disabled={loadingId === item.id}
-                            className="h-7 px-2.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
+                            className="h-7.5 px-3 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full shadow-2xs cursor-pointer"
                           >
                             {t("সমাধান ✓", "Resolve ✓")}
                           </Button>
@@ -686,7 +735,7 @@ export function HouseHub({
                             size="sm"
                             variant="outline"
                             onClick={() => handleUpdateMaintStatus(item.id, "IN_PROGRESS")}
-                            className="h-7 px-2.5 text-xs text-gray-500 rounded-full"
+                            className="h-7.5 px-3 text-xs text-gray-500 rounded-full font-bold"
                           >
                             {t("পুনরায় খুলুন", "Reopen")}
                           </Button>
@@ -701,20 +750,20 @@ export function HouseHub({
         </div>
       )}
 
-      {/* 5. Section 3: Shared Shopping List */}
+      {/* 5. Section 3: Shared Shopping List (Purple / Indigo theme) */}
       {(activeTab === "all" || activeTab === "shopping") && (
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="bg-purple-50/30 dark:bg-purple-950/10 border border-purple-200/80 dark:border-purple-900/50 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold shadow-2xs">
                 <ShoppingCart size={16} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">{t("শেয়ার্ড শপিং লিস্ট", "Shared Shopping List")}</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-500">{t("মালামাল কেনা হলে টিক চিহ্ন দিয়ে দাম লিখুন, মেস খরচে যুক্ত হবে", "Mark items as purchased with cost to add to mess expenses")}</p>
+                <h3 className="font-bold text-sm text-gray-900 dark:text-slate-100">{t("শেয়ার্ড শপিং লিস্ট", "Shared Shopping List")}</h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400">{t("মালামাল কেনা হলে টিক চিহ্ন দিয়ে দাম লিখুন, মেস খরচে যুক্ত হবে", "Mark items as purchased with cost to add to mess expenses")}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-bold bg-purple-100/80 dark:bg-purple-950 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full border border-purple-200 dark:border-purple-800">
               {t(`${pendingShopCount} টি দরকার`, `${pendingShopCount} needed`)}
             </span>
           </div>
@@ -731,7 +780,7 @@ export function HouseHub({
               value={quickItemName}
               onChange={(e) => setQuickItemName(e.target.value)}
               placeholder={t("+ নতুন মালামালের নাম (যেমন: হারপিক, ডিশওয়াশ, বাল্ব)...", "+ New item name (e.g. Dishwash, Light bulb)...")}
-              className="h-9 text-xs flex-1 rounded-xl"
+              className="h-9.5 text-xs flex-1 rounded-xl"
             />
             <Input
               value={quickItemCost}
@@ -739,9 +788,13 @@ export function HouseHub({
               placeholder={t("দাম ৳", "Price ৳")}
               type="number"
               min="0"
-              className="h-9 text-xs w-20 rounded-xl"
+              className="h-9.5 text-xs w-20 sm:w-24 rounded-xl"
             />
-            <Button type="submit" size="sm" className="h-9 px-3.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
+            <Button
+              type="submit"
+              size="sm"
+              className="h-9.5 px-3.5 text-xs font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl shadow-2xs shrink-0 cursor-pointer"
+            >
               {t("যোগ করুন", "Add")}
             </Button>
           </form>
@@ -750,14 +803,22 @@ export function HouseHub({
           {shoppingList.length === 0 ? (
             <p className="text-center py-6 text-xs text-gray-400 dark:text-slate-500">{t("শপিং লিস্টে কোনো আইটেম নেই।", "No items in shopping list.")}</p>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-slate-800">
+            <div className="grid grid-cols-1 gap-2.5">
               {shoppingList.map((item) => {
                 const isPurchased = item.status === "PURCHASED";
                 const addedName = item.addedBy?.user?.name ?? "Member";
                 const cost = Number(item.cost) || 0;
 
                 return (
-                  <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors">
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "p-3 rounded-2xl border transition-all flex items-center justify-between gap-3",
+                      isPurchased
+                        ? "bg-white/60 dark:bg-slate-900/60 border-purple-100 dark:border-slate-800 opacity-65"
+                        : "bg-white dark:bg-slate-900 border-purple-200/90 dark:border-purple-900/80 hover:border-purple-400 dark:hover:border-purple-700 shadow-2xs"
+                    )}
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <button
                         type="button"
@@ -768,8 +829,8 @@ export function HouseHub({
                         className={cn(
                           "w-6 h-6 rounded-lg border flex items-center justify-center transition-all cursor-pointer shrink-0",
                           isPurchased
-                            ? "bg-emerald-600 border-emerald-600 text-white"
-                            : "border-gray-300 dark:border-slate-700 hover:border-indigo-500 bg-white dark:bg-slate-900 text-transparent"
+                            ? "bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-600 text-white shadow-xs"
+                            : "border-purple-300 dark:border-purple-700 hover:border-purple-500 bg-white dark:bg-slate-900 text-transparent"
                         )}
                         title={isPurchased ? t("কেনা হয়েছে", "Purchased") : t("কেনা হলে টিক দিন", "Mark as purchased")}
                       >
@@ -777,10 +838,10 @@ export function HouseHub({
                       </button>
 
                       <div className="min-w-0">
-                        <p className={cn("text-xs font-semibold text-gray-900 dark:text-slate-100 truncate", isPurchased && "line-through text-gray-400 dark:text-slate-500")}>
+                        <p className={cn("text-xs font-bold text-gray-900 dark:text-slate-100 truncate", isPurchased && "line-through text-gray-400 dark:text-slate-500")}>
                           {item.name}
                         </p>
-                        <p className="text-[11px] text-gray-400 dark:text-slate-500">
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
                           {item.quantity ? `${item.quantity} ${item.unit ?? ""} • ` : ""}{t(`যুক্ত করেছে: ${addedName}`, `Added by: ${addedName}`)}
                           {item.note ? ` (${item.note})` : ""}
                         </p>
@@ -789,7 +850,7 @@ export function HouseHub({
 
                     <div className="flex items-center gap-2 shrink-0">
                       {cost > 0 && (
-                        <span className="text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                        <span className="text-[11px] font-bold bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800">
                           {formatCurrency(cost)}
                         </span>
                       )}

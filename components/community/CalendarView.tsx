@@ -1,18 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/currency";
 import {
   Calendar as CalendarIcon, ShoppingBasket, UtensilsCrossed, Brush,
-  CreditCard, Bell,
+  CreditCard, Bell, Plus, Lock, Trash2, Clock, CheckCircle2,
+  Bookmark, Briefcase, GraduationCap, Sparkles, Loader2,
 } from "lucide-react";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { createCalendarEventAction, deleteCalendarEventAction } from "@/app/actions/app.actions";
 
 interface CalendarViewProps {
   month: number;
   year: number;
   isAdmin: boolean;
+  currentUserId?: string;
   bazars: any[];
   meals: any[];
   cleanings: any[];
@@ -24,15 +35,30 @@ interface CalendarViewProps {
 export function CalendarView({
   month,
   year,
+  currentUserId,
   bazars,
   meals,
   cleanings,
   payments,
   notices,
-  events,
+  events: initialEvents,
 }: CalendarViewProps) {
   const today = new Date();
+  const router = useRouter();
   const [selectedDay, setSelectedDay] = useState<number>(today.getDate());
+  const [events, setEvents] = useState<any[]>(initialEvents || []);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form states for new personal schedule
+  const [newTitle, setNewTitle] = useState("");
+  const [newType, setNewType] = useState("PERSONAL");
+  const [newTime, setNewTime] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newDate, setNewDate] = useState(
+    `${year}-${String(month).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+  );
+
   const { t, language } = usePreferences();
 
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -109,7 +135,7 @@ export function CalendarView({
     if (dayData[d]) dayData[d].notices.push(n);
   }
 
-  // 6. Events
+  // 6. Private Personal Events
   for (const e of events) {
     const d = new Date(e.date).getDate();
     if (dayData[d]) dayData[d].events.push(e);
@@ -131,6 +157,89 @@ export function CalendarView({
     currentDayInfo.payments.length > 0 ||
     currentDayInfo.notices.length > 0 ||
     currentDayInfo.events.length > 0;
+
+  // Handle Create Private Schedule
+  const handleCreatePersonalSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    setSubmitting(true);
+    const dateToUse = newDate || `${year}-${String(month).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`;
+    const [y, m, d] = dateToUse.split("-").map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+
+    const optimisticEvent = {
+      id: `temp-ev-${Date.now()}`,
+      title: newTitle.trim(),
+      type: newType,
+      date: dateObj,
+      description: newDescription.trim() ? (newTime ? `⏰ ${newTime} • ${newDescription.trim()}` : newDescription.trim()) : (newTime ? `⏰ ${newTime}` : null),
+      createdById: currentUserId || "me",
+    };
+
+    setEvents((prev) => [...prev, optimisticEvent]);
+    setNewTitle("");
+    setNewDescription("");
+    setNewTime("");
+    setAddDialogOpen(false);
+
+    try {
+      await createCalendarEventAction({
+        title: optimisticEvent.title,
+        date: dateToUse,
+        type: newType,
+        description: optimisticEvent.description || undefined,
+      });
+      router.refresh();
+    } catch (err) {
+      console.error("Error creating personal schedule:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Delete Private Schedule
+  const handleDeletePersonalSchedule = async (eventId: string) => {
+    if (!confirm(t("আপনি কি এই ব্যক্তিগত শিডিউলটি মুছে ফেলতে চান?", "Are you sure you want to delete this personal schedule?"))) return;
+
+    setEvents((prev) => prev.filter((e) => e.id !== eventId));
+
+    try {
+      await deleteCalendarEventAction(eventId);
+      router.refresh();
+    } catch (err) {
+      console.error("Error deleting personal schedule:", err);
+    }
+  };
+
+  const getEventTypeBadge = (type: string) => {
+    switch (type) {
+      case "STUDY":
+        return (
+          <Badge variant="outline" className="text-[10px] bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 gap-1">
+            <GraduationCap size={11} /> {t("পড়াশোনা", "Study")}
+          </Badge>
+        );
+      case "WORK":
+        return (
+          <Badge variant="outline" className="text-[10px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 gap-1">
+            <Briefcase size={11} /> {t("কাজ / অফিস", "Work")}
+          </Badge>
+        );
+      case "REMINDER":
+        return (
+          <Badge variant="outline" className="text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 gap-1">
+            <Bookmark size={11} /> {t("রিমাইন্ডার", "Reminder")}
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="text-[10px] bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 gap-1">
+            <Lock size={10} /> {t("ব্যক্তিগত", "Private")}
+          </Badge>
+        );
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -169,12 +278,16 @@ export function CalendarView({
             const hasBazar = info?.bazars.length > 0;
             const hasCleaning = info?.cleanings.length > 0;
             const hasPayment = info?.payments.length > 0;
+            const hasPrivateEvent = info?.events.length > 0;
 
             return (
               <button
                 key={day}
                 type="button"
-                onClick={() => setSelectedDay(day)}
+                onClick={() => {
+                  setSelectedDay(day);
+                  setNewDate(`${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+                }}
                 className={cn(
                   "h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex flex-col items-center justify-center relative transition-all cursor-pointer select-none mx-auto",
                   isSelected
@@ -187,7 +300,7 @@ export function CalendarView({
                 <span className="text-[11px] leading-none">{day}</span>
 
                 {/* Activity Indicator Dots */}
-                {(hasBazar || hasCleaning || hasPayment) && (
+                {(hasBazar || hasCleaning || hasPayment || hasPrivateEvent) && (
                   <div className="flex items-center gap-0.5 mt-0.5">
                     {hasBazar && (
                       <span
@@ -204,6 +317,11 @@ export function CalendarView({
                         className={cn("w-1 h-1 rounded-full", isSelected ? "bg-emerald-300" : "bg-emerald-500")}
                       />
                     )}
+                    {hasPrivateEvent && (
+                      <span
+                        className={cn("w-1 h-1 rounded-full", isSelected ? "bg-purple-300" : "bg-purple-500")}
+                      />
+                    )}
                   </div>
                 )}
               </button>
@@ -212,7 +330,7 @@ export function CalendarView({
         </div>
 
         {/* Mini Legend */}
-        <div className="flex items-center justify-center gap-3 pt-2.5 border-t border-gray-100 dark:border-slate-800 text-[10px] text-gray-500 dark:text-slate-400 font-medium">
+        <div className="flex items-center justify-center gap-2.5 pt-2.5 border-t border-gray-100 dark:border-slate-800 text-[10px] text-gray-500 dark:text-slate-400 font-medium flex-wrap">
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {t("বাজার", "Bazar")}
           </span>
@@ -222,33 +340,213 @@ export function CalendarView({
           <span className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t("পেমেন্ট", "Payment")}
           </span>
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> {t("ব্যক্তিগত", "Private")}
+          </span>
         </div>
       </div>
 
       {/* RIGHT COLUMN: Detailed Day Timeline */}
-      <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
-        {/* Selected Date Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
+      <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Selected Date Header + Add Personal Schedule Button */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3 gap-2.5">
           <div>
-            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-              {t("তারিখের বিস্তারিত বিবরণ", "Day Schedule & Details")}
-            </span>
-            <h2 className="text-base font-bold text-gray-900 dark:text-slate-100 mt-0.5">{formattedSelectedDate}</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                {t("তারিখের বিস্তারিত বিবরণ", "Day Schedule & Details")}
+              </span>
+              <span className="text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2.5 py-0.5 rounded-full">
+                {t(`দিন ${selectedDay} / ${daysInMonth}`, `Day ${selectedDay} of ${daysInMonth}`)}
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-slate-100 mt-0.5">{formattedSelectedDate}</h2>
           </div>
-          <span className="text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-3 py-1 rounded-full">
-            {t(`দিন ${selectedDay} / ${daysInMonth}`, `Day ${selectedDay} of ${daysInMonth}`)}
-          </span>
+
+          {/* Add Personal Private Schedule Dialog Button */}
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                className="h-8.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs gap-1.5 shadow-2xs cursor-pointer select-none shrink-0"
+              >
+                <Plus size={14} />
+                <span>{t("ব্যক্তিগত শিডিউল যোগ", "Add Personal Schedule")}</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 rounded-3xl p-5">
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 flex items-center justify-center">
+                    <Lock size={16} />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-base font-bold text-gray-900 dark:text-slate-100">
+                      {t("ব্যক্তিগত শিডিউল তৈরি করুন", "Create Personal Schedule")}
+                    </DialogTitle>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      {t("🔒 এটি সম্পূর্ণ ব্যক্তিগত, শুধুমাত্র আপনিই দেখতে পাবেন।", "🔒 100% Private, only visible from your account.")}
+                    </p>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <form onSubmit={handleCreatePersonalSchedule} className="space-y-3.5 mt-3">
+                <div className="space-y-1">
+                  <Label htmlFor="title" className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                    {t("কাজের শিরোনাম *", "Schedule Title *")}
+                  </Label>
+                  <Input
+                    id="title"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder={t("যেমন: ডাক্তারের অ্যাপয়েন্টমেন্ট, পরীক্ষার পড়া, ওষুধ কেনা...", "e.g. Doctor appointment, Exam revision, buy medicine...")}
+                    required
+                    className="h-9.5 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {t("ক্যাটাগরি", "Category")}
+                    </Label>
+                    <Select value={newType} onValueChange={(val) => { if (val) setNewType(val); }}>
+                      <SelectTrigger className="h-9.5 text-xs rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PERSONAL">🔒 {t("ব্যক্তিগত", "Private")}</SelectItem>
+                        <SelectItem value="STUDY">📚 {t("পড়াশোনা", "Study")}</SelectItem>
+                        <SelectItem value="WORK">💼 {t("কাজ / অফিস", "Work")}</SelectItem>
+                        <SelectItem value="REMINDER">⏰ {t("রিমাইন্ডার", "Reminder")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="time" className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {t("সময় (ঐচ্ছিক)", "Time (optional)")}
+                    </Label>
+                    <Input
+                      id="time"
+                      value={newTime}
+                      onChange={(e) => setNewTime(e.target.value)}
+                      placeholder={t("যেমন: সকাল ১০:৩০ / 6:00 PM", "e.g. 10:30 AM / 6:00 PM")}
+                      className="h-9.5 text-xs rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="date" className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                    {t("তারিখ *", "Date *")}
+                  </Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    required
+                    className="h-9.5 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="desc" className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                    {t("বিবরণ ও নোট (ঐচ্ছিক)", "Description / Notes (optional)")}
+                  </Label>
+                  <Textarea
+                    id="desc"
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder={t("প্রয়োজনীয় তথ্য বা বিস্তারিত নোট লিখুন...", "Add any specific details or notes...")}
+                    rows={2}
+                    className="text-xs rounded-xl resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAddDialogOpen(false)}
+                    className="flex-1 h-9 rounded-xl text-xs font-bold"
+                    disabled={submitting}
+                  >
+                    {t("বাতিল", "Cancel")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={!newTitle.trim() || submitting}
+                    className="flex-1 h-9 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                  >
+                    {submitting ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                    {t("শিডিউল সংরক্ষণ করুন", "Save Schedule")}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {!hasAnyActivity ? (
           <div className="py-12 text-center text-gray-400 dark:text-slate-500 space-y-2">
             <CalendarIcon size={28} className="mx-auto text-gray-300 dark:text-slate-600 stroke-1" />
-            <p className="text-sm font-medium">{t("এই তারিখে কোনো বাজার, ডিউটি বা পেমেন্ট রেকর্ড নেই।", "No bazar, duty, or payment records on this date.")}</p>
-            <p className="text-xs text-gray-400 dark:text-slate-500">{t("ক্যালেন্ডারের অন্য কোনো তারিখে ক্লিক করে দেখুন।", "Select another date on the calendar.")}</p>
+            <p className="text-sm font-medium">{t("এই তারিখে কোনো বাজার, ডিউটি বা ব্যক্তিগত শিডিউল নেই।", "No bazar, duty, or personal schedules on this date.")}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">{t("ওপরের বাটন থেকে নিজের ব্যক্তিগত শিডিউল যোগ করতে পারেন।", "Use the button above to add your private personal schedule.")}</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {/* 1. Bazar Details */}
+            {/* 1. Private Personal Schedule Section (Encapsulated & Private) */}
+            {currentDayInfo.events.length > 0 && (
+              <div className="bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/90 dark:border-purple-800/60 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-purple-900 dark:text-purple-200 font-black text-xs">
+                    <div className="w-5.5 h-5.5 rounded-lg bg-purple-200/80 dark:bg-purple-900/80 flex items-center justify-center text-purple-800 dark:text-purple-300">
+                      <Lock size={12} />
+                    </div>
+                    <span>{t("আপনার ব্যক্তিগত শিডিউল (শুধুমাত্র আপনি দেখতে পাবেন)", "My Personal Schedule (Private to you)")}</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded-full">
+                    {t(`${currentDayInfo.events.length} টি কাজ`, `${currentDayInfo.events.length} tasks`)}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {currentDayInfo.events.map((ev) => (
+                    <div
+                      key={ev.id}
+                      className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-purple-100 dark:border-slate-800 shadow-2xs flex items-start justify-between gap-3 group transition-all"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-bold text-gray-900 dark:text-slate-100 leading-tight">
+                            {ev.title}
+                          </p>
+                          {getEventTypeBadge(ev.type)}
+                        </div>
+                        {ev.description && (
+                          <p className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                            {ev.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePersonalSchedule(ev.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer shrink-0"
+                        title={t("মুছে ফেলুন", "Delete")}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Bazar Details */}
             {currentDayInfo.bazars.length > 0 && (
               <div className="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
@@ -280,7 +578,7 @@ export function CalendarView({
               </div>
             )}
 
-            {/* 2. Meals Breakdown */}
+            {/* 3. Meals Breakdown */}
             {currentDayInfo.mealsCount.total > 0 && (
               <div className="bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
@@ -310,7 +608,7 @@ export function CalendarView({
               </div>
             )}
 
-            {/* 3. Cleaning Duties */}
+            {/* 4. Cleaning Duties */}
             {currentDayInfo.cleanings.length > 0 && (
               <div className="bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-xs">
@@ -339,7 +637,7 @@ export function CalendarView({
               </div>
             )}
 
-            {/* 4. Payments */}
+            {/* 5. Payments */}
             {currentDayInfo.payments.length > 0 && (
               <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
@@ -359,7 +657,7 @@ export function CalendarView({
               </div>
             )}
 
-            {/* 5. Notices / Meetings */}
+            {/* 6. Notices / Meetings */}
             {currentDayInfo.notices.length > 0 && (
               <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/80 rounded-2xl p-4 space-y-2.5">
                 <div className="flex items-center gap-2 text-purple-900 dark:text-purple-300 font-black text-xs">
