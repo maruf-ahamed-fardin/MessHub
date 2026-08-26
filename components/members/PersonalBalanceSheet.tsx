@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/utils/currency";
-import { formatShortDate, formatDate } from "@/lib/utils/date";
+import { formatDate } from "@/lib/utils/date";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Wallet, TrendingUp, TrendingDown, Receipt, UtensilsCrossed,
-  ChefHat, Zap, Droplets, Flame, Wifi, Trash2, Home, CreditCard,
-  Calendar, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownLeft,
-  FileText, UserPlus, Layers,
+  UtensilsCrossed, ChefHat, Zap, Flame, Wifi, Home, CreditCard,
+  ArrowUpRight, ArrowDownLeft, UserPlus, Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { useT } from "@/lib/i18n/useT";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 export interface PersonalBalanceSheetProps {
   member: {
@@ -73,10 +71,8 @@ export function PersonalBalanceSheet({
   otherExpenseShare,
   balance,
   paymentHistory,
-  month,
-  year,
 }: PersonalBalanceSheetProps) {
-  const T = useT();
+  const { t } = usePreferences();
   const [activeTab, setActiveTab] = useState<"summary" | "expenses" | "payments">("summary");
 
   const totalCost = foodCost + guestMealCost + utilityShare + seatRent + otherExpenseShare;
@@ -91,56 +87,56 @@ export function PersonalBalanceSheet({
   const expenseItems = [
     {
       id: "food",
-      label: `${T.common.foodCost} (${totalMeals} মিল × ৳${mealRate})`,
+      label: t(`খাবারের খরচ (${totalMeals} মিল × ${formatCurrency(mealRate)})`, `Food Cost (${totalMeals} meals × ${formatCurrency(mealRate)})`),
       amount: foodCost,
       icon: UtensilsCrossed,
       color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     },
     {
       id: "guest",
-      label: `গেস্ট মিল চার্জ (${totalGuestMeals} টি গেস্ট মিল)`,
+      label: t(`গেস্ট মিল চার্জ (${totalGuestMeals} টি গেস্ট মিল)`, `Guest Meal Charge (${totalGuestMeals} guest meals)`),
       amount: guestMealCost,
       icon: UserPlus,
       color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
     },
     {
       id: "bua",
-      label: "বুয়া / কুক বিলের অংশ (Cook / Bua Share)",
+      label: t("বুয়া ও বাবুর্চি বিলের অংশ", "Cook / House Maid Share"),
       amount: utilityDetails.buaBill,
       icon: ChefHat,
       color: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
     },
     {
       id: "electricity",
-      label: "বিদ্যুৎ / কারেন্ট বিলের অংশ (Electricity)",
+      label: t("বিদ্যুৎ বিলের অংশ", "Electricity Bill Share"),
       amount: utilityDetails.electricity,
       icon: Zap,
       color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
     },
     {
       id: "gas_water",
-      label: "গ্যাস ও পানি বিল (Gas & Water)",
+      label: t("গ্যাস ও পানি বিল", "Gas & Water Bill Share"),
       amount: utilityDetails.gas + utilityDetails.water,
       icon: Flame,
       color: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
     },
     {
       id: "internet_waste",
-      label: "ইন্টারনেট ও ময়লা বিল (Wifi & Waste)",
+      label: t("ইন্টারনেট ও ময়লা বিল", "Wifi & Waste Bill Share"),
       amount: utilityDetails.internet + utilityDetails.waste,
       icon: Wifi,
       color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     },
     {
       id: "rent",
-      label: `${T.common.seatRent} (${member.seat?.room?.name ?? "Room"} - ${member.seat?.label ?? "Seat"})`,
+      label: t(`সিট ভাড়া (${member.seat?.room?.name ?? "Room"} - ${member.seat?.label ?? "Seat"})`, `Seat Rent (${member.seat?.room?.name ?? "Room"} - ${member.seat?.label ?? "Seat"})`),
       amount: seatRent,
       icon: Home,
       color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
     },
     {
       id: "other",
-      label: "মেসের অন্যান্য শেয়ার্ড খরচ (Flat Expenses)",
+      label: t("মেসের অন্যান্য শেয়ার্ড খরচ", "Other Shared Mess Expenses"),
       amount: otherExpenseShare,
       icon: Layers,
       color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
@@ -166,7 +162,7 @@ export function PersonalBalanceSheet({
               <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{member.user.email}</p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className="text-[11px] font-bold bg-primary/10 text-primary dark:bg-primary/20 px-2 py-0.5 rounded-md">
-                  {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : "সিট বরাদ্দ নেই"}
+                  {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সিট বরাদ্দ নেই", "No Seat Assigned")}
                 </span>
                 {member.phone && (
                   <span className="text-[11px] text-gray-400 font-medium">📞 {member.phone}</span>
@@ -186,15 +182,15 @@ export function PersonalBalanceSheet({
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                {T.common.currentBalance}
+                {t("বর্তমান ব্যালেন্স", "Current Balance")}
               </span>
               {isCredit ? (
                 <span className="text-[10px] font-black bg-emerald-200 dark:bg-emerald-800 px-1.5 py-0.5 rounded text-emerald-800 dark:text-emerald-100">
-                  জমা (Credit)
+                  {t("পাওনা জমা", "Credit")}
                 </span>
               ) : (
                 <span className="text-[10px] font-black bg-rose-200 dark:bg-rose-800 px-1.5 py-0.5 rounded text-rose-800 dark:text-rose-100">
-                  বকেয়া (Due)
+                  {t("বকেয়া", "Due")}
                 </span>
               )}
             </div>
@@ -203,7 +199,7 @@ export function PersonalBalanceSheet({
                 {isCredit ? "+" : ""}{formatCurrency(balance)}
               </p>
               <p className="text-[11px] opacity-75 mt-0.5">
-                {isCredit ? T.common.youHaveCredit : T.common.youOwe}
+                {isCredit ? t("মেস থেকে আপনি টাকা পাবেন", "You have surplus balance") : t("মেসে আপনার টাকা দিতে হবে", "You have outstanding dues")}
               </p>
             </div>
           </div>
@@ -218,7 +214,7 @@ export function PersonalBalanceSheet({
             <ArrowDownLeft size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">সর্বমোট জমা (Total Paid)</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">{t("সর্বমোট জমা", "Total Deposited")}</p>
             <p className="text-lg sm:text-xl font-black text-gray-900 dark:text-slate-100 mt-0.5 truncate">
               {formatCurrency(totalPaid)}
             </p>
@@ -231,7 +227,7 @@ export function PersonalBalanceSheet({
             <ArrowUpRight size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">চলতি মাসের খরচ (Total Cost)</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">{t("চলতি মাসের মোট খরচ", "Total Monthly Cost")}</p>
             <p className="text-lg sm:text-xl font-black text-gray-900 dark:text-slate-100 mt-0.5 truncate">
               {formatCurrency(totalCost)}
             </p>
@@ -244,9 +240,9 @@ export function PersonalBalanceSheet({
             <UtensilsCrossed size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">মোট মিল ও রেট</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">{t("মোট মিল ও মিল রেট", "Total Meals & Rate")}</p>
             <p className="text-lg sm:text-xl font-black text-gray-900 dark:text-slate-100 mt-0.5 truncate">
-              {totalMeals} টি <span className="text-xs font-normal text-gray-400">(রেট ৳{mealRate})</span>
+              {t(`${totalMeals} টি মিল`, `${totalMeals} meals`)} <span className="text-xs font-normal text-gray-400">({t(`রেট ${formatCurrency(mealRate)}`, `rate ${formatCurrency(mealRate)}`)})</span>
             </p>
           </div>
         </div>
@@ -264,7 +260,7 @@ export function PersonalBalanceSheet({
               : "text-gray-500 dark:text-slate-400 hover:text-gray-900"
           )}
         >
-          হিসাব খাতা (Statement)
+          {t("হিসাব খাতা", "Statement")}
         </button>
         <button
           type="button"
@@ -276,7 +272,7 @@ export function PersonalBalanceSheet({
               : "text-gray-500 dark:text-slate-400 hover:text-gray-900"
           )}
         >
-          খরচের তালিকা ({expenseItems.length})
+          {t(`খরচের তালিকা (${expenseItems.length})`, `Cost List (${expenseItems.length})`)}
         </button>
         <button
           type="button"
@@ -288,7 +284,7 @@ export function PersonalBalanceSheet({
               : "text-gray-500 dark:text-slate-400 hover:text-gray-900"
           )}
         >
-          জমার ইতিহাস ({paymentHistory.length})
+          {t(`জমার ইতিহাস (${paymentHistory.length})`, `Payment History (${paymentHistory.length})`)}
         </button>
       </div>
 
@@ -298,14 +294,14 @@ export function PersonalBalanceSheet({
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
             <div>
               <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-slate-100">
-                ব্যক্তিগত খরচের বিস্তারিত খতিয়ান (Cost Breakdown)
+                {t("ব্যক্তিগত খরচের বিস্তারিত খতিয়ান", "Personal Cost Breakdown")}
               </h3>
               <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                চলতি মাসে আপনার জন্য ধার্যকৃত সব খাতের হিসাব
+                {t("চলতি মাসে আপনার জন্য ধার্যকৃত সব খাতের হিসাব", "Itemized breakdown of all expenses allocated to you")}
               </p>
             </div>
             <span className="text-xs font-extrabold text-primary bg-primary/10 dark:bg-primary/20 px-2.5 py-1 rounded-lg">
-              সর্বমোট ৳{formatCurrency(totalCost)}
+              {t(`সর্বমোট ${formatCurrency(totalCost)}`, `Total ${formatCurrency(totalCost)}`)}
             </span>
           </div>
 
@@ -341,20 +337,20 @@ export function PersonalBalanceSheet({
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
             <div>
               <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-slate-100">
-                টাকা জমার লেনদেন হিস্ট্রি (Payment History)
+                {t("টাকা জমার লেনদেন হিস্ট্রি", "Deposit Transaction History")}
               </h3>
               <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                মেস ফান্ডে আপনার দেওয়া জমা ভাউচারসমূহ
+                {t("মেস ফান্ডে আপনার দেওয়া জমা ভাউচারসমূহ", "Payment records deposited by you into the mess fund")}
               </p>
             </div>
             <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-lg">
-              জমা ৳{formatCurrency(totalPaid)}
+              {t(`জমা ${formatCurrency(totalPaid)}`, `Total Paid ${formatCurrency(totalPaid)}`)}
             </span>
           </div>
 
           {paymentHistory.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-xs">
-              চলতি মাসে এখনো কোনো টাকা জমা রেকর্ড নেই।
+            <div className="text-center py-8 text-gray-400 dark:text-slate-500 text-xs">
+              {t("চলতি মাসে এখনো কোনো টাকা জমা রেকর্ড নেই।", "No payment deposits recorded for this month.")}
             </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -366,9 +362,9 @@ export function PersonalBalanceSheet({
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-900 dark:text-slate-100">
-                        {p.method} পেমেন্ট জমা
+                        {t(`${p.method} পেমেন্ট জমা`, `${p.method} Payment Deposit`)}
                       </p>
-                      <p className="text-[11px] text-gray-400">
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500">
                         {formatDate(p.date)} {p.note ? `• ${p.note}` : ""}
                       </p>
                     </div>

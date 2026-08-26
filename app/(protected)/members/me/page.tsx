@@ -125,7 +125,7 @@ export default async function MyProfilePage() {
     <div className="max-w-4xl space-y-6">
       <PageHeader
         title={T.profile.title}
-        description="আপনার চলতি মাসের রানিং ব্যালেন্স, মিল ও ইউটিলিটি খরচের হিসাব এবং জমার খতিয়ান"
+        description={T.profile.description}
       />
 
       <PersonalBalanceSheet

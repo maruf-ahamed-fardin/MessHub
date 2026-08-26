@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/currency";
 import {
   Calendar as CalendarIcon, ShoppingBasket, UtensilsCrossed, Brush,
-  CreditCard, Bell, Sparkles, CheckCircle2,
+  CreditCard, Bell,
 } from "lucide-react";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface CalendarViewProps {
   month: number;
@@ -23,7 +24,6 @@ interface CalendarViewProps {
 export function CalendarView({
   month,
   year,
-  isAdmin,
   bazars,
   meals,
   cleanings,
@@ -33,18 +33,24 @@ export function CalendarView({
 }: CalendarViewProps) {
   const today = new Date();
   const [selectedDay, setSelectedDay] = useState<number>(today.getDate());
+  const { t, language } = usePreferences();
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
-  const monthName = new Date(year, month - 1).toLocaleString("en", { month: "long", year: "numeric" });
+  const dateLocale = language === "bn" ? "bn-BD" : "en-US";
+  const monthName = new Date(year, month - 1).toLocaleString(dateLocale, { month: "long", year: "numeric" });
 
   const selectedDateObj = new Date(year, month - 1, selectedDay);
-  const formattedSelectedDate = selectedDateObj.toLocaleDateString("en-US", {
+  const formattedSelectedDate = selectedDateObj.toLocaleDateString(dateLocale, {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
+
+  const dayHeaders = language === "bn"
+    ? ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি"]
+    : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   // Group everything by day (1..31)
   const dayData: Record<number, {
@@ -128,27 +134,27 @@ export function CalendarView({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      {/* LEFT COLUMN: Ultra Compact Mini Calendar Widget */}
-      <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-4 shadow-xs space-y-3 max-w-sm">
+      {/* LEFT COLUMN: Mini Calendar Widget */}
+      <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3 max-w-sm">
         {/* Month Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <CalendarIcon size={15} className="text-primary" />
-            <h3 className="font-bold text-sm text-gray-900">{monthName}</h3>
+            <h3 className="font-bold text-sm text-gray-900 dark:text-slate-100">{monthName}</h3>
           </div>
-          <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-            {daysInMonth} দিন
+          <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            {t(`${daysInMonth} দিন`, `${daysInMonth} Days`)}
           </span>
         </div>
 
         {/* Days of Week */}
-        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 py-1 border-b border-gray-100">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 dark:text-slate-500 py-1 border-b border-gray-100 dark:border-slate-800">
+          {dayHeaders.map((d) => (
             <div key={d}>{d}</div>
           ))}
         </div>
 
-        {/* Calendar Grid (Mini Cells) */}
+        {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: firstDayOfWeek }, (_, i) => (
             <div key={`blank-${i}`} className="h-7 w-7" />
@@ -175,7 +181,7 @@ export function CalendarView({
                     ? "bg-primary text-white font-bold shadow-xs ring-2 ring-primary/40 scale-105"
                     : isToday
                     ? "bg-primary/10 text-primary font-bold hover:bg-primary/15"
-                    : "text-gray-700 hover:bg-gray-100 font-medium"
+                    : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 font-medium"
                 )}
               >
                 <span className="text-[11px] leading-none">{day}</span>
@@ -206,69 +212,69 @@ export function CalendarView({
         </div>
 
         {/* Mini Legend */}
-        <div className="flex items-center justify-center gap-3 pt-2.5 border-t border-gray-100 text-[10px] text-gray-500 font-medium">
+        <div className="flex items-center justify-center gap-3 pt-2.5 border-t border-gray-100 dark:border-slate-800 text-[10px] text-gray-500 dark:text-slate-400 font-medium">
           <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> বাজার
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {t("বাজার", "Bazar")}
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> ডিউটি
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> {t("ডিউটি", "Duty")}
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> পেমেন্ট
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t("পেমেন্ট", "Payment")}
           </span>
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Detailed Day Timeline & Schedule */}
-      <div className="lg:col-span-8 bg-white border border-gray-200 rounded-2xl p-5 shadow-xs space-y-4">
+      {/* RIGHT COLUMN: Detailed Day Timeline */}
+      <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
         {/* Selected Date Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
           <div>
             <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-              তারিখের বিস্তারিত বিবরণ
+              {t("তারিখের বিস্তারিত বিবরণ", "Day Schedule & Details")}
             </span>
-            <h2 className="text-base font-bold text-gray-900 mt-0.5">{formattedSelectedDate}</h2>
+            <h2 className="text-base font-bold text-gray-900 dark:text-slate-100 mt-0.5">{formattedSelectedDate}</h2>
           </div>
-          <span className="text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
-            দিন {selectedDay} / {daysInMonth}
+          <span className="text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-3 py-1 rounded-full">
+            {t(`দিন ${selectedDay} / ${daysInMonth}`, `Day ${selectedDay} of ${daysInMonth}`)}
           </span>
         </div>
 
         {!hasAnyActivity ? (
-          <div className="py-12 text-center text-gray-400 space-y-2">
-            <CalendarIcon size={28} className="mx-auto text-gray-300 stroke-1" />
-            <p className="text-sm font-medium">এই তারিখে কোনো বাজার, ডিউটি বা পেমেন্ট রেকর্ড নেই।</p>
-            <p className="text-xs text-gray-400">ক্যালেন্ডারের অন্য কোনো তারিখে ক্লিক করে দেখুন।</p>
+          <div className="py-12 text-center text-gray-400 dark:text-slate-500 space-y-2">
+            <CalendarIcon size={28} className="mx-auto text-gray-300 dark:text-slate-600 stroke-1" />
+            <p className="text-sm font-medium">{t("এই তারিখে কোনো বাজার, ডিউটি বা পেমেন্ট রেকর্ড নেই।", "No bazar, duty, or payment records on this date.")}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">{t("ক্যালেন্ডারের অন্য কোনো তারিখে ক্লিক করে দেখুন।", "Select another date on the calendar.")}</p>
           </div>
         ) : (
           <div className="space-y-3">
             {/* 1. Bazar Details */}
             {currentDayInfo.bazars.length > 0 && (
-              <div className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-3.5 space-y-2">
+              <div className="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-amber-800 font-bold text-xs">
-                    <ShoppingBasket size={15} className="text-amber-600" />
-                    <span>আজকের বাজার তালিকা (Bazar)</span>
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                    <ShoppingBasket size={15} className="text-amber-600 dark:text-amber-400" />
+                    <span>{t("আজকের বাজার তালিকা", "Today's Bazar Details")}</span>
                   </div>
-                  <span className="text-xs font-bold text-amber-900">
+                  <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
                     {formatCurrency(currentDayInfo.bazars.reduce((s, b) => s + Number(b.totalAmount), 0))}
                   </span>
                 </div>
 
                 {currentDayInfo.bazars.map((b) => (
-                  <div key={b.id} className="bg-white rounded-lg p-2.5 border border-amber-100 space-y-1">
+                  <div key={b.id} className="bg-white dark:bg-slate-900 rounded-lg p-2.5 border border-amber-100 dark:border-slate-800 space-y-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold text-gray-900">
-                        বাজার করেছে: {b.buyerMember?.user?.name ?? "Member"}
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100">
+                        {t(`বাজার করেছে: ${b.buyerMember?.user?.name ?? "Member"}`, `Purchased by: ${b.buyerMember?.user?.name ?? "Member"}`)}
                       </p>
-                      <span className="text-xs font-bold text-emerald-700">{formatCurrency(Number(b.totalAmount))}</span>
+                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(Number(b.totalAmount))}</span>
                     </div>
                     {b.items && b.items.length > 0 && (
-                      <div className="text-[11px] text-gray-500">
-                        আইটেম: {b.items.map((it: any) => `${it.productName} (${it.quantity}${it.unit})`).join(", ")}
+                      <div className="text-[11px] text-gray-500 dark:text-slate-400">
+                        {t("আইটেম:", "Items:")} {b.items.map((it: any) => `${it.productName} (${it.quantity}${it.unit})`).join(", ")}
                       </div>
                     )}
-                    {b.note && <p className="text-[11px] text-gray-400">নোট: {b.note}</p>}
+                    {b.note && <p className="text-[11px] text-gray-400 dark:text-slate-500">{t(`নোট: ${b.note}`, `Note: ${b.note}`)}</p>}
                   </div>
                 ))}
               </div>
@@ -276,27 +282,29 @@ export function CalendarView({
 
             {/* 2. Meals Breakdown */}
             {currentDayInfo.mealsCount.total > 0 && (
-              <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-3.5 space-y-2">
+              <div className="bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-blue-800 font-bold text-xs">
-                    <UtensilsCrossed size={15} className="text-blue-600" />
-                    <span>আজকের মোট মিল সংখ্যা (Meals)</span>
+                  <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 font-bold text-xs">
+                    <UtensilsCrossed size={15} className="text-blue-600 dark:text-blue-400" />
+                    <span>{t("আজকের মোট মিল সংখ্যা", "Total Meals on this Date")}</span>
                   </div>
-                  <span className="text-xs font-bold text-blue-900">{currentDayInfo.mealsCount.total} টি মিল</span>
+                  <span className="text-xs font-bold text-blue-900 dark:text-blue-200">
+                    {t(`${currentDayInfo.mealsCount.total} টি মিল`, `${currentDayInfo.mealsCount.total} Meals`)}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center text-xs pt-0.5">
-                  <div className="bg-white p-2 rounded-lg border border-blue-100">
-                    <p className="text-[10px] text-gray-500 font-medium">☀️ সকাল</p>
-                    <p className="text-xs font-bold text-amber-700">{currentDayInfo.mealsCount.breakfast} জন</p>
+                  <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-blue-100 dark:border-slate-800">
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{t("☀️ সকাল", "☀️ Breakfast")}</p>
+                    <p className="text-xs font-bold text-amber-700 dark:text-amber-400">{currentDayInfo.mealsCount.breakfast}</p>
                   </div>
-                  <div className="bg-white p-2 rounded-lg border border-blue-100">
-                    <p className="text-[10px] text-gray-500 font-medium">🍽️ দুপুর</p>
-                    <p className="text-xs font-bold text-blue-700">{currentDayInfo.mealsCount.lunch} জন</p>
+                  <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-blue-100 dark:border-slate-800">
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{t("🍽️ দুপুর", "🍽️ Lunch")}</p>
+                    <p className="text-xs font-bold text-blue-700 dark:text-blue-400">{currentDayInfo.mealsCount.lunch}</p>
                   </div>
-                  <div className="bg-white p-2 rounded-lg border border-blue-100">
-                    <p className="text-[10px] text-gray-500 font-medium">🌙 রাত</p>
-                    <p className="text-xs font-bold text-indigo-700">{currentDayInfo.mealsCount.dinner} জন</p>
+                  <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-blue-100 dark:border-slate-800">
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{t("🌙 রাত", "🌙 Dinner")}</p>
+                    <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400">{currentDayInfo.mealsCount.dinner}</p>
                   </div>
                 </div>
               </div>
@@ -304,27 +312,27 @@ export function CalendarView({
 
             {/* 3. Cleaning Duties */}
             {currentDayInfo.cleanings.length > 0 && (
-              <div className="bg-teal-50/60 border border-teal-200/80 rounded-xl p-3.5 space-y-2">
-                <div className="flex items-center gap-2 text-teal-800 font-bold text-xs">
-                  <Brush size={15} className="text-teal-600" />
-                  <span>ক্লিনিং দায়িত্ব ও শিডিউল (Cleaning)</span>
+              <div className="bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/40 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-xs">
+                  <Brush size={15} className="text-teal-600 dark:text-teal-400" />
+                  <span>{t("ক্লিনিং দায়িত্ব ও শিডিউল", "Cleaning Schedule")}</span>
                 </div>
 
                 {currentDayInfo.cleanings.map((c) => (
-                  <div key={c.id} className="bg-white rounded-lg p-2.5 border border-teal-100 flex items-center justify-between">
+                  <div key={c.id} className="bg-white dark:bg-slate-900 rounded-lg p-2.5 border border-teal-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-gray-900">{c.title}</p>
-                      <p className="text-[11px] text-gray-500">
-                        স্থান: {c.location} • দায়িত্বে: {c.assignedMember?.user?.name ?? "Member"}
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100">{c.title}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                        {t(`স্থান: ${c.location}`, `Location: ${c.location}`)} • {t(`দায়িত্বে: ${c.assignedMember?.user?.name ?? "Member"}`, `Assigned: ${c.assignedMember?.user?.name ?? "Member"}`)}
                       </p>
                     </div>
                     <span
                       className={cn(
                         "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                        c.status === "DONE" ? "bg-emerald-100 text-emerald-800" : "bg-teal-100 text-teal-800"
+                        c.status === "DONE" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" : "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300"
                       )}
                     >
-                      {c.status === "DONE" ? "সম্পন্ন ✓" : "পেন্ডিং"}
+                      {c.status === "DONE" ? t("সম্পন্ন ✓", "Done ✓") : t("পেন্ডিং", "Pending")}
                     </span>
                   </div>
                 ))}
@@ -333,19 +341,19 @@ export function CalendarView({
 
             {/* 4. Payments */}
             {currentDayInfo.payments.length > 0 && (
-              <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3.5 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
-                  <CreditCard size={15} className="text-emerald-600" />
-                  <span>জমা / পেমেন্ট রেকর্ড (Payments)</span>
+              <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
+                  <CreditCard size={15} className="text-emerald-600 dark:text-emerald-400" />
+                  <span>{t("জমা ও পেমেন্ট রেকর্ড", "Deposits & Payments")}</span>
                 </div>
 
                 {currentDayInfo.payments.map((p) => (
-                  <div key={p.id} className="bg-white rounded-lg p-2.5 border border-emerald-100 flex items-center justify-between">
+                  <div key={p.id} className="bg-white dark:bg-slate-900 rounded-lg p-2.5 border border-emerald-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-gray-900">{p.member?.user?.name ?? "Member"}</p>
-                      <p className="text-[11px] text-gray-500">পেমেন্ট মেথড: {p.method} {p.note ? `• ${p.note}` : ""}</p>
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100">{p.member?.user?.name ?? "Member"}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400">{t(`পেমেন্ট মেথড: ${p.method}`, `Method: ${p.method}`)} {p.note ? `• ${p.note}` : ""}</p>
                     </div>
-                    <span className="text-xs font-bold text-emerald-700">+{formatCurrency(Number(p.amount))}</span>
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">+{formatCurrency(Number(p.amount))}</span>
                   </div>
                 ))}
               </div>
@@ -358,7 +366,7 @@ export function CalendarView({
                   <div className="w-6 h-6 rounded-lg bg-purple-200/80 dark:bg-purple-900/60 flex items-center justify-center text-purple-700 dark:text-purple-300">
                     <Bell size={13} />
                   </div>
-                  <span>নোটিশ ও মিটিং (Announcements)</span>
+                  <span>{t("নোটিশ ও মিটিং", "Notices & Announcements")}</span>
                 </div>
 
                 {currentDayInfo.notices.map((n) => (

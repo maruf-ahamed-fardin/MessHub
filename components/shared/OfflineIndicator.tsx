@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { WifiOff, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 export function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(true);
   const [showOnline, setShowOnline] = useState(false);
+  const { t } = usePreferences();
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -44,12 +46,12 @@ export function OfflineIndicator() {
       {isOnline ? (
         <>
           <Wifi size={13} />
-          Back online
+          {t("অনলাইন সংযুক্ত", "Back online")}
         </>
       ) : (
         <>
           <WifiOff size={13} />
-          You're offline
+          {t("অফলাইনে আছেন", "You're offline")}
         </>
       )}
     </div>

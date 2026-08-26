@@ -124,16 +124,16 @@ export const translations = {
   // ─── Payments ─────────────────────────────────────────────────
   payments: {
     title:          { bn: "টাকা লেনদেন",        en: "Money Transaction" },
-    moneyIn:        { bn: "মোট জমা (Money In)", en: "Total Money In" },
-    moneyOut:       { bn: "মোট খরচ (Money Out)", en: "Total Money Out" },
+    moneyIn:        { bn: "মোট জমা",            en: "Total Money In" },
+    moneyOut:       { bn: "মোট খরচ",            en: "Total Money Out" },
     fundBalance:    { bn: "হাতে জমা ফান্ড",     en: "Fund Balance" },
     fundRemains:    { bn: "মেস ফান্ডে অবশিষ্ট আছে", en: "Remaining in Fund" },
     fundShortage:   { bn: "ফান্ড শর্টেজ",       en: "Fund Shortage" },
     paymentRecords: { bn: "টি পেমেন্ট রেকর্ড",  en: "payment records" },
     bazarAndOthers: { bn: "বাজার ও অন্যান্য সব ব্যয়", en: "All bazar & other expenses" },
     allTab:         { bn: "সব লেনদেন",           en: "All Transactions" },
-    inTab:          { bn: "জমা (Money In)",     en: "Deposits (In)" },
-    outTab:         { bn: "খরচ (Money Out)",    en: "Expenses (Out)" },
+    inTab:          { bn: "জমা",                en: "Deposits (In)" },
+    outTab:         { bn: "খরচ",                en: "Expenses (Out)" },
     addDeposit:     { bn: "+ টাকা জমা দিন",     en: "+ Add Deposit" },
     addExpense:     { bn: "+ মেস খরচ লিখুন",    en: "+ Add Expense" },
     member:         { bn: "মেম্বার",             en: "Member" },
@@ -218,7 +218,7 @@ export const translations = {
     expensesDesc:            { bn: "ফ্ল্যাট ভাড়া, বিদ্যুৎ, ওয়াইফাই, পানি ও গ্যাস বিল বণ্টন", en: "Flat rent, electricity, wifi, water & gas bill distribution" },
     paymentsSubtitle:        { bn: "টাকা লেনদেন ও মেস ফান্ড",        en: "Money transaction & fund" },
     paymentsDesc:            { bn: "মেম্বারদের টাকা জমা, মোট ব্যয় ও ব্যালেন্স স্থিতি", en: "Member deposits, total expenses & balance status" },
-    paymentsBadge:           { bn: "টাকা ইন/আউট",                    en: "In / Out" },
+    paymentsBadge:           { bn: "টাকা ইন ও আউট",                  en: "In / Out" },
     settlementSubtitle:      { bn: "মাসিক চূড়ান্ত মিল ও বিল সেটেলমেন্ট", en: "Monthly final settlement" },
     settlementDesc:          { bn: "মাস শেষের মিল রেট ও লেনদেন নিষ্পত্তি", en: "Month-end meal rate & transaction settlement" },
     houseSubtitle:           { bn: "বাসার ডিউটি ও মেইনটেন্যান্স",    en: "House duties & maintenance" },
@@ -256,6 +256,10 @@ export const translations = {
     rooms: {
       title:       { bn: "রুম ও মেম্বার",          en: "Rooms & Members" },
       description: { bn: "মেসের রুম, সিট ও মেম্বারদের বিবরণ এবং সিট বণ্টন", en: "Room, seat & member details with seat allocation" },
+    },
+    members: {
+      title:       { bn: "মেম্বার প্রোফাইল ও ব্যালেন্স শীট", en: "Member Profile & Statement" },
+      description: { bn: "সদস্যের সিট ব্যবস্থাপনা, ভাড়ার হার এবং ব্যক্তিগত হিসাব খাতা", en: "Seat management, rent rates, and individual statement" },
     },
     house: {
       title:       { bn: "বাসা ব্যবস্থাপনা",       en: "House Management" },
@@ -311,8 +315,9 @@ export const translations = {
 
   // ─── Profile ──────────────────────────────────────────────────
   profile: {
-    title:      { bn: "আমার প্রোফাইল", en: "My Profile" },
-    mealsMonth: { bn: "মাসের মিল",     en: "Meals (This Month)" },
+    title:       { bn: "আমার প্রোফাইল", en: "My Profile" },
+    description: { bn: "আপনার চলতি মাসের রানিং ব্যালেন্স, মিল ও ইউটিলিটি খরচের হিসাব এবং জমার খতিয়ান", en: "Your current running balance, meal and utility breakdown, and payment history" },
+    mealsMonth:  { bn: "মাসের মিল",     en: "Meals this Month" },
   },
 } as const;
 

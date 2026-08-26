@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Manage Member & Statement" };
 
 export default async function ManageMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
+  const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
 
   const member = await getMemberById(id);
@@ -77,13 +77,11 @@ export default async function ManageMemberPage({ params }: { params: Promise<{ i
   const totalCost = foodCost + guestData.guestMealCost + utilityShare + seatRent + otherCost;
   const balance = Math.round((totalPaid - totalCost) * 100) / 100;
 
-  const T = await getServerT();
-
   return (
     <div className="max-w-4xl space-y-6">
       <PageHeader
-        title={member.user.name ?? "Member Profile"}
-        description="সদস্যের সিট ব্যবস্থাপনা, ভাড়ার হার এবং ব্যক্তিগত হিসাব খাতা"
+        title={member.user.name ?? T.pages.members.title}
+        description={T.pages.members.description}
       />
 
       {isAdmin && (

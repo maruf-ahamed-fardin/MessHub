@@ -9,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Loader2 } from "lucide-react";
 import { createMemberAction } from "@/app/actions/app.actions";
 import { useRouter } from "next/navigation";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 export function AddMemberDialog({ rooms }: { rooms: any[] }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { t } = usePreferences();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,40 +45,40 @@ export function AddMemberDialog({ rooms }: { rooms: any[] }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1.5 h-8 text-xs">
-          <Plus size={14} /> Add Member
+          <Plus size={14} /> {t("মেম্বার যুক্ত করুন", "Add Member")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Member</DialogTitle>
+          <DialogTitle>{t("নতুন মেম্বার যুক্ত করুন", "Add New Member")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 mt-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
-              <Label htmlFor="name">Full Name *</Label>
-              <Input id="name" name="name" placeholder="Fardin Ahmed" required />
+              <Label htmlFor="name">{t("পূর্ণ নাম *", "Full Name *")}</Label>
+              <Input id="name" name="name" placeholder={t("যেমন: তানভীর আহমেদ", "e.g. Tanvir Ahmed")} required />
             </div>
             <div className="col-span-2 space-y-1">
-              <Label htmlFor="email">Email *</Label>
-              <Input id="email" name="email" type="email" placeholder="fardin@example.com" required />
+              <Label htmlFor="email">{t("ইমেইল অ্যাড্রেস *", "Email Address *")}</Label>
+              <Input id="email" name="email" type="email" placeholder="member@example.com" required />
             </div>
             <div className="col-span-2 space-y-1">
-              <Label htmlFor="password">Password *</Label>
-              <Input id="password" name="password" type="password" placeholder="Min 6 characters" required minLength={6} />
+              <Label htmlFor="password">{t("পাসওয়ার্ড *", "Password *")}</Label>
+              <Input id="password" name="password" type="password" placeholder={t("কমপক্ষে ৬ অক্ষর", "Min 6 characters")} required minLength={6} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{t("ফোন নম্বর", "Phone")}</Label>
               <Input id="phone" name="phone" placeholder="01XXXXXXXXX" />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="seatRent">Seat Rent (৳)</Label>
+              <Label htmlFor="seatRent">{t("সিট ভাড়া (৳)", "Seat Rent (৳)")}</Label>
               <Input id="seatRent" name="seatRent" type="number" placeholder="3500" defaultValue="3500" min="0" />
             </div>
             <div className="col-span-2 space-y-1">
-              <Label>Room (optional)</Label>
+              <Label>{t("রুম (ঐচ্ছিক)", "Room (optional)")}</Label>
               <Select name="roomId">
                 <SelectTrigger>
-                  <SelectValue placeholder="Select room" />
+                  <SelectValue placeholder={t("রুম বেছে নিন", "Select room")} />
                 </SelectTrigger>
                 <SelectContent>
                   {rooms.map((r: any) => (
@@ -88,9 +90,11 @@ export function AddMemberDialog({ rooms }: { rooms: any[] }) {
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1" disabled={loading}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1" disabled={loading}>
+              {t("বাতিল", "Cancel")}
+            </Button>
             <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? <><Loader2 size={14} className="animate-spin mr-1" />Creating...</> : "Create Member"}
+              {loading ? <><Loader2 size={14} className="animate-spin mr-1" />{t("তৈরি হচ্ছে...", "Creating...")}</> : t("মেম্বার তৈরি করুন", "Create Member")}
             </Button>
           </div>
         </form>

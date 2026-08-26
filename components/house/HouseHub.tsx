@@ -24,6 +24,7 @@ import {
 } from "@/app/actions/app.actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/currency";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface HouseHubProps {
   cleaningTasks: any[];
@@ -48,11 +49,11 @@ export function HouseHub({
   members,
   isAdmin,
   currentMemberId,
-  monthlyHouseCost,
 }: HouseHubProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as TabType) || "all";
+  const { t } = usePreferences();
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [cleaningList, setCleaningList] = useState(initialCleaning);
@@ -218,14 +219,14 @@ export function HouseHub({
 
   return (
     <div className="space-y-6">
-      {/* 1. Quick KPI Cards + Live Cost Tracker */}
+      {/* 1. KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab("cleaning")}
           className={cn(
-            "p-3.5 rounded-xl border text-left transition-all cursor-pointer bg-white flex items-center justify-between",
-            activeTab === "cleaning" ? "border-primary ring-2 ring-primary/20 shadow-xs" : "border-gray-200 hover:border-gray-300"
+            "p-3.5 rounded-xl border text-left transition-all cursor-pointer bg-white dark:bg-slate-900 flex items-center justify-between",
+            activeTab === "cleaning" ? "border-primary ring-2 ring-primary/20 shadow-xs" : "border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700"
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
@@ -233,8 +234,10 @@ export function HouseHub({
               <Brush size={17} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">ক্লিনিং ডিউটি</p>
-              <p className="text-base font-bold text-gray-900 dark:text-white">{pendingCleaningCount} <span className="text-xs font-normal text-gray-400">বাকি</span></p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">{t("ক্লিনিং ডিউটি", "Cleaning Duties")}</p>
+              <p className="text-base font-bold text-gray-900 dark:text-slate-100">
+                {pendingCleaningCount} <span className="text-xs font-normal text-gray-400 dark:text-slate-500">{t("বাকি", "pending")}</span>
+              </p>
             </div>
           </div>
         </button>
@@ -243,8 +246,8 @@ export function HouseHub({
           type="button"
           onClick={() => setActiveTab("maintenance")}
           className={cn(
-            "p-3.5 rounded-xl border text-left transition-all cursor-pointer bg-white flex items-center justify-between",
-            activeTab === "maintenance" ? "border-primary ring-2 ring-primary/20 shadow-xs" : "border-gray-200 hover:border-gray-300"
+            "p-3.5 rounded-xl border text-left transition-all cursor-pointer bg-white dark:bg-slate-900 flex items-center justify-between",
+            activeTab === "maintenance" ? "border-primary ring-2 ring-primary/20 shadow-xs" : "border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700"
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
@@ -252,8 +255,10 @@ export function HouseHub({
               <Wrench size={17} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">মেরামত ও সমস্যা</p>
-              <p className="text-base font-bold text-gray-900 dark:text-white">{pendingMaintCount} <span className="text-xs font-normal text-gray-400">ওপেন</span></p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">{t("মেরামত ও সমস্যা", "Maintenance")}</p>
+              <p className="text-base font-bold text-gray-900 dark:text-slate-100">
+                {pendingMaintCount} <span className="text-xs font-normal text-gray-400 dark:text-slate-500">{t("ওপেন", "open")}</span>
+              </p>
             </div>
           </div>
         </button>
@@ -262,8 +267,8 @@ export function HouseHub({
           type="button"
           onClick={() => setActiveTab("shopping")}
           className={cn(
-            "p-3.5 rounded-xl border text-left transition-all cursor-pointer bg-white flex items-center justify-between",
-            activeTab === "shopping" ? "border-primary ring-2 ring-primary/20 shadow-xs" : "border-gray-200 hover:border-gray-300"
+            "p-3.5 rounded-xl border text-left transition-all cursor-pointer bg-white dark:bg-slate-900 flex items-center justify-between",
+            activeTab === "shopping" ? "border-primary ring-2 ring-primary/20 shadow-xs" : "border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700"
           )}
         >
           <div className="flex items-center gap-2.5 min-w-0">
@@ -271,19 +276,21 @@ export function HouseHub({
               <ShoppingCart size={17} />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">শপিং লিস্ট</p>
-              <p className="text-base font-bold text-gray-900 dark:text-white">{pendingShopCount} <span className="text-xs font-normal text-gray-400">আইটেম</span></p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 truncate">{t("শপিং লিস্ট", "Shopping List")}</p>
+              <p className="text-base font-bold text-gray-900 dark:text-slate-100">
+                {pendingShopCount} <span className="text-xs font-normal text-gray-400 dark:text-slate-500">{t("আইটেম", "items")}</span>
+              </p>
             </div>
           </div>
         </button>
 
-        {/* 💰 Real Expense Card (Flows to Dashboard & Settlement) */}
+        {/* Real Expense Card */}
         <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
             <Coins size={17} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 truncate">হাউজ খরচ (Dashboard)</p>
+            <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 truncate">{t("হাউজ খরচ", "House Expenses")}</p>
             <p className="text-base font-bold text-emerald-950 dark:text-emerald-100 truncate">
               {formatCurrency(totalHouseSpent)}
             </p>
@@ -292,50 +299,50 @@ export function HouseHub({
       </div>
 
       {/* 2. Unified Tab Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-gray-200 pb-2 overflow-x-auto gap-2">
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 rounded-xl">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 pb-2 overflow-x-auto gap-2">
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 dark:bg-slate-800 rounded-xl">
           <button
             type="button"
             onClick={() => setActiveTab("all")}
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-              activeTab === "all" ? "bg-white text-gray-900 shadow-xs" : "text-gray-600 hover:text-gray-900"
+              activeTab === "all" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            সব একত্রে (All)
+            {t("সব একত্রে", "All Tasks")}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("cleaning")}
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-              activeTab === "cleaning" ? "bg-white text-gray-900 shadow-xs" : "text-gray-600 hover:text-gray-900"
+              activeTab === "cleaning" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
             <Brush size={13} />
-            ক্লিনিং ({pendingCleaningCount})
+            {t(`ক্লিনিং (${pendingCleaningCount})`, `Cleaning (${pendingCleaningCount})`)}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("maintenance")}
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-              activeTab === "maintenance" ? "bg-white text-gray-900 shadow-xs" : "text-gray-600 hover:text-gray-900"
+              activeTab === "maintenance" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
             <Wrench size={13} />
-            মেরামত ({pendingMaintCount})
+            {t(`মেরামত (${pendingMaintCount})`, `Maintenance (${pendingMaintCount})`)}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("shopping")}
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-              activeTab === "shopping" ? "bg-white text-gray-900 shadow-xs" : "text-gray-600 hover:text-gray-900"
+              activeTab === "shopping" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
             <ShoppingCart size={13} />
-            শপিং লিস্ট ({pendingShopCount})
+            {t(`শপিং লিস্ট (${pendingShopCount})`, `Shopping (${pendingShopCount})`)}
           </button>
         </div>
 
@@ -346,23 +353,23 @@ export function HouseHub({
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs gap-1.5 bg-teal-600 hover:bg-teal-700 text-white">
                   <Plus size={14} />
-                  + Add Cleaning
+                  {t("ক্লিনিং টাস্ক যোগ করুন", "Add Cleaning Task")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
-                <DialogHeader><DialogTitle>নতুন ক্লিনিং ডিউটি যুক্ত করুন</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{t("নতুন ক্লিনিং ডিউটি যুক্ত করুন", "Add New Cleaning Task")}</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddCleaning} className="space-y-3.5 mt-2">
                   <div className="space-y-1">
-                    <Label htmlFor="c-title">ক্লিনিং টাস্কের নাম *</Label>
-                    <Input id="c-title" name="title" placeholder="যেমন: বাথরুম ডিপ ক্লিন, ডাইনিং মুছা..." required />
+                    <Label htmlFor="c-title">{t("ক্লিনিং টাস্কের নাম *", "Task Title *")}</Label>
+                    <Input id="c-title" name="title" placeholder={t("যেমন: বাথরুম ডিপ ক্লিন, ডাইনিং মুছা...", "e.g. Bathroom deep clean, Dining hall sweep...")} required />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label htmlFor="c-loc">লোকেশন *</Label>
-                      <Input id="c-loc" name="location" placeholder="১ম তলা বাথরুম..." required />
+                      <Label htmlFor="c-loc">{t("লোকেশন *", "Location *")}</Label>
+                      <Input id="c-loc" name="location" placeholder={t("১ম তলা বাথরুম...", "1st Floor Bathroom...")} required />
                     </div>
                     <div className="space-y-1">
-                      <Label>দায়িত্বপ্রাপ্ত মেম্বার *</Label>
+                      <Label>{t("দায়িত্বপ্রাপ্ত মেম্বার *", "Assigned Member *")}</Label>
                       <Select name="assignedMemberId" defaultValue={members[0]?.id ?? ""}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -375,25 +382,28 @@ export function HouseHub({
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label htmlFor="c-due">সম্পন্নের তারিখ *</Label>
+                      <Label htmlFor="c-due">{t("সম্পন্নের তারিখ *", "Due Date *")}</Label>
                       <Input id="c-due" name="dueDate" type="date" defaultValue={new Date().toISOString().split("T")[0]} required />
                     </div>
                     <div className="space-y-1">
-                      <Label>পুনরাবৃত্তি (Recurrence)</Label>
+                      <Label>{t("পুনরাবৃত্তি", "Recurrence")}</Label>
                       <Select name="recurrence" defaultValue="WEEKLY">
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="DAILY">প্রতিদিন</SelectItem>
-                          <SelectItem value="WEEKLY">সাপ্তাহিক</SelectItem>
-                          <SelectItem value="MONTHLY">মাসিক</SelectItem>
+                          <SelectItem value="DAILY">{t("প্রতিদিন", "Daily")}</SelectItem>
+                          <SelectItem value="WEEKLY">{t("সাপ্তাহিক", "Weekly")}</SelectItem>
+                          <SelectItem value="MONTHLY">{t("মাসিক", "Monthly")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" variant="outline" onClick={() => setCleanDialogOpen(false)} className="flex-1">বাতিল</Button>
+                    <Button type="button" variant="outline" onClick={() => setCleanDialogOpen(false)} className="flex-1">
+                      {t("বাতিল", "Cancel")}
+                    </Button>
                     <Button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-700 text-white" disabled={submitting}>
-                      {submitting ? <Loader2 size={14} className="animate-spin mr-1" /> : null}সেভ করুন
+                      {submitting ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                      {t("সেভ করুন", "Save Task")}
                     </Button>
                   </div>
                 </form>
@@ -406,48 +416,51 @@ export function HouseHub({
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
                   <Plus size={14} />
-                  + Report Issue
+                  {t("সমস্যা রিপোর্ট করুন", "Report Issue")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
-                <DialogHeader><DialogTitle>সমস্যা বা মেরামত রিপোর্ট করুন</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{t("সমস্যা বা মেরামত রিপোর্ট করুন", "Report Maintenance Issue")}</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddMaintenance} className="space-y-3.5 mt-2">
                   <div className="space-y-1">
-                    <Label htmlFor="m-title">সমস্যার শিরোনাম *</Label>
-                    <Input id="m-title" name="title" placeholder="যেমন: ফ্যান মেরামত, পানির ট্যাপ লিক..." required />
+                    <Label htmlFor="m-title">{t("সমস্যার শিরোনাম *", "Issue Title *")}</Label>
+                    <Input id="m-title" name="title" placeholder={t("যেমন: ফ্যান মেরামত, পানির ট্যাপ লিক...", "e.g. Fan repair, Tap leaking...")} required />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label htmlFor="m-loc">স্থান / রুম</Label>
-                      <Input id="m-loc" name="location" placeholder="রুম ১০১, কিচেন..." />
+                      <Label htmlFor="m-loc">{t("স্থান / রুম", "Location / Room")}</Label>
+                      <Input id="m-loc" name="location" placeholder={t("রুম ১০১, কিচেন...", "Room 101, Kitchen...")} />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="m-cost">আনুমানিক / মেরামত খরচ (৳)</Label>
+                      <Label htmlFor="m-cost">{t("মেরামত খরচ (৳)", "Estimated / Repair Cost (৳)")}</Label>
                       <Input id="m-cost" name="cost" type="number" min="0" defaultValue="0" placeholder="0" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label>জরুরিতা (Priority)</Label>
+                      <Label>{t("জরুরিতা", "Priority")}</Label>
                       <Select name="priority" defaultValue="MEDIUM">
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="LOW">কম (Low)</SelectItem>
-                          <SelectItem value="MEDIUM">মাঝারি (Medium)</SelectItem>
-                          <SelectItem value="HIGH">জরুরি (High)</SelectItem>
-                          <SelectItem value="URGENT">অতি জরুরি (Urgent)</SelectItem>
+                          <SelectItem value="LOW">{t("কম", "Low")}</SelectItem>
+                          <SelectItem value="MEDIUM">{t("মাঝারি", "Medium")}</SelectItem>
+                          <SelectItem value="HIGH">{t("জরুরি", "High")}</SelectItem>
+                          <SelectItem value="URGENT">{t("অতি জরুরি", "Urgent")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="m-desc">বিবরণ</Label>
-                      <Input id="m-desc" name="description" placeholder="বিস্তারিত..." />
+                      <Label htmlFor="m-desc">{t("বিবরণ", "Description")}</Label>
+                      <Input id="m-desc" name="description" placeholder={t("বিস্তারিত...", "Details...")} />
                     </div>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" variant="outline" onClick={() => setMaintDialogOpen(false)} className="flex-1">বাতিল</Button>
+                    <Button type="button" variant="outline" onClick={() => setMaintDialogOpen(false)} className="flex-1">
+                      {t("বাতিল", "Cancel")}
+                    </Button>
                     <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700 text-white" disabled={submitting}>
-                      {submitting ? <Loader2 size={14} className="animate-spin mr-1" /> : null}সাবমিট করুন
+                      {submitting ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                      {t("সাবমিট করুন", "Submit Report")}
                     </Button>
                   </div>
                 </form>
@@ -460,11 +473,11 @@ export function HouseHub({
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
                   <Plus size={14} />
-                  + Add Item
+                  {t("মালামাল যোগ করুন", "Add Shopping Item")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
-                <DialogHeader><DialogTitle>শপিং লিস্টে আইটেম যোগ করুন</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{t("শপিং লিস্টে আইটেম যোগ করুন", "Add Item to Shopping List")}</DialogTitle></DialogHeader>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -480,26 +493,30 @@ export function HouseHub({
                   className="space-y-3.5 mt-2"
                 >
                   <div className="space-y-1">
-                    <Label htmlFor="s-name">আইটেমের নাম *</Label>
-                    <Input id="s-name" name="name" placeholder="যেমন: হারপিক, ভিম লিকুইড, লাইট বাল্ব..." required />
+                    <Label htmlFor="s-name">{t("আইটেমের নাম *", "Item Name *")}</Label>
+                    <Input id="s-name" name="name" placeholder={t("যেমন: হারপিক, ভিম লিকুইড, লাইট বাল্ব...", "e.g. Cleaning liquid, Dishwash, Light bulb...")} required />
                   </div>
                   <div className="grid grid-cols-3 gap-2.5">
                     <div className="space-y-1">
-                      <Label htmlFor="s-qty">পরিমাণ</Label>
+                      <Label htmlFor="s-qty">{t("পরিমাণ", "Quantity")}</Label>
                       <Input id="s-qty" name="quantity" defaultValue="1" />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="s-unit">একক</Label>
+                      <Label htmlFor="s-unit">{t("একক", "Unit")}</Label>
                       <Input id="s-unit" name="unit" defaultValue="piece" />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="s-cost">দাম (৳)</Label>
+                      <Label htmlFor="s-cost">{t("দাম (৳)", "Cost (৳)")}</Label>
                       <Input id="s-cost" name="cost" type="number" min="0" defaultValue="0" />
                     </div>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button type="button" variant="outline" onClick={() => setShopDialogOpen(false)} className="flex-1">বাতিল</Button>
-                    <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">যোগ করুন</Button>
+                    <Button type="button" variant="outline" onClick={() => setShopDialogOpen(false)} className="flex-1">
+                      {t("বাতিল", "Cancel")}
+                    </Button>
+                    <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">
+                      {t("যোগ করুন", "Add Item")}
+                    </Button>
                   </div>
                 </form>
               </DialogContent>
@@ -510,29 +527,29 @@ export function HouseHub({
 
       {/* 3. Section 1: Cleaning Schedule */}
       {(activeTab === "all" || activeTab === "cleaning") && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
                 <Brush size={16} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-gray-900">ক্লিনিং শিডিউল ও দায়িত্ব (Cleaning Tasks)</h3>
-                <p className="text-xs text-gray-400">মেম্বারদের ক্লিনিং দায়িত্ব সম্পন্ন হলে Done চাপুন</p>
+                <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">{t("ক্লিনিং শিডিউল ও দায়িত্ব", "Cleaning Tasks & Schedule")}</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500">{t("মেম্বারদের ক্লিনিং দায়িত্ব সম্পন্ন হলে Done চাপুন", "Click Done when a cleaning task is completed")}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full">
-              {pendingCleaningCount} টি বাকি
+            <span className="text-xs font-semibold bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2.5 py-1 rounded-full">
+              {t(`${pendingCleaningCount} টি বাকি`, `${pendingCleaningCount} pending`)}
             </span>
           </div>
 
           {cleaningList.length === 0 ? (
-            <p className="text-center py-6 text-xs text-gray-400">কোনো ক্লিনিং টাস্ক নির্ধারিত নেই।</p>
+            <p className="text-center py-6 text-xs text-gray-400 dark:text-slate-500">{t("কোনো ক্লিনিং টাস্ক নির্ধারিত নেই।", "No cleaning tasks scheduled.")}</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {cleaningList.map((task) => {
                 const isDone = task.status === "DONE";
-                const memberName = task.assignedMember?.user?.name ?? "Unassigned";
+                const memberName = task.assignedMember?.user?.name ?? t("অনির্ধারিত", "Unassigned");
                 const initials = memberName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
                 return (
@@ -540,18 +557,18 @@ export function HouseHub({
                     key={task.id}
                     className={cn(
                       "p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3",
-                      isDone ? "bg-gray-50/70 border-gray-200 opacity-60" : "bg-white border-teal-100 hover:border-teal-200 shadow-xs"
+                      isDone ? "bg-gray-50/70 dark:bg-slate-800/40 border-gray-200 dark:border-slate-800 opacity-60" : "bg-white dark:bg-slate-900 border-teal-100 dark:border-teal-900/60 hover:border-teal-200 shadow-xs"
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="text-xs font-semibold bg-teal-50 text-teal-800">{initials}</AvatarFallback>
+                        <AvatarFallback className="text-xs font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300">{initials}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className={cn("text-xs font-semibold text-gray-900 truncate", isDone && "line-through")}>
+                        <p className={cn("text-xs font-semibold text-gray-900 dark:text-slate-100 truncate", isDone && "line-through")}>
                           {task.title}
                         </p>
-                        <p className="text-[11px] text-gray-400 truncate">
+                        <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">
                           {task.location} • {memberName} {task.recurrence ? `(${task.recurrence})` : ""}
                         </p>
                       </div>
@@ -566,11 +583,11 @@ export function HouseHub({
                         className="h-7 px-3 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-full shrink-0 gap-1"
                       >
                         {loadingId === task.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                        Done
+                        {t("সম্পন্ন", "Done")}
                       </Button>
                     ) : (
-                      <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 shrink-0">
-                        <CheckCircle2 size={14} /> সম্পন্ন
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 shrink-0">
+                        <CheckCircle2 size={14} /> {t("সম্পন্ন", "Done")}
                       </span>
                     )}
                   </div>
@@ -581,28 +598,28 @@ export function HouseHub({
         </div>
       )}
 
-      {/* 4. Section 2: Maintenance Issues with Repair Cost */}
+      {/* 4. Section 2: Maintenance Issues */}
       {(activeTab === "all" || activeTab === "maintenance") && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
                 <Wrench size={16} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-gray-900">মেরামত ও রক্ষণাবেক্ষণ (Maintenance Issues)</h3>
-                <p className="text-xs text-gray-400">বাসার যেকোনো মেরামত খরচ সরাসরি ড্যাশবোর্ডে যুক্ত হবে</p>
+                <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">{t("মেরামত ও রক্ষণাবেক্ষণ", "Maintenance & Repairs")}</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500">{t("বাসার যেকোনো মেরামত খরচ সরাসরি ড্যাশবোর্ডে যুক্ত হবে", "Repair costs are directly linked to shared mess finances")}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">
-              {pendingMaintCount} টি ওপেন
+            <span className="text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full">
+              {t(`${pendingMaintCount} টি ওপেন`, `${pendingMaintCount} open`)}
             </span>
           </div>
 
           {maintenanceList.length === 0 ? (
-            <p className="text-center py-6 text-xs text-gray-400">কোনো সমস্যা রিপোর্ট করা নেই।</p>
+            <p className="text-center py-6 text-xs text-gray-400 dark:text-slate-500">{t("কোনো সমস্যা রিপোর্ট করা নেই।", "No maintenance issues reported.")}</p>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-slate-800">
               {maintenanceList.map((item) => {
                 const isResolved = item.status === "RESOLVED";
                 const reportedName = item.reportedBy?.user?.name ?? "Member";
@@ -612,7 +629,7 @@ export function HouseHub({
                   <div key={item.id} className="py-3 flex items-center justify-between gap-3 first:pt-0 last:pb-0">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={cn("text-xs font-semibold text-gray-900", isResolved && "line-through text-gray-400")}>
+                        <p className={cn("text-xs font-semibold text-gray-900 dark:text-slate-100", isResolved && "line-through text-gray-400")}>
                           {item.title}
                         </p>
                         <Badge
@@ -620,29 +637,29 @@ export function HouseHub({
                           className={cn(
                             "text-[10px] py-0 px-2 rounded-full font-bold",
                             item.priority === "URGENT" || item.priority === "HIGH"
-                              ? "bg-rose-50 text-rose-700 border-rose-200"
-                              : "bg-amber-50 text-amber-700 border-amber-200"
+                              ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                              : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                           )}
                         >
                           {item.priority}
                         </Badge>
                         {cost > 0 && (
-                          <Badge className="bg-emerald-100 text-emerald-800 border-0 text-[10px]">
-                            খরচ: {formatCurrency(cost)}
+                          <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-0 text-[10px]">
+                            {t(`খরচ: ${formatCurrency(cost)}`, `Cost: ${formatCurrency(cost)}`)}
                           </Badge>
                         )}
                         <Badge
                           variant="outline"
                           className={cn(
                             "text-[10px] py-0 px-2 rounded-full",
-                            isResolved ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200"
+                            isResolved ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                           )}
                         >
                           {item.status}
                         </Badge>
                       </div>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
-                        {item.location ? `${item.location} • ` : ""}রিপোর্টকারী: {reportedName}
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">
+                        {item.location ? `${item.location} • ` : ""}{t(`রিপোর্টকারী: ${reportedName}`, `Reported by: ${reportedName}`)}
                         {item.description ? ` — ${item.description}` : ""}
                       </p>
                     </div>
@@ -654,14 +671,14 @@ export function HouseHub({
                             type="button"
                             size="sm"
                             onClick={() => {
-                              const costStr = prompt("মেরামত খরচ কত টাকা হয়েছে? (৳):", String(cost || 0));
+                              const costStr = prompt(t("মেরামত খরচ কত টাকা হয়েছে? (৳):", "Enter final repair cost (৳):"), String(cost || 0));
                               const finalCost = costStr ? Number(costStr) : cost;
                               handleUpdateMaintStatus(item.id, "RESOLVED", finalCost);
                             }}
                             disabled={loadingId === item.id}
                             className="h-7 px-2.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-full"
                           >
-                            Resolve ✓
+                            {t("সমাধান ✓", "Resolve ✓")}
                           </Button>
                         ) : (
                           <Button
@@ -671,7 +688,7 @@ export function HouseHub({
                             onClick={() => handleUpdateMaintStatus(item.id, "IN_PROGRESS")}
                             className="h-7 px-2.5 text-xs text-gray-500 rounded-full"
                           >
-                            Reopen
+                            {t("পুনরায় খুলুন", "Reopen")}
                           </Button>
                         )}
                       </div>
@@ -684,25 +701,25 @@ export function HouseHub({
         </div>
       )}
 
-      {/* 5. Section 3: Shared Shopping List with Purchase Cost */}
+      {/* 5. Section 3: Shared Shopping List */}
       {(activeTab === "all" || activeTab === "shopping") && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                 <ShoppingCart size={16} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-gray-900">শেয়ার্ড শপিং লিস্ট (Household Shopping List)</h3>
-                <p className="text-xs text-gray-400">মালামাল কেনা হলে টিক চিহ্ন দিয়ে দাম লিখুন, ড্যাশবোর্ডে খরচ যুক্ত হবে</p>
+                <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">{t("শেয়ার্ড শপিং লিস্ট", "Shared Shopping List")}</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500">{t("মালামাল কেনা হলে টিক চিহ্ন দিয়ে দাম লিখুন, মেস খরচে যুক্ত হবে", "Mark items as purchased with cost to add to mess expenses")}</p>
               </div>
             </div>
-            <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
-              {pendingShopCount} টি দরকার
+            <span className="text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 px-2.5 py-1 rounded-full">
+              {t(`${pendingShopCount} টি দরকার`, `${pendingShopCount} needed`)}
             </span>
           </div>
 
-          {/* Inline Quick Add Input with Cost */}
+          {/* Inline Quick Add Input */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -713,34 +730,34 @@ export function HouseHub({
             <Input
               value={quickItemName}
               onChange={(e) => setQuickItemName(e.target.value)}
-              placeholder="+ নতুন মালামালের নাম (যেমন: হারপিক, ডিশওয়াশ, বাল্ব)..."
+              placeholder={t("+ নতুন মালামালের নাম (যেমন: হারপিক, ডিশওয়াশ, বাল্ব)...", "+ New item name (e.g. Dishwash, Light bulb)...")}
               className="h-9 text-xs flex-1 rounded-xl"
             />
             <Input
               value={quickItemCost}
               onChange={(e) => setQuickItemCost(e.target.value)}
-              placeholder="দাম ৳"
+              placeholder={t("দাম ৳", "Price ৳")}
               type="number"
               min="0"
               className="h-9 text-xs w-20 rounded-xl"
             />
             <Button type="submit" size="sm" className="h-9 px-3.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
-              যোগ করুন
+              {t("যোগ করুন", "Add")}
             </Button>
           </form>
 
           {/* Shopping Items List */}
           {shoppingList.length === 0 ? (
-            <p className="text-center py-6 text-xs text-gray-400">শপিং লিস্টে কোনো আইটেম নেই।</p>
+            <p className="text-center py-6 text-xs text-gray-400 dark:text-slate-500">{t("শপিং লিস্টে কোনো আইটেম নেই।", "No items in shopping list.")}</p>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-slate-800">
               {shoppingList.map((item) => {
                 const isPurchased = item.status === "PURCHASED";
                 const addedName = item.addedBy?.user?.name ?? "Member";
                 const cost = Number(item.cost) || 0;
 
                 return (
-                  <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-gray-50/50 px-2 rounded-xl transition-colors">
+                  <div key={item.id} className="py-2.5 flex items-center justify-between gap-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       <button
                         type="button"
@@ -752,19 +769,19 @@ export function HouseHub({
                           "w-6 h-6 rounded-lg border flex items-center justify-center transition-all cursor-pointer shrink-0",
                           isPurchased
                             ? "bg-emerald-600 border-emerald-600 text-white"
-                            : "border-gray-300 hover:border-indigo-500 bg-white text-transparent"
+                            : "border-gray-300 dark:border-slate-700 hover:border-indigo-500 bg-white dark:bg-slate-900 text-transparent"
                         )}
-                        title={isPurchased ? "Marked as purchased" : "Click to mark as purchased with price"}
+                        title={isPurchased ? t("কেনা হয়েছে", "Purchased") : t("কেনা হলে টিক দিন", "Mark as purchased")}
                       >
                         <Check size={14} />
                       </button>
 
                       <div className="min-w-0">
-                        <p className={cn("text-xs font-semibold text-gray-900 truncate", isPurchased && "line-through text-gray-400")}>
+                        <p className={cn("text-xs font-semibold text-gray-900 dark:text-slate-100 truncate", isPurchased && "line-through text-gray-400 dark:text-slate-500")}>
                           {item.name}
                         </p>
-                        <p className="text-[11px] text-gray-400">
-                          {item.quantity ? `${item.quantity} ${item.unit ?? ""} • ` : ""}যুক্ত করেছে: {addedName}
+                        <p className="text-[11px] text-gray-400 dark:text-slate-500">
+                          {item.quantity ? `${item.quantity} ${item.unit ?? ""} • ` : ""}{t(`যুক্ত করেছে: ${addedName}`, `Added by: ${addedName}`)}
                           {item.note ? ` (${item.note})` : ""}
                         </p>
                       </div>
@@ -772,20 +789,20 @@ export function HouseHub({
 
                     <div className="flex items-center gap-2 shrink-0">
                       {cost > 0 && (
-                        <span className="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+                        <span className="text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">
                           {formatCurrency(cost)}
                         </span>
                       )}
                       {isPurchased && (
-                        <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          কেনা হয়েছে ✓
+                        <span className="text-[10px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                          {t("কেনা হয়েছে ✓", "Purchased ✓")}
                         </span>
                       )}
                       <button
                         type="button"
                         onClick={() => handleDeleteShopping(item.id)}
-                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                        title="Delete item"
+                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title={t("মুছে ফেলুন", "Delete item")}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -802,22 +819,22 @@ export function HouseHub({
       <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
         <DialogContent className="max-w-xs">
           <DialogHeader>
-            <DialogTitle>মালামাল কেনার খরচ লিখুন</DialogTitle>
+            <DialogTitle>{t("মালামাল কেনার খরচ লিখুন", "Record Purchase Cost")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleConfirmPurchase} className="space-y-3 mt-2">
-            <p className="text-xs text-gray-500">
-              আইটেম: <strong className="text-gray-900">{selectedShopItem?.name}</strong>
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              {t("আইটেম:", "Item:")} <strong className="text-gray-900 dark:text-slate-100">{selectedShopItem?.name}</strong>
             </p>
             <div className="space-y-1">
-              <Label htmlFor="pur-cost">কেনার দাম / খরচ (৳) *</Label>
+              <Label htmlFor="pur-cost">{t("কেনার দাম / খরচ (৳) *", "Purchase Price (৳) *")}</Label>
               <Input id="pur-cost" name="cost" type="number" min="0" defaultValue={selectedShopItem?.cost || "0"} required autoFocus />
             </div>
             <div className="flex gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setPurchaseDialogOpen(false)} className="flex-1">
-                বাতিল
+                {t("বাতিল", "Cancel")}
               </Button>
               <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
-                সেভ করুন ✓
+                {t("সেভ করুন ✓", "Save ✓")}
               </Button>
             </div>
           </form>

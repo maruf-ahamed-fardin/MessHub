@@ -19,6 +19,7 @@ export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   FURNITURE: "Furniture",
   OTHER: "Other",
 };
+export const EXPENSE_CATEGORY_LABELS_EN = EXPENSE_CATEGORY_LABELS;
 
 export const EXPENSE_CATEGORY_LABELS_BN: Record<string, string> = {
   ELECTRICITY: "বিদ্যুৎ বিল",
@@ -50,6 +51,7 @@ export const UTILITY_LABELS: Record<string, string> = {
   WASTE: "Waste Management",
   OTHER: "Other Utility",
 };
+export const UTILITY_LABELS_EN = UTILITY_LABELS;
 
 export const UTILITY_LABELS_BN: Record<string, string> = {
   ELECTRICITY: "বিদ্যুৎ বিল",
@@ -74,6 +76,7 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   BANK: "Bank Transfer",
   OTHER: "Other",
 };
+export const PAYMENT_METHOD_LABELS_EN = PAYMENT_METHOD_LABELS;
 
 export const PAYMENT_METHOD_LABELS_BN: Record<string, string> = {
   CASH: "নগদ ক্যাশ",
@@ -93,6 +96,7 @@ export const SHARING_METHOD_LABELS: Record<string, string> = {
   MEAL_BASED: "Meal Based",
   SELECTED_MEMBERS: "Selected Members",
 };
+export const SHARING_METHOD_LABELS_EN = SHARING_METHOD_LABELS;
 
 export const SHARING_METHOD_LABELS_BN: Record<string, string> = {
   EQUAL: "সমান বণ্টন",
@@ -111,6 +115,7 @@ export const NOTICE_PRIORITY_LABELS: Record<string, string> = {
   IMPORTANT: "Important",
   URGENT: "Urgent",
 };
+export const NOTICE_PRIORITY_LABELS_EN = NOTICE_PRIORITY_LABELS;
 
 export const NOTICE_PRIORITY_LABELS_BN: Record<string, string> = {
   NORMAL: "সাধারণ",
@@ -131,6 +136,7 @@ export const MAINTENANCE_PRIORITY_LABELS: Record<string, string> = {
   HIGH: "High",
   URGENT: "Urgent",
 };
+export const MAINTENANCE_PRIORITY_LABELS_EN = MAINTENANCE_PRIORITY_LABELS;
 
 export const MAINTENANCE_PRIORITY_LABELS_BN: Record<string, string> = {
   LOW: "কম",
@@ -154,6 +160,7 @@ export const POST_TYPE_LABELS: Record<string, string> = {
   EVENT: "Event",
   IMPORTANT: "Important",
 };
+export const POST_TYPE_LABELS_EN = POST_TYPE_LABELS;
 
 export const POST_TYPE_LABELS_BN: Record<string, string> = {
   GENERAL: "সাধারণ",
@@ -178,6 +185,7 @@ export const RECURRENCE_LABELS: Record<string, string> = {
   WEEKLY: "Weekly",
   CUSTOM: "Custom",
 };
+export const RECURRENCE_LABELS_EN = RECURRENCE_LABELS;
 
 export const RECURRENCE_LABELS_BN: Record<string, string> = {
   DAILY: "প্রতিদিন",

@@ -3,13 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Bell, AlertTriangle, ShoppingBasket, Brush, Wrench,
+  Bell, ShoppingBasket,
   CreditCard, UtensilsCrossed, CheckCheck, Trash2,
-  ArrowRight, MessageSquare, Check, Sparkles, Megaphone,
+  ArrowRight, MessageSquare, Check, Sparkles, Megaphone, Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { LiveNotificationItem } from "@/backend/notifications/notification.service";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface NotificationCenterProps {
   initialNotifications: LiveNotificationItem[];
@@ -18,6 +19,7 @@ interface NotificationCenterProps {
 export function NotificationCenter({ initialNotifications }: NotificationCenterProps) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const { t } = usePreferences();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -41,56 +43,56 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
         return {
           icon: Megaphone,
           badgeBg: "bg-gradient-to-tr from-rose-500 to-red-600 text-white shadow-xs",
-          tagLabel: "নোটিশ",
+          tagLabel: t("নোটিশ", "Notice"),
           tagStyle: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800",
         };
       case "bazar":
         return {
           icon: ShoppingBasket,
           badgeBg: "bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-xs",
-          tagLabel: "বাজার",
+          tagLabel: t("বাজার", "Bazar"),
           tagStyle: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800",
         };
       case "payment":
         return {
           icon: CreditCard,
           badgeBg: "bg-gradient-to-tr from-emerald-500 to-teal-600 text-white shadow-xs",
-          tagLabel: "টাকা জমা",
+          tagLabel: t("টাকা জমা", "Payment"),
           tagStyle: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800",
         };
       case "duty":
         return {
           icon: Sparkles,
           badgeBg: "bg-gradient-to-tr from-teal-500 to-cyan-600 text-white shadow-xs",
-          tagLabel: "ডিউটি",
+          tagLabel: t("ডিউটি", "Duty"),
           tagStyle: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800",
         };
       case "meal":
         return {
           icon: UtensilsCrossed,
           badgeBg: "bg-gradient-to-tr from-blue-500 to-indigo-600 text-white shadow-xs",
-          tagLabel: "মিল বুকিং",
+          tagLabel: t("মিল", "Meal"),
           tagStyle: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800",
         };
       case "house":
         return {
           icon: Wrench,
           badgeBg: "bg-gradient-to-tr from-purple-500 to-violet-600 text-white shadow-xs",
-          tagLabel: "হাউস টাস্ক",
+          tagLabel: t("হাউস", "House"),
           tagStyle: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800",
         };
       case "community":
         return {
           icon: MessageSquare,
           badgeBg: "bg-gradient-to-tr from-indigo-500 to-primary text-white shadow-xs",
-          tagLabel: "ফিড পোস্ট",
+          tagLabel: t("ফিড", "Feed"),
           tagStyle: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800",
         };
       default:
         return {
           icon: Bell,
           badgeBg: "bg-gradient-to-tr from-slate-600 to-slate-800 text-white shadow-xs",
-          tagLabel: "অ্যালার্ট",
+          tagLabel: t("অ্যালার্ট", "Alert"),
           tagStyle: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
         };
     }
@@ -120,7 +122,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
             )}
           >
-            সব ({notifications.length})
+            {t(`সব (${notifications.length})`, `All (${notifications.length})`)}
           </button>
           <button
             type="button"
@@ -132,7 +134,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
             )}
           >
-            অপঠিত ({unreadCount})
+            {t(`অপঠিত (${unreadCount})`, `Unread (${unreadCount})`)}
           </button>
           <button
             type="button"
@@ -144,7 +146,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
             )}
           >
-            🛒 বাজার ও মিল
+            {t("বাজার ও মিল", "Bazar & Meals")}
           </button>
           <button
             type="button"
@@ -156,7 +158,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
             )}
           >
-            💰 টাকা ও লেনদেন
+            {t("টাকা ও লেনদেন", "Finance & Payments")}
           </button>
           <button
             type="button"
@@ -168,7 +170,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
             )}
           >
-            🧹 ডিউটি ও কাজ
+            {t("ডিউটি ও কাজ", "Duties & Tasks")}
           </button>
           <button
             type="button"
@@ -180,7 +182,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
             )}
           >
-            📢 নোটিশ ও ফিড
+            {t("নোটিশ ও ফিড", "Notices & Feed")}
           </button>
         </div>
 
@@ -192,7 +194,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             className="h-8 text-xs font-bold gap-1.5 shrink-0 rounded-xl"
           >
             <CheckCheck size={14} />
-            <span>সবগুলো পঠিত করুন</span>
+            <span>{t("সবগুলো পঠিত করুন", "Mark All as Read")}</span>
           </Button>
         )}
       </div>
@@ -204,7 +206,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2 text-slate-400">
               <Bell size={22} className="opacity-50" />
             </div>
-            <p className="font-bold">কোনো নোটিফিকেশন পাওয়া যায়নি</p>
+            <p className="font-bold">{t("কোনো নোটিফিকেশন পাওয়া যায়নি", "No notifications found")}</p>
           </div>
         ) : (
           filteredList.map((n) => {
@@ -221,7 +223,6 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 )}
               >
                 <div className="flex items-start gap-3.5 min-w-0">
-                  {/* Distinct Colorful Squircle Badge */}
                   <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 mt-0.5", badgeBg)}>
                     <Icon size={18} strokeWidth={2.3} />
                   </div>
@@ -251,7 +252,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                   <Link
                     href={n.href}
                     className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title="দেখুন"
+                    title={t("দেখুন", "View")}
                   >
                     <ArrowRight size={15} />
                   </Link>
@@ -259,7 +260,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                     type="button"
                     onClick={() => handleToggleRead(n.id)}
                     className="p-1.5 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                    title={n.read ? "অপঠিত চিহ্নিত করুন" : "পঠিত চিহ্নিত করুন"}
+                    title={n.read ? t("অপঠিত চিহ্নিত করুন", "Mark as unread") : t("পঠিত চিহ্নিত করুন", "Mark as read")}
                   >
                     <Check size={15} />
                   </button>
@@ -267,7 +268,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                     type="button"
                     onClick={() => handleDelete(n.id)}
                     className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                    title="মুছে ফেলুন"
+                    title={t("মুছে ফেলুন", "Delete")}
                   >
                     <Trash2 size={15} />
                   </button>

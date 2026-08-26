@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
-import { Brush, CheckSquare, Calendar, Plus, Check, MoreHorizontal, RotateCcw } from "lucide-react";
-import { completeCleaningTaskAction, createCleaningTaskAction } from "@/app/actions/app.actions";
+import { Brush, CheckSquare, Check } from "lucide-react";
+import { completeCleaningTaskAction } from "@/app/actions/app.actions";
 import { formatShortDate } from "@/lib/utils/date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface CleaningListProps {
   tasks: any[];
@@ -16,18 +17,19 @@ interface CleaningListProps {
   type: "cleaning" | "household";
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: "badge-warning",
-  DONE: "badge-success",
-  OVERDUE: "badge-urgent",
-};
-
-export function CleaningList({ tasks, isAdmin, type }: CleaningListProps) {
+export function CleaningList({ tasks, type }: CleaningListProps) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { t } = usePreferences();
 
   if (tasks.length === 0) {
-    return <EmptyState icon={type === "cleaning" ? Brush : CheckSquare} title={`No ${type === "cleaning" ? "cleaning" : "household"} tasks`} description="All caught up!" />;
+    return (
+      <EmptyState
+        icon={type === "cleaning" ? Brush : CheckSquare}
+        title={t("কোনো টাস্ক নেই", "No tasks scheduled")}
+        description={t("সব কাজ সম্পন্ন হয়েছে!", "All caught up!")}
+      />
+    );
   }
 
   const handleComplete = (id: string) => {
@@ -44,24 +46,42 @@ export function CleaningList({ tasks, isAdmin, type }: CleaningListProps) {
         const isOverdue = !isDone && new Date(task.dueDate) < new Date();
 
         return (
-          <div key={task.id} className={cn(
-            "bg-white border rounded-[var(--radius)] px-4 py-3 flex items-center gap-3",
-            isDone ? "border-[hsl(var(--border))] opacity-60" : isOverdue ? "border-red-200" : "border-[hsl(var(--border))]"
-          )}>
-            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-              isDone ? "bg-green-50" : "bg-[hsl(var(--secondary))]")}>
-              {type === "cleaning" ? <Brush size={14} className={isDone ? "text-green-600" : "text-[hsl(var(--secondary-foreground))]"} />
-                : <CheckSquare size={14} className={isDone ? "text-green-600" : "text-[hsl(var(--secondary-foreground))]"} />}
+          <div
+            key={task.id}
+            className={cn(
+              "bg-white dark:bg-slate-900 border rounded-xl px-4 py-3 flex items-center gap-3",
+              isDone ? "border-gray-200 dark:border-slate-800 opacity-60" : isOverdue ? "border-red-200 dark:border-red-900/60" : "border-gray-200 dark:border-slate-800"
+            )}
+          >
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                isDone ? "bg-green-50 dark:bg-green-950/40" : "bg-gray-100 dark:bg-slate-800"
+              )}
+            >
+              {type === "cleaning" ? (
+                <Brush size={14} className={isDone ? "text-green-600 dark:text-green-400" : "text-gray-600 dark:text-slate-300"} />
+              ) : (
+                <CheckSquare size={14} className={isDone ? "text-green-600 dark:text-green-400" : "text-gray-600 dark:text-slate-300"} />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={cn("text-sm font-medium", isDone && "line-through text-[hsl(var(--muted-foreground))]")}>{task.title}</p>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                {task.location ?? task.category} · {task.assignedMember?.user?.name} · Due {formatShortDate(task.dueDate)}
+              <p className={cn("text-sm font-medium text-gray-900 dark:text-slate-100", isDone && "line-through text-gray-400 dark:text-slate-500")}>
+                {task.title}
               </p>
-              {task.recurrence && <p className="text-xs text-[hsl(var(--primary))]">↻ Recurring</p>}
+              <p className="text-xs text-gray-400 dark:text-slate-500">
+                {task.location ?? task.category} · {task.assignedMember?.user?.name} · {t("মেয়াদ:", "Due:")} {formatShortDate(task.dueDate)}
+              </p>
+              {task.recurrence && <p className="text-xs text-primary font-medium">{t("↻ পুনরাবৃত্তি", "↻ Recurring")}</p>}
             </div>
-            <Badge variant="outline" className={`text-xs ${STATUS_STYLES[isOverdue ? "OVERDUE" : task.status] ?? ""}`}>
-              {isOverdue ? "Overdue" : task.status}
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs",
+                isOverdue ? "bg-red-50 text-red-700 border-red-200" : isDone ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"
+              )}
+            >
+              {isOverdue ? t("মেয়াদোত্তীর্ণ", "Overdue") : isDone ? t("সম্পন্ন", "Done") : t("বাকি", "Pending")}
             </Badge>
             {!isDone && (
               <Button
@@ -71,7 +91,8 @@ export function CleaningList({ tasks, isAdmin, type }: CleaningListProps) {
                 onClick={() => handleComplete(task.id)}
                 disabled={pending}
               >
-                <Check size={12} />Done
+                <Check size={12} />
+                {t("সম্পন্ন", "Done")}
               </Button>
             )}
           </div>

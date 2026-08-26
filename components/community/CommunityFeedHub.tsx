@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   MessageSquare, Pin, Trash2, MoreHorizontal, Send,
-  ThumbsUp, Heart, Flame, Lightbulb, Image as ImageIcon,
-  Video, AtSign, X, Reply, ChevronDown, ChevronUp,
-  UploadCloud, Link as LinkIcon, FileText, Sparkles, SmilePlus,
+  Image as ImageIcon, Video, AtSign, X, Reply, ChevronDown, ChevronUp,
+  Sparkles, SmilePlus, Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -23,8 +22,8 @@ import {
   addPostCommentAction,
   togglePostReactionAction,
 } from "@/app/actions/app.actions";
-
 import { compressImageFile, formatFileSize, CompressionResult } from "@/lib/utils/media-compression";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface MemberItem {
   id: string;
@@ -50,19 +49,6 @@ const DEFAULT_MEMBERS: MemberItem[] = [
   { id: "m7", name: "Sifat Khan", room: "Room 103" },
 ];
 
-const WHATSAPP_EMOJIS = [
-  { emoji: "👍", label: "লাইক" },
-  { emoji: "❤️", label: "লাভ" },
-  { emoji: "😂", label: "হাসি" },
-  { emoji: "😮", label: "বিস্ময়" },
-  { emoji: "😢", label: "কষ্ট" },
-  { emoji: "🙏", label: "ধন্যবাদ" },
-  { emoji: "🔥", label: "দারুণ" },
-  { emoji: "💡", label: "আইডিয়া" },
-  { emoji: "👏", label: "সাবাশ" },
-  { emoji: "🎉", label: "উদযাপন" },
-];
-
 // Helper to highlight @mentions in text
 function renderFormattedContent(content: string) {
   const parts = content.split(/(@[A-Za-z0-9_.\s]+(?=\s|$|[.,!?]))/g);
@@ -71,7 +57,7 @@ function renderFormattedContent(content: string) {
       return (
         <span
           key={i}
-          className="inline-block font-extrabold text-indigo-600 bg-indigo-50/90 border border-indigo-200/80 px-1.5 py-0.2 rounded-md hover:bg-indigo-100 transition-colors"
+          className="inline-block font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50/90 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800 px-1.5 py-0.2 rounded-md hover:bg-indigo-100 transition-colors"
         >
           {part}
         </span>
@@ -89,12 +75,26 @@ export function CommunityFeedHub({
   members = DEFAULT_MEMBERS,
 }: CommunityFeedHubProps) {
   const router = useRouter();
+  const { t } = usePreferences();
   const [posts, setPosts] = useState(initialPosts);
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState<"GENERAL" | "ANNOUNCEMENT" | "IDEA" | "ISSUE">("GENERAL");
   const [submitting, setSubmitting] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "pinned" | "media">("all");
   const [reactionPickerPostId, setReactionPickerPostId] = useState<string | null>(null);
+
+  const WHATSAPP_EMOJIS = [
+    { emoji: "👍", label: t("লাইক", "Like") },
+    { emoji: "❤️", label: t("লাভ", "Love") },
+    { emoji: "😂", label: t("হাসি", "Haha") },
+    { emoji: "😮", label: t("বিস্ময়", "Wow") },
+    { emoji: "😢", label: t("কষ্ট", "Sad") },
+    { emoji: "🙏", label: t("ধন্যবাদ", "Thanks") },
+    { emoji: "🔥", label: t("দারুণ", "Fire") },
+    { emoji: "💡", label: t("আইডিয়া", "Idea") },
+    { emoji: "👏", label: t("সাবাশ", "Clap") },
+    { emoji: "🎉", label: t("উদযাপন", "Celebrate") },
+  ];
 
   // Media Attachment States (Files & URLs & Compression)
   const [imageUrl, setImageUrl] = useState("");
@@ -148,13 +148,13 @@ export function CommunityFeedHub({
       reader.onload = (event) => {
         if (event.target?.result) {
           setImageUrl(event.target.result as string);
+          setVideoUrl("");
           setMediaFileName(file.name);
         }
       };
       reader.readAsDataURL(file);
     } finally {
       setIsCompressing(false);
-      e.target.value = "";
     }
   };
 
@@ -163,69 +163,54 @@ export function CommunityFeedHub({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 30 * 1024 * 1024) {
-      alert("ভিডিও ফাইলটি অনেক বড় (৩০MB এর বেশি)। ছোট ভিডিও আপলোড করুন।");
-      return;
-    }
-
-    setMediaFileName(file.name);
-    setCompressionStats({
-      dataUrl: "",
-      originalSize: file.size,
-      compressedSize: file.size,
-      reductionPercentage: 0,
-      fileName: file.name,
-    });
-
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
         setVideoUrl(event.target.result as string);
         setImageUrl(""); // clear image if video selected
+        setMediaFileName(file.name);
       }
     };
     reader.readAsDataURL(file);
-    e.target.value = ""; // reset input
   };
 
-  // Watch for "@" in textarea to trigger mention autocomplete
+  // Handle @ Mention Search trigger in input
   const handleContentChange = (val: string) => {
     setContent(val);
-    const lastAtIdx = val.lastIndexOf("@");
-    if (lastAtIdx !== -1 && lastAtIdx >= val.length - 15) {
-      const query = val.slice(lastAtIdx + 1).toLowerCase();
-      if (!query.includes(" ")) {
-        setMentionQuery(query);
-        setShowMentionMenu(true);
-        return;
-      }
+    const lastAtIndex = val.lastIndexOf("@");
+    if (lastAtIndex >= 0 && lastAtIndex === val.length - 1) {
+      setShowMentionMenu(true);
+      setMentionQuery("");
+    } else if (lastAtIndex >= 0 && showMentionMenu) {
+      const query = val.slice(lastAtIndex + 1).trim();
+      setMentionQuery(query.toLowerCase());
+    } else {
+      setShowMentionMenu(false);
     }
-    setShowMentionMenu(false);
   };
 
   const handleSelectMention = (memberName: string) => {
-    const lastAtIdx = content.lastIndexOf("@");
-    if (lastAtIdx !== -1) {
-      const updated = content.slice(0, lastAtIdx) + `@${memberName} `;
-      setContent(updated);
+    const lastAtIndex = content.lastIndexOf("@");
+    if (lastAtIndex >= 0) {
+      const newContent = content.slice(0, lastAtIndex) + `@${memberName} `;
+      setContent(newContent);
     }
     setShowMentionMenu(false);
     textareaRef.current?.focus();
   };
 
-  // Create New Post
-  const handleCreatePost = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  // Create Post
+  const handleCreatePost = async () => {
     if (!content.trim() && !imageUrl && !videoUrl) return;
-
     setSubmitting(true);
+
     const newPost = {
       id: `temp-${Date.now()}`,
       content: content.trim(),
       type: postType,
-      imageUrl: imageUrl.trim() || null,
-      videoUrl: videoUrl.trim() || null,
-      isPinned: postType === "ANNOUNCEMENT" && isAdmin,
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
+      isPinned: false,
       createdAt: new Date(),
       author: {
         id: currentUserId,
@@ -236,17 +221,18 @@ export function CommunityFeedHub({
       reactions: [],
     };
 
-    setPosts([newPost, ...posts]);
+    setPosts((prev) => [newPost, ...prev]);
     setContent("");
     setImageUrl("");
     setVideoUrl("");
     setMediaFileName("");
+    setCompressionStats(null);
     setShowUrlInput(null);
 
     try {
       await createPostAction({
-        type: postType,
         content: newPost.content,
+        type: newPost.type,
         imageUrl: newPost.imageUrl || undefined,
         videoUrl: newPost.videoUrl || undefined,
         authorId: currentUserId,
@@ -274,7 +260,7 @@ export function CommunityFeedHub({
 
   // Delete Post
   const handleDeletePost = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+    if (!confirm(t("আপনি কি এই পোস্টটি মুছে ফেলতে চান?", "Are you sure you want to delete this post?"))) return;
     setPosts((prev) => prev.filter((p) => p.id !== id));
     try {
       await deletePostAction(id);
@@ -315,7 +301,7 @@ export function CommunityFeedHub({
     }
   };
 
-  // Add Comment or Nested Reply
+  // Add Comment
   const handleAddComment = async (postId: string) => {
     const text = (commentInputs[postId] || "").trim();
     if (!text) return;
@@ -373,13 +359,13 @@ export function CommunityFeedHub({
   const getTagBadge = (type: string) => {
     switch (type) {
       case "ANNOUNCEMENT":
-        return <Badge variant="outline" className="text-[10px] bg-rose-50 text-rose-700 border-rose-200">📢 ঘোষণা</Badge>;
+        return <Badge variant="outline" className="text-[10px] bg-rose-50 text-rose-700 border-rose-200">{t("📢 ঘোষণা", "📢 Announcement")}</Badge>;
       case "IDEA":
-        return <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">💡 প্রস্তাব</Badge>;
+        return <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">{t("💡 প্রস্তাব", "💡 Idea")}</Badge>;
       case "ISSUE":
-        return <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">⚠️ সমস্যা</Badge>;
+        return <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">{t("⚠️ সমস্যা", "⚠️ Issue")}</Badge>;
       default:
-        return <Badge variant="outline" className="text-[10px] bg-gray-50 text-gray-600 border-gray-200">💬 আলোচনা</Badge>;
+        return <Badge variant="outline" className="text-[10px] bg-gray-50 text-gray-600 border-gray-200">{t("💬 সাধারণ", "💬 Discussion")}</Badge>;
     }
   };
 
@@ -389,7 +375,7 @@ export function CommunityFeedHub({
 
   return (
     <div className="max-w-4xl mx-auto space-y-5 pb-44">
-      {/* Hidden File Inputs for Device Image & Video Upload */}
+      {/* Hidden File Inputs */}
       <input
         type="file"
         ref={imageInputRef}
@@ -406,63 +392,62 @@ export function CommunityFeedHub({
       />
 
       {/* 1. Header Filter Bar & Activity Pulse */}
-      <div className="bg-white border border-gray-200/90 rounded-2xl p-2.5 sm:p-3.5 shadow-2xs flex items-center justify-between gap-2 overflow-x-auto">
+      <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3.5 shadow-2xs flex items-center justify-between gap-2 overflow-x-auto">
         {/* Filter Pills */}
-        <div className="flex items-center gap-1 p-1 bg-gray-100/90 rounded-xl shrink-0">
+        <div className="flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-slate-800 rounded-xl shrink-0">
           <button
             type="button"
             onClick={() => setActiveFilter("all")}
             className={cn(
               "px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
-              activeFilter === "all" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
+              activeFilter === "all" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            সব ({posts.length})
+            {t(`সব (${posts.length})`, `All (${posts.length})`)}
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("pinned")}
             className={cn(
               "px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
-              activeFilter === "pinned" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
+              activeFilter === "pinned" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            📌 পিন ({posts.filter((p) => p.isPinned).length})
+            {t(`📌 পিন (${posts.filter((p) => p.isPinned).length})`, `📌 Pinned (${posts.filter((p) => p.isPinned).length})`)}
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("media")}
             className={cn(
               "px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer select-none",
-              activeFilter === "media" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-900"
+              activeFilter === "media" ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs" : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
             )}
           >
-            📸 মিডিয়া ({posts.filter((p) => p.imageUrl || p.videoUrl).length})
+            {t(`📸 মিডিয়া (${posts.filter((p) => p.imageUrl || p.videoUrl).length})`, `📸 Media (${posts.filter((p) => p.imageUrl || p.videoUrl).length})`)}
           </button>
         </div>
 
         {/* Live Members Pulse Badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] font-extrabold shrink-0 shadow-2xs">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 text-[11px] font-extrabold shrink-0 shadow-2xs">
           <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span className="hidden sm:inline">৭ জন মেম্বার সক্রিয়</span>
-          <span className="sm:hidden">৭ সক্রিয়</span>
+          <span>{t(`${members.length} জন সক্রিয়`, `${members.length} Members Active`)}</span>
         </div>
       </div>
 
-      {/* 2. Main Feed Posts Stream (Spacious Cards) */}
+      {/* 2. Main Feed Posts Stream */}
       <div className="space-y-4">
         {filteredPosts.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-2xl py-16 text-center text-xs text-gray-400 shadow-2xs">
+          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl py-16 text-center text-xs text-gray-400 shadow-2xs">
             <MessageSquare size={36} className="mx-auto mb-3 opacity-30 text-indigo-500" />
-            <p className="font-bold text-sm text-gray-700">কোনো পোস্ট পাওয়া যায়নি।</p>
-            <p className="text-gray-400 mt-1">নিচের ফ্লোটিং পোস্ট বার থেকে ছবি, ভিডিও বা বার্তা লিখে পোস্ট করুন!</p>
+            <p className="font-bold text-sm text-gray-700 dark:text-slate-300">{t("কোনো পোস্ট পাওয়া যায়নি।", "No posts found.")}</p>
+            <p className="text-gray-400 dark:text-slate-500 mt-1">{t("নিচের বার থেকে বার্তা লিখে পোস্ট করুন!", "Write something in the composer below to post!")}</p>
           </div>
         ) : (
           filteredPosts.map((post) => {
-            const authorName = post.author?.name ?? post.authorName ?? "মেম্বার";
+            const authorName = post.author?.name ?? post.authorName ?? "Member";
             const initials = authorName
               .replace(/[()]/g, "")
               .trim()
@@ -486,32 +471,32 @@ export function CommunityFeedHub({
               <article
                 key={post.id}
                 className={cn(
-                  "bg-white border border-gray-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-gray-300 transition-all space-y-4",
-                  post.isPinned && "border-indigo-200 bg-indigo-50/15 ring-1 ring-indigo-200/60"
+                  "bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs hover:border-gray-300 dark:hover:border-slate-700 transition-all space-y-4",
+                  post.isPinned && "border-indigo-200 dark:border-indigo-800 bg-indigo-50/15 dark:bg-indigo-950/20 ring-1 ring-indigo-200/60 dark:ring-indigo-800/60"
                 )}
               >
                 {/* Post Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <Avatar className="h-11 w-11 shrink-0 border-2 border-indigo-100 shadow-2xs">
-                      <AvatarFallback className="text-xs font-black bg-indigo-50 text-indigo-600">
+                    <Avatar className="h-11 w-11 shrink-0 border-2 border-indigo-100 dark:border-indigo-900 shadow-2xs">
+                      <AvatarFallback className="text-xs font-black bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-black text-gray-900 truncate">
+                        <span className="text-sm font-black text-gray-900 dark:text-slate-100 truncate">
                           {authorName}
                         </span>
                         {getTagBadge(post.type)}
                         {post.isPinned && (
-                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md flex items-center gap-1 border border-indigo-100">
-                            📌 পিন করা
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md flex items-center gap-1 border border-indigo-100 dark:border-indigo-800">
+                            {t("📌 পিন করা", "📌 Pinned")}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-400 mt-0.5 font-medium">
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5 font-medium">
                         {formatRelativeDate(new Date(post.createdAt))}
                       </p>
                     </div>
@@ -523,7 +508,7 @@ export function CommunityFeedHub({
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="h-8 w-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                          className="h-8 w-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
                           <MoreHorizontal size={16} />
                         </button>
@@ -535,7 +520,7 @@ export function CommunityFeedHub({
                             className="cursor-pointer"
                           >
                             <Pin size={13} className="mr-2" />
-                            <span>{post.isPinned ? "আনপিন করুন" : "পিন করুন"}</span>
+                            <span>{post.isPinned ? t("আনপিন করুন", "Unpin Post") : t("পিন করুন", "Pin Post")}</span>
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
@@ -543,7 +528,7 @@ export function CommunityFeedHub({
                           className="text-rose-600 focus:text-rose-600 cursor-pointer"
                         >
                           <Trash2 size={13} className="mr-2" />
-                          <span>মুছে ফেলুন</span>
+                          <span>{t("মুছে ফেলুন", "Delete Post")}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -552,14 +537,14 @@ export function CommunityFeedHub({
 
                 {/* Post Content Body */}
                 {post.content && (
-                  <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-normal">
+                  <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-normal">
                     {renderFormattedContent(post.content)}
                   </p>
                 )}
 
-                {/* Attached Image (Wide & High-Res Frame) */}
+                {/* Attached Image */}
                 {post.imageUrl && (
-                  <div className="rounded-2xl overflow-hidden border border-gray-200/90 bg-gray-50 max-h-96 shadow-2xs">
+                  <div className="rounded-2xl overflow-hidden border border-gray-200/90 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 max-h-96 shadow-2xs">
                     <img
                       src={post.imageUrl}
                       alt="Post attachment"
@@ -570,16 +555,14 @@ export function CommunityFeedHub({
 
                 {/* Attached Video */}
                 {post.videoUrl && (
-                  <div className="rounded-2xl overflow-hidden border border-gray-200/90 bg-black max-h-96 shadow-2xs">
+                  <div className="rounded-2xl overflow-hidden border border-gray-200/90 dark:border-slate-800 bg-black max-h-96 shadow-2xs">
                     <video src={post.videoUrl} controls className="w-full max-h-96 object-contain" />
                   </div>
                 )}
 
                 {/* Reactions & Comment Bar */}
                 <div className="pt-3.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 text-xs">
-                  {/* WhatsApp-Style Reactions & Action Bar */}
                   <div className="flex items-center gap-1.5 flex-wrap relative">
-                    {/* 1. Active reaction badges */}
                     {WHATSAPP_EMOJIS.filter(({ emoji }) => {
                       const matching = postReactions.filter((r: any) => r.emoji === emoji);
                       return matching.length > 0;
@@ -599,7 +582,6 @@ export function CommunityFeedHub({
                               ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 shadow-2xs scale-105"
                               : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
                           )}
-                          title="রিঅ্যাকশন টগল করুন"
                         >
                           <span>{emoji}</span>
                           <span className="text-[11px] font-extrabold">{count}</span>
@@ -607,7 +589,6 @@ export function CommunityFeedHub({
                       );
                     })}
 
-                    {/* 2. WhatsApp-Style Single Reaction Trigger Button with Floating Picker */}
                     <div className="relative">
                       <button
                         type="button"
@@ -620,13 +601,11 @@ export function CommunityFeedHub({
                             ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
                             : "bg-gray-50/80 dark:bg-slate-800/80 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
                         )}
-                        title="রিঅ্যাকশন দিন"
                       >
                         <SmilePlus size={15} className="text-primary" />
-                        <span className="text-[11px]">React</span>
+                        <span className="text-[11px]">{t("রিঅ্যাক্ট", "React")}</span>
                       </button>
 
-                      {/* WhatsApp-Style Floating Emoji Bar */}
                       {reactionPickerPostId === post.id && (
                         <div className="absolute bottom-full left-0 mb-2 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-gray-200/90 dark:border-slate-700 shadow-2xl rounded-full px-2.5 py-1.5 flex items-center gap-1 animate-in fade-in zoom-in-95 duration-150">
                           {WHATSAPP_EMOJIS.map(({ emoji, label }) => {
@@ -664,30 +643,34 @@ export function CommunityFeedHub({
                       "px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer select-none",
                       isCommentsOpen || postComments.length > 0
                         ? "text-primary bg-primary/10 hover:bg-primary/15"
-                        : "text-gray-500 hover:bg-gray-100"
+                        : "text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
                     )}
                   >
                     <MessageSquare size={14} />
-                    <span>{postComments.length > 0 ? `${postComments.length} মন্তব্য ও রিপ্লাই` : "মন্তব্য করুন"}</span>
+                    <span>
+                      {postComments.length > 0
+                        ? t(`${postComments.length} টি মন্তব্য`, `${postComments.length} Comments`)
+                        : t("মন্তব্য লিখুন", "Comment")}
+                    </span>
                     {isCommentsOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
                 </div>
 
                 {/* 3. Threaded Comments & Nested Replies Box */}
                 {isCommentsOpen && (
-                  <div className="pt-4 border-t border-gray-100 space-y-3.5 animate-in fade-in-0 duration-150">
+                  <div className="pt-4 border-t border-gray-100 dark:border-slate-800 space-y-3.5 animate-in fade-in-0 duration-150">
                     {/* Comments List */}
                     {rootComments.length > 0 && (
                       <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                         {rootComments.map((comment: any) => {
-                          const cAuthor = comment.author?.name || "মেম্বার";
+                          const cAuthor = comment.author?.name || "Member";
                           const cInitials = cAuthor.replace(/[()]/g, "").trim().split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "M";
                           const replies = getReplies(comment.id);
 
                           return (
                             <div key={comment.id} className="space-y-2.5">
                               {/* Root Comment */}
-                              <div className="flex items-start gap-3 text-xs bg-gray-50/90 rounded-2xl p-3.5 border border-gray-100">
+                              <div className="flex items-start gap-3 text-xs bg-gray-50/90 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-gray-100 dark:border-slate-800">
                                 <Avatar className="h-8 w-8 shrink-0 mt-0.5 border border-primary/20">
                                   <AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">
                                     {cInitials}
@@ -695,10 +678,10 @@ export function CommunityFeedHub({
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-1">
-                                    <span className="font-black text-gray-900 text-xs">{cAuthor}</span>
+                                    <span className="font-black text-gray-900 dark:text-slate-100 text-xs">{cAuthor}</span>
                                     <span className="text-[10px] text-gray-400 font-medium">{formatRelativeDate(new Date(comment.createdAt))}</span>
                                   </div>
-                                  <p className="text-gray-700 text-xs mt-1 leading-relaxed whitespace-pre-wrap">
+                                  <p className="text-gray-700 dark:text-slate-300 text-xs mt-1 leading-relaxed whitespace-pre-wrap">
                                     {renderFormattedContent(comment.content)}
                                   </p>
                                   <button
@@ -707,23 +690,23 @@ export function CommunityFeedHub({
                                       setReplyingTo((prev) => ({ ...prev, [post.id]: { id: comment.id, name: cAuthor } }));
                                       setCommentInputs((prev) => ({ ...prev, [post.id]: `@${cAuthor} ` }));
                                     }}
-                                    className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                                    className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                                   >
                                     <Reply size={12} />
-                                    <span>রিপ্লাই</span>
+                                    <span>{t("রিপ্লাই", "Reply")}</span>
                                   </button>
                                 </div>
                               </div>
 
-                              {/* Nested Replies (রিপ্লাইয়ের রিপ্লাই) */}
+                              {/* Nested Replies */}
                               {replies.length > 0 && (
-                                <div className="pl-8 border-l-2 border-indigo-200 space-y-2.5">
+                                <div className="pl-8 border-l-2 border-indigo-200 dark:border-indigo-800 space-y-2.5">
                                   {replies.map((reply: any) => {
-                                    const rAuthor = reply.author?.name || "মেম্বার";
+                                    const rAuthor = reply.author?.name || "Member";
                                     const rInitials = rAuthor.replace(/[()]/g, "").trim().split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "M";
 
                                     return (
-                                      <div key={reply.id} className="flex items-start gap-2.5 text-xs bg-indigo-50/40 rounded-2xl p-3 border border-indigo-100/70">
+                                      <div key={reply.id} className="flex items-start gap-2.5 text-xs bg-indigo-50/40 dark:bg-indigo-950/20 rounded-2xl p-3 border border-indigo-100/70 dark:border-indigo-900/60">
                                         <Avatar className="h-7 w-7 shrink-0 mt-0.5 border border-indigo-200">
                                           <AvatarFallback className="text-[9px] font-black bg-indigo-100 text-indigo-700">
                                             {rInitials}
@@ -731,10 +714,10 @@ export function CommunityFeedHub({
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                           <div className="flex items-center justify-between gap-1">
-                                            <span className="font-extrabold text-gray-900 text-[11px]">{rAuthor}</span>
+                                            <span className="font-extrabold text-gray-900 dark:text-slate-100 text-[11px]">{rAuthor}</span>
                                             <span className="text-[9px] text-gray-400">{formatRelativeDate(new Date(reply.createdAt))}</span>
                                           </div>
-                                          <p className="text-gray-700 text-xs mt-0.5 leading-relaxed whitespace-pre-wrap">
+                                          <p className="text-gray-700 dark:text-slate-300 text-xs mt-0.5 leading-relaxed whitespace-pre-wrap">
                                             {renderFormattedContent(reply.content)}
                                           </p>
                                           <button
@@ -743,10 +726,10 @@ export function CommunityFeedHub({
                                               setReplyingTo((prev) => ({ ...prev, [post.id]: { id: comment.id, name: rAuthor } }));
                                               setCommentInputs((prev) => ({ ...prev, [post.id]: `@${rAuthor} ` }));
                                             }}
-                                            className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                                            className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                                           >
                                             <Reply size={11} />
-                                            <span>রিপ্লাই</span>
+                                            <span>{t("রিপ্লাই", "Reply")}</span>
                                           </button>
                                         </div>
                                       </div>
@@ -762,15 +745,15 @@ export function CommunityFeedHub({
 
                     {/* Replying target indicator banner */}
                     {activeReplyTarget && (
-                      <div className="flex items-center justify-between bg-indigo-50 px-3.5 py-1.5 rounded-xl text-xs text-indigo-700 font-semibold border border-indigo-100">
+                      <div className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-950/60 px-3.5 py-1.5 rounded-xl text-xs text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-100 dark:border-indigo-800">
                         <span className="flex items-center gap-1.5">
                           <Reply size={13} />
-                          <span>@{activeReplyTarget.name} এর মন্তব্যে রিপ্লাই দিচ্ছেন...</span>
+                          <span>{t(`@${activeReplyTarget.name} এর মন্তব্যে রিপ্লাই দিচ্ছেন...`, `Replying to @${activeReplyTarget.name}...`)}</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => setReplyingTo((prev) => ({ ...prev, [post.id]: null }))}
-                          className="text-gray-500 hover:text-gray-900 cursor-pointer"
+                          className="text-gray-500 hover:text-gray-900 dark:hover:text-slate-200 cursor-pointer"
                         >
                           <X size={13} />
                         </button>
@@ -784,7 +767,7 @@ export function CommunityFeedHub({
                           {userInitials}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3.5 py-1.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all">
+                      <div className="flex-1 flex items-center gap-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-3.5 py-1.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all">
                         <input
                           type="text"
                           value={commentInputs[post.id] || ""}
@@ -797,8 +780,8 @@ export function CommunityFeedHub({
                               handleAddComment(post.id);
                             }
                           }}
-                          placeholder={activeReplyTarget ? `@${activeReplyTarget.name} এর উত্তরে লিখুন...` : "একটি মন্তব্য লিখুন..."}
-                          className="w-full text-xs bg-transparent border-0 outline-none placeholder:text-gray-400 py-1"
+                          placeholder={activeReplyTarget ? t(`@${activeReplyTarget.name} এর উত্তরে লিখুন...`, `Reply to @${activeReplyTarget.name}...`) : t("একটি মন্তব্য লিখুন...", "Write a comment...")}
+                          className="w-full text-xs bg-transparent border-0 outline-none text-gray-900 dark:text-slate-100 placeholder:text-gray-400 py-1"
                         />
                         <button
                           type="button"
@@ -818,34 +801,32 @@ export function CommunityFeedHub({
         )}
       </div>
 
-      {/* ========================================================================= */}
-      {/* 3. WIDE STICKY BOTTOM POST COMPOSER (max-w-4xl, Image & Video File Uploads) */}
-      {/* ========================================================================= */}
+      {/* 3. STICKY BOTTOM POST COMPOSER */}
       <div
         ref={bottomComposerRef}
         className="fixed bottom-16 md:bottom-5 left-2 right-2 md:left-auto md:right-auto md:w-[896px] md:max-w-4xl mx-auto z-40"
       >
-        <div className="bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-2xl p-3.5 sm:p-4 space-y-2.5 ring-1 ring-black/5 animate-in slide-in-from-bottom-3 duration-200">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-gray-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-3.5 sm:p-4 space-y-2.5 ring-1 ring-black/5 animate-in slide-in-from-bottom-3 duration-200">
           {/* Loading Compression Status */}
           {isCompressing && (
-            <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center gap-2 text-indigo-700 text-xs font-bold animate-pulse">
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center gap-2 text-indigo-700 dark:text-indigo-300 text-xs font-bold animate-pulse">
               <Sparkles size={15} className="animate-spin text-indigo-600" />
-              <span>ছবিটি স্বয়ংক্রিয়ভাবে কম্প্রেস ও অপটিমাইজ করা হচ্ছে...</span>
+              <span>{t("ছবিটি স্বয়ংক্রিয়ভাবে কম্প্রেস ও অপটিমাইজ করা হচ্ছে...", "Optimizing and compressing image automatically...")}</span>
             </div>
           )}
 
-          {/* Top Row: Floating Media Previews with Compression Badge */}
+          {/* Floating Media Previews */}
           {imageUrl && (
-            <div className="relative rounded-xl overflow-hidden border border-gray-200 max-h-44 bg-gray-50 flex items-center justify-center">
+            <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 max-h-44 bg-gray-50 dark:bg-slate-800 flex items-center justify-center">
               <img src={imageUrl} alt="Attached Preview" className="max-h-44 object-contain" />
               <div className="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
                 <div className="bg-black/75 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                   <ImageIcon size={11} />
-                  <span className="truncate max-w-36">{mediaFileName || "ছবি"}</span>
+                  <span className="truncate max-w-36">{mediaFileName || t("ছবি", "Image")}</span>
                 </div>
                 {compressionStats && compressionStats.reductionPercentage > 0 && (
                   <div className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
-                    <span>⚡ সাইজ কমানো হয়েছে: {formatFileSize(compressionStats.originalSize)} ➔ {formatFileSize(compressionStats.compressedSize)} (-{compressionStats.reductionPercentage}%)</span>
+                    <span>⚡ {formatFileSize(compressionStats.originalSize)} ➔ {formatFileSize(compressionStats.compressedSize)} (-{compressionStats.reductionPercentage}%)</span>
                   </div>
                 )}
               </div>
@@ -864,12 +845,12 @@ export function CommunityFeedHub({
           )}
 
           {videoUrl && (
-            <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-black max-h-44 flex items-center justify-center">
+            <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-black max-h-44 flex items-center justify-center">
               <video src={videoUrl} controls className="max-h-44 object-contain" />
               <div className="absolute top-2 left-2 flex items-center gap-1.5">
                 <div className="bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                   <Video size={11} />
-                  <span>{mediaFileName || "ভিডিও"}</span>
+                  <span>{mediaFileName || t("ভিডিও", "Video")}</span>
                 </div>
                 {compressionStats && compressionStats.originalSize > 0 && (
                   <div className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
@@ -892,33 +873,33 @@ export function CommunityFeedHub({
           )}
 
           {showUrlInput && (
-            <div className="p-2 rounded-xl bg-gray-50 border border-gray-200 flex items-center gap-2 animate-in fade-in duration-100">
+            <div className="p-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center gap-2 animate-in fade-in duration-100">
               <LinkIcon size={15} className="text-indigo-600 shrink-0" />
               <input
                 type="url"
-                placeholder={showUrlInput === "image" ? "ছবির ওয়েব লিঙ্ক (Image URL) দিন..." : "ভিডিওর ওয়েব লিঙ্ক (Video URL) দিন..."}
+                placeholder={showUrlInput === "image" ? t("ছবির লিঙ্ক দিন...", "Enter image URL...") : t("ভিডিও লিঙ্ক দিন...", "Enter video URL...")}
                 value={showUrlInput === "image" ? imageUrl : videoUrl}
                 onChange={(e) => {
                   if (showUrlInput === "image") setImageUrl(e.target.value);
                   else setVideoUrl(e.target.value);
                 }}
-                className="flex-1 text-xs bg-transparent border-0 outline-none text-gray-800 placeholder:text-gray-400"
+                className="flex-1 text-xs bg-transparent border-0 outline-none text-gray-800 dark:text-slate-100 placeholder:text-gray-400"
               />
               <button
                 type="button"
                 onClick={() => setShowUrlInput(null)}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-2 py-0.5"
+                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 px-2 py-0.5"
               >
-                ঠিক আছে
+                {t("ঠিক আছে", "Done")}
               </button>
             </div>
           )}
 
           {/* Mention Suggestions Floating Dropdown */}
           {showMentionMenu && filteredMentionMembers.length > 0 && (
-            <div className="absolute left-0 bottom-full mb-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-200 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
-              <div className="px-3.5 py-1.5 text-[10px] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                মেম্বার মেনশন করুন (@)
+            <div className="absolute left-0 bottom-full mb-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
+              <div className="px-3.5 py-1.5 text-[10px] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-slate-800">
+                {t("মেম্বার মেনশন করুন (@)", "Mention Member (@)")}
               </div>
               <div className="max-h-52 overflow-y-auto py-1">
                 {filteredMentionMembers.map((m) => (
@@ -926,7 +907,7 @@ export function CommunityFeedHub({
                     key={m.id}
                     type="button"
                     onClick={() => handleSelectMention(m.name)}
-                    className="w-full text-left px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center justify-between cursor-pointer transition-colors"
+                    className="w-full text-left px-4 py-2 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 flex items-center justify-between cursor-pointer transition-colors"
                   >
                     <span className="truncate">@{m.name}</span>
                     {m.room && <span className="text-[10px] text-gray-400">{m.room}</span>}
@@ -936,8 +917,8 @@ export function CommunityFeedHub({
             </div>
           )}
 
-          {/* Main Input Box (Full-Width Responsive Modern Composer) */}
-          <div className="bg-gray-50/90 border border-gray-200 rounded-2xl p-2.5 sm:p-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all space-y-2">
+          {/* Main Input Box */}
+          <div className="bg-gray-50/90 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-2xl p-2.5 sm:p-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all space-y-2">
             {/* Textarea */}
             <textarea
               ref={textareaRef}
@@ -949,14 +930,14 @@ export function CommunityFeedHub({
                   handleCreatePost();
                 }
               }}
-              placeholder="মেসের মেম্বারদের কিছু জানান... (@ লিখে মেনশন করুন)"
-              className="w-full text-xs sm:text-sm resize-none border-0 shadow-none focus-visible:ring-0 p-0 min-h-[38px] max-h-32 placeholder:text-gray-400 leading-relaxed bg-transparent outline-none"
+              placeholder={t("মেসের মেম্বারদের কিছু জানান... (@ লিখে মেনশন করুন)", "Share an update with mess members... (type @ to mention)")}
+              className="w-full text-xs sm:text-sm resize-none border-0 shadow-none focus-visible:ring-0 p-0 min-h-[38px] max-h-32 placeholder:text-gray-400 leading-relaxed bg-transparent outline-none text-gray-900 dark:text-slate-100"
               maxLength={3000}
               rows={1}
             />
 
             {/* Bottom Quick Tag Selection & File Action Toolbar */}
-            <div className="flex items-center justify-between pt-1.5 border-t border-gray-200/60 flex-wrap gap-2">
+            <div className="flex items-center justify-between pt-1.5 border-t border-gray-200/60 dark:border-slate-700 flex-wrap gap-2">
               {/* Left: Post Category Tags */}
               <div className="flex items-center gap-1">
                 <button
@@ -964,84 +945,79 @@ export function CommunityFeedHub({
                   onClick={() => setPostType("GENERAL")}
                   className={cn(
                     "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer select-none",
-                    postType === "GENERAL" ? "bg-gray-900 text-white shadow-2xs" : "text-gray-500 hover:bg-gray-200/80"
+                    postType === "GENERAL" ? "bg-gray-900 dark:bg-slate-100 text-white dark:text-gray-900 shadow-2xs" : "text-gray-500 hover:bg-gray-200/80 dark:hover:bg-slate-700"
                   )}
                 >
-                  💬 সাধারণ
+                  {t("💬 সাধারণ", "💬 General")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPostType("ANNOUNCEMENT")}
                   className={cn(
                     "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer select-none",
-                    postType === "ANNOUNCEMENT" ? "bg-rose-600 text-white shadow-2xs" : "text-rose-700 hover:bg-rose-100"
+                    postType === "ANNOUNCEMENT" ? "bg-rose-600 text-white shadow-2xs" : "text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60"
                   )}
                 >
-                  📢 ঘোষণা
+                  {t("📢 ঘোষণা", "📢 Announcement")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPostType("IDEA")}
                   className={cn(
                     "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer select-none",
-                    postType === "IDEA" ? "bg-amber-500 text-white shadow-2xs" : "text-amber-700 hover:bg-amber-100"
+                    postType === "IDEA" ? "bg-amber-500 text-white shadow-2xs" : "text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/60"
                   )}
                 >
-                  💡 প্রস্তাব
+                  {t("💡 প্রস্তাব", "💡 Idea")}
                 </button>
               </div>
 
               {/* Right: Media Picker Icons & Send Button */}
               <div className="flex items-center gap-1.5 ml-auto">
-                {/* Upload Image from Device */}
                 <button
                   type="button"
                   onClick={() => imageInputRef.current?.click()}
                   className={cn(
-                    "p-1.5 rounded-xl border text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all cursor-pointer",
-                    imageUrl ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-2xs" : "border-gray-200 bg-white"
+                    "p-1.5 rounded-xl border text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all cursor-pointer",
+                    imageUrl ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-2xs" : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   )}
-                  title="ডিভাইস থেকে ছবি আপলোড করুন"
+                  title={t("ছবি আপলোড", "Upload image")}
                 >
                   <ImageIcon size={15} />
                 </button>
 
-                {/* Upload Video from Device */}
                 <button
                   type="button"
                   onClick={() => videoInputRef.current?.click()}
                   className={cn(
-                    "p-1.5 rounded-xl border text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-all cursor-pointer",
-                    videoUrl ? "bg-purple-50 border-purple-200 text-purple-600 shadow-2xs" : "border-gray-200 bg-white"
+                    "p-1.5 rounded-xl border text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-700 transition-all cursor-pointer",
+                    videoUrl ? "bg-purple-50 border-purple-200 text-purple-600 shadow-2xs" : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   )}
-                  title="ডিভাইস থেকে ভিডিও আপলোড করুন"
+                  title={t("ভিডিও আপলোড", "Upload video")}
                 >
                   <Video size={15} />
                 </button>
 
-                {/* Mention Autocomplete Trigger */}
                 <button
                   type="button"
                   onClick={() => {
                     setContent((prev) => prev + " @");
                     setShowMentionMenu(true);
                   }}
-                  className="p-1.5 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all cursor-pointer"
-                  title="মেম্বার মেনশন করুন (@)"
+                  className="p-1.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                  title={t("মেম্বার মেনশন (@)", "Mention member (@)")}
                 >
                   <AtSign size={15} />
                 </button>
 
-                {/* Glowing Send Button */}
                 <Button
                   type="button"
                   size="sm"
                   onClick={() => handleCreatePost()}
                   disabled={(!content.trim() && !imageUrl && !videoUrl) || submitting}
                   className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-primary to-indigo-600 text-white hover:from-primary/90 hover:to-indigo-700 shadow-xs hover:shadow-md transition-all cursor-pointer font-bold text-xs gap-1.5 select-none"
-                  title="পোস্ট করুন"
                 >
-                  <span>পোস্ট</span>
+                  <span>{t("পোস্ট", "Post")}</span>
                   <Send size={12} />
                 </Button>
               </div>

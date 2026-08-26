@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingCart, Plus, Trash2 } from "lucide-react";
 import { addShoppingItemAction, purchaseShoppingItemAction, deleteShoppingItemAction } from "@/app/actions/app.actions";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { cn } from "@/lib/utils/cn";
+import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface ShoppingListViewProps {
   items: any[];
@@ -16,10 +16,11 @@ interface ShoppingListViewProps {
   isAdmin: boolean;
 }
 
-export function ShoppingListView({ items, addedById, isAdmin }: ShoppingListViewProps) {
+export function ShoppingListView({ items, isAdmin }: ShoppingListViewProps) {
   const [newItem, setNewItem] = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { t } = usePreferences();
 
   const pending_items = items.filter((i) => i.status === "PENDING");
   const purchased_items = items.filter((i) => i.status === "PURCHASED");
@@ -56,20 +57,22 @@ export function ShoppingListView({ items, addedById, isAdmin }: ShoppingListView
         <Input
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
-          placeholder="Add to shopping list..."
+          placeholder={t("শপিং লিস্টে আইটেম লিখুন...", "Add to shopping list...")}
           className="flex-1"
           disabled={pending}
         />
         <Button type="submit" size="sm" className="h-10 gap-1.5" disabled={!newItem.trim() || pending}>
-          <Plus size={14} /> Add
+          <Plus size={14} /> {t("যোগ করুন", "Add")}
         </Button>
       </form>
 
       {/* Pending items */}
       {pending_items.length > 0 && (
         <div>
-          <p className="section-heading">To Buy ({pending_items.length})</p>
-          <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] divide-y divide-[hsl(var(--border))]">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            {t(`কিনতে হবে (${pending_items.length})`, `To Buy (${pending_items.length})`)}
+          </p>
+          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl divide-y divide-gray-100 dark:divide-slate-800">
             {pending_items.map((item) => (
               <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                 <Checkbox
@@ -78,13 +81,17 @@ export function ShoppingListView({ items, addedById, isAdmin }: ShoppingListView
                   disabled={pending}
                   className="shrink-0"
                 />
-                <label htmlFor={`item-${item.id}`} className="flex-1 text-sm cursor-pointer">
+                <label htmlFor={`item-${item.id}`} className="flex-1 text-sm text-gray-900 dark:text-slate-100 cursor-pointer">
                   {item.name}
-                  {item.quantity && <span className="text-[hsl(var(--muted-foreground))] ml-1">· {item.quantity} {item.unit}</span>}
+                  {item.quantity && <span className="text-gray-400 dark:text-slate-500 ml-1">· {item.quantity} {item.unit}</span>}
                 </label>
-                <span className="text-xs text-[hsl(var(--muted-foreground))]">{item.addedBy?.user?.name}</span>
+                <span className="text-xs text-gray-400 dark:text-slate-500">{item.addedBy?.user?.name}</span>
                 {isAdmin && (
-                  <button onClick={() => handleDelete(item.id)} disabled={pending} className="text-[hsl(var(--muted-foreground))] hover:text-destructive">
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    disabled={pending}
+                    className="text-gray-400 hover:text-rose-600 transition-colors"
+                  >
                     <Trash2 size={13} />
                   </button>
                 )}
@@ -97,12 +104,14 @@ export function ShoppingListView({ items, addedById, isAdmin }: ShoppingListView
       {/* Purchased items */}
       {purchased_items.length > 0 && (
         <div>
-          <p className="section-heading">Purchased ({purchased_items.length})</p>
-          <div className="bg-white border border-[hsl(var(--border))] rounded-[var(--radius)] divide-y divide-[hsl(var(--border))] opacity-60">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            {t(`কেনা সম্পন্ন (${purchased_items.length})`, `Purchased (${purchased_items.length})`)}
+          </p>
+          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl divide-y divide-gray-100 dark:divide-slate-800 opacity-60">
             {purchased_items.map((item) => (
               <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                 <Checkbox checked disabled className="shrink-0" />
-                <span className="flex-1 text-sm line-through text-[hsl(var(--muted-foreground))]">{item.name}</span>
+                <span className="flex-1 text-sm line-through text-gray-400 dark:text-slate-500">{item.name}</span>
               </div>
             ))}
           </div>
@@ -110,7 +119,11 @@ export function ShoppingListView({ items, addedById, isAdmin }: ShoppingListView
       )}
 
       {items.length === 0 && (
-        <EmptyState icon={ShoppingCart} title="Shopping list is empty" description="Add items using the field above." />
+        <EmptyState
+          icon={ShoppingCart}
+          title={t("শপিং লিস্ট খালি", "Shopping list is empty")}
+          description={t("উপরের ঘরে নতুন মালামালের নাম লিখে যোগ করুন।", "Add items using the field above.")}
+        />
       )}
     </div>
   );
