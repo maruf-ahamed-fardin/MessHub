@@ -12,6 +12,7 @@ import { getTotalUtility } from "./utility.service";
 import { getTotalOtherExpense, calculateMemberExpenseShare } from "./expense-calculation.service";
 import { getMemberTotalPayments, calculateBalance } from "./balance.service";
 import { SettlementSummary } from "@/types";
+import { getCurrentMonthYear } from "@/lib/utils/date";
 
 /**
  * Calculate the full monthly settlement for a given month/year.
@@ -60,8 +61,8 @@ export async function calculateMonthlySettlement(
 
       return {
         memberId: member.id,
-        memberName: member.user.name ?? "Unknown",
-        avatar: member.user.image ?? member.avatar,
+        memberName: member.user?.name ?? "Unknown",
+        avatar: member.user?.image ?? null,
         totalMeals,
         foodCost,
         guestMealCost,
@@ -71,6 +72,7 @@ export async function calculateMonthlySettlement(
         totalCost,
         totalPaid,
         balance,
+        status: balance >= 0 ? ("REFUND" as const) : ("DUE" as const),
       };
     })
   );
@@ -93,13 +95,18 @@ export async function calculateMonthlySettlement(
 /**
  * Finalize a month's settlement.
  * Locks records and persists MemberSettlement rows.
- * Throws if already finalized.
+ * Throws if already finalized or if current month.
  */
 export async function finalizeMonthlySettlement(
   month: number,
   year: number,
   finalizedById: string
 ): Promise<void> {
+  const { month: currMonth, year: currYear } = getCurrentMonthYear();
+  if (month === currMonth && year === currYear) {
+    throw new Error("চলতি মাস এখনও শেষ হয়নি। মাস শেষ হওয়ার পর ফাইনাল ও লক করা যাবে। (The current running month cannot be finalized.)");
+  }
+
   // Check if already finalized
   const existing = await prisma.monthlySettlement.findUnique({
     where: { month_year: { month, year } },
@@ -214,6 +221,10 @@ export async function reopenMonthlySettlement(
  * Check if a month is finalized.
  */
 export async function isMonthFinalized(month: number, year: number): Promise<boolean> {
+  const { month: currMonth, year: currYear } = getCurrentMonthYear();
+  if (month === currMonth && year === currYear) {
+    return false;
+  }
   const settlement = await prisma.monthlySettlement.findUnique({
     where: { month_year: { month, year } },
     select: { isFinalized: true },

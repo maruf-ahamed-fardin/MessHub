@@ -242,6 +242,9 @@ model MemberProfile {
   // Bazar
   bazarEntries    Bazar[]
   bazarSchedules  BazarSchedule[]
+  bazarSwapRequestsRequested BazarSwapRequest[] @relation("RequesterSwaps")
+  bazarSwapRequestsTargeted  BazarSwapRequest[] @relation("TargetSwaps")
+  bazarSwapRequestsAccepted  BazarSwapRequest[] @relation("AcceptedSwaps")
 
   // Expenses
   expensesPaid Expense[]
@@ -399,11 +402,34 @@ model BazarSchedule {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  member MemberProfile @relation(fields: [memberId], references: [id])
+  member       MemberProfile      @relation(fields: [memberId], references: [id])
+  swapRequests BazarSwapRequest[]
 
   @@unique([date])
   @@index([memberId])
   @@map("bazar_schedules")
+}
+
+model BazarSwapRequest {
+  id             String         @id @default(cuid())
+  scheduleId     String
+  requesterId    String
+  targetDate     DateTime?
+  targetMemberId String?        // null means open to all members
+  reason         String?
+  status         String         @default("PENDING") // PENDING, ACCEPTED, REJECTED, CANCELLED
+  acceptedById   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  schedule     BazarSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  requester    MemberProfile  @relation("RequesterSwaps", fields: [requesterId], references: [id], onDelete: Cascade)
+  targetMember MemberProfile? @relation("TargetSwaps", fields: [targetMemberId], references: [id])
+  acceptedBy   MemberProfile? @relation("AcceptedSwaps", fields: [acceptedById], references: [id])
+
+  @@index([scheduleId])
+  @@index([requesterId])
+  @@map("bazar_swap_requests")
 }
 
 // ============================================================

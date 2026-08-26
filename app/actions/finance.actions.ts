@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin, requireAuth } from "@/backend/permissions/permission.service";
-import { createBazar, deleteBazar } from "@/backend/bazar/bazar.repository";
-import { createBazarSchema } from "@/backend/bazar/bazar.validation";
+import { createBazar, updateBazar, deleteBazar } from "@/backend/bazar/bazar.repository";
+import { createBazarSchema, updateBazarSchema } from "@/backend/bazar/bazar.validation";
 import { createExpense, deleteExpense, upsertUtilityBill } from "@/backend/expenses/expense.repository";
 import { createPayment, deletePayment } from "@/backend/payments/payment.repository";
 import { z } from "zod";
@@ -21,32 +21,95 @@ function revalidateAllFinancialRoutes() {
 
 export async function createBazarAction(data: unknown) {
   try {
-    await requireAuth();
     const validated = createBazarSchema.parse(data);
     await createBazar({ ...validated, date: new Date(validated.date) });
-  } catch (err) {
-    console.warn("DB offline (demo mode createBazar):", err);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("DB error (createBazarAction):", err);
+    return { success: false, error: err?.message ?? "Failed to create bazar" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
+}
+
+export async function updateBazarAction(data: unknown) {
+  try {
+    const session = await requireAuth();
+    const validated = updateBazarSchema.parse(data);
+    const { getBazarById } = await import("@/backend/bazar/bazar.repository");
+    const bazar = await getBazarById(validated.id);
+    if (!bazar) throw new Error("Bazar record not found.");
+
+    if (session.user.role !== "ADMIN") {
+      if (bazar.buyerId !== session.user.memberId) {
+        throw new Error("অনুমতি নেই: আপনি শুধুমাত্র নিজের বাজার পরিবর্তন করতে পারবেন।");
+      }
+
+      const now = new Date();
+      const bazarDate = new Date(bazar.date);
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+      const isWithin3Days = now.getTime() - bazarDate.getTime() <= threeDaysMs;
+
+      const bazarMonth = bazarDate.getMonth() + 1;
+      const bazarYear = bazarDate.getFullYear();
+      const currMonth = now.getMonth() + 1;
+      const currYear = now.getFullYear();
+      const isSameMonth = bazarMonth === currMonth && bazarYear === currYear;
+
+      if (!isWithin3Days || !isSameMonth) {
+        throw new Error("বাজার এন্ট্রি করার ৩ দিন পর অথবা মাস শেষ হওয়ার পর সাধারণ সদস্যরা আর এডিট করতে পারবেন না। শুধুমাত্র এডমিন এডিট করতে পারবেন।");
+      }
+    }
+
+    await updateBazar(validated.id, {
+      date: validated.date ? new Date(validated.date) : undefined,
+      buyerId: session.user.role === "ADMIN" ? validated.buyerId : undefined,
+      note: validated.note,
+      receiptUrl: validated.receiptUrl,
+      items: validated.items,
+    });
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in updateBazarAction:", err);
+    return { success: false, error: err?.message ?? "Failed to update bazar" };
+  }
 }
 
 export async function deleteBazarAction(id: string) {
   try {
     const session = await requireAuth();
+    const { getBazarById } = await import("@/backend/bazar/bazar.repository");
+    const bazar = await getBazarById(id);
+    if (!bazar) throw new Error("Bazar record not found.");
+
     if (session.user.role !== "ADMIN") {
-      const { getBazarById } = await import("@/backend/bazar/bazar.repository");
-      const bazar = await getBazarById(id);
-      if (bazar && bazar.buyerId !== session.user.memberId) {
-        throw new Error("Unauthorized to delete this bazar entry.");
+      if (bazar.buyerId !== session.user.memberId) {
+        throw new Error("অনুমতি নেই: আপনি শুধুমাত্র নিজের বাজার মুছতে পারবেন।");
+      }
+
+      const now = new Date();
+      const bazarDate = new Date(bazar.date);
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+      const isWithin3Days = now.getTime() - bazarDate.getTime() <= threeDaysMs;
+
+      const bazarMonth = bazarDate.getMonth() + 1;
+      const bazarYear = bazarDate.getFullYear();
+      const currMonth = now.getMonth() + 1;
+      const currYear = now.getFullYear();
+      const isSameMonth = bazarMonth === currMonth && bazarYear === currYear;
+
+      if (!isWithin3Days || !isSameMonth) {
+        throw new Error("বাজার এন্ট্রি করার ৩ দিন পর অথবা মাস শেষ হওয়ার পর সাধারণ সদস্যরা আর ডিলিট করতে পারবেন না। শুধুমাত্র এডমিন ডিলিট করতে পারবেন।");
       }
     }
+
     await deleteBazar(id);
-  } catch (err) {
-    console.warn("DB offline (demo mode deleteBazar):", err);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deleteBazarAction:", err);
+    return { success: false, error: err?.message ?? "Failed to delete bazar" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }
 
 export async function updateBazarScheduleAction(scheduleId: string, memberId: string, note?: string) {
@@ -54,11 +117,12 @@ export async function updateBazarScheduleAction(scheduleId: string, memberId: st
     await requireAdmin();
     const { updateBazarSchedule } = await import("@/backend/bazar/bazar-schedule.repository");
     await updateBazarSchedule(scheduleId, memberId, note);
-  } catch (err) {
-    console.warn("DB error in updateBazarSchedule:", err);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("DB error in updateBazarSchedule:", err);
+    return { success: false, error: err?.message ?? "Failed to update schedule" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }
 
 export async function assignBazarScheduleAction(dateStr: string, memberId: string, dayName?: string, note?: string) {
@@ -73,11 +137,79 @@ export async function assignBazarScheduleAction(dateStr: string, memberId: strin
       dayName,
       note,
     });
-  } catch (err) {
-    console.warn("DB error in assignBazarSchedule:", err);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("DB error in assignBazarSchedule:", err);
+    return { success: false, error: err?.message ?? "Failed to assign schedule" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
+}
+
+export async function createBazarSwapRequestAction(data: {
+  scheduleId: string;
+  targetDate?: string;
+  targetMemberId?: string;
+  reason?: string;
+}) {
+  try {
+    const session = await requireAuth();
+    const requesterId = session.user.memberId;
+    if (!requesterId) throw new Error("Member profile not found for user.");
+
+    const { createBazarSwapRequest } = await import("@/backend/bazar/bazar-schedule.repository");
+    let targetDateObj: Date | undefined;
+    if (data.targetDate) {
+      const [y, m, d] = data.targetDate.split("-").map(Number);
+      targetDateObj = new Date(Date.UTC(y, m - 1, d));
+    }
+
+    await createBazarSwapRequest({
+      scheduleId: data.scheduleId,
+      requesterId,
+      targetDate: targetDateObj,
+      targetMemberId: data.targetMemberId || undefined,
+      reason: data.reason?.trim() || undefined,
+    });
+
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error creating bazar swap request:", err);
+    return { success: false, error: err?.message ?? "Failed to create swap request" };
+  }
+}
+
+export async function acceptBazarSwapRequestAction(requestId: string) {
+  try {
+    const session = await requireAuth();
+    const memberId = session.user.memberId;
+    if (!memberId) throw new Error("Member profile not found for user.");
+
+    const { acceptBazarSwapRequest } = await import("@/backend/bazar/bazar-schedule.repository");
+    await acceptBazarSwapRequest(requestId, memberId);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error accepting bazar swap request:", err);
+    return { success: false, error: err?.message ?? "Failed to accept swap request" };
+  }
+}
+
+export async function cancelBazarSwapRequestAction(requestId: string) {
+  try {
+    const session = await requireAuth();
+    const memberId = session.user.memberId;
+    const isAdmin = session.user.role === "ADMIN";
+    if (!memberId && !isAdmin) throw new Error("Unauthorized.");
+
+    const { cancelBazarSwapRequest } = await import("@/backend/bazar/bazar-schedule.repository");
+    await cancelBazarSwapRequest(requestId, memberId || "", isAdmin);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error cancelling bazar swap request:", err);
+    return { success: false, error: err?.message ?? "Failed to cancel swap request" };
+  }
 }
 
 export async function createExpenseAction(data: unknown) {

@@ -10,8 +10,34 @@ import {
 } from "lucide-react";
 import { deleteBazarAction } from "@/app/actions/finance.actions";
 import { useRouter } from "next/navigation";
+import { EditBazarDialog } from "@/components/bazar/EditBazarDialog";
 import { AddBazarDialog } from "@/components/bazar/AddBazarDialog";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+
+function isBazarEditable(
+  bazar: any,
+  currentMemberId: string,
+  isAdmin: boolean
+): boolean {
+  if (isAdmin) return true;
+  if (bazar.buyerId !== currentMemberId) return false;
+
+  const now = new Date();
+  const bazarDate = new Date(bazar.date);
+
+  // 1. 3-day (72h) window
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+  const isWithin3Days = now.getTime() - bazarDate.getTime() <= threeDaysMs;
+
+  // 2. Month-end boundary: cannot edit if month has passed
+  const bazarMonth = bazarDate.getMonth() + 1;
+  const bazarYear = bazarDate.getFullYear();
+  const currMonth = now.getMonth() + 1;
+  const currYear = now.getFullYear();
+  const isSameMonth = bazarMonth === currMonth && bazarYear === currYear;
+
+  return isWithin3Days && isSameMonth;
+}
 
 interface BazarExplorerProps {
   items: any[];
@@ -335,19 +361,27 @@ export function BazarExplorer({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/50">
                       {formatCurrency(total)}
                     </span>
-                    {(isAdmin || bazar.buyerId === currentMemberId) && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(bazar.id)}
-                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                        title={t("বাজার মুছুন", "Delete bazar")}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                    {isBazarEditable(bazar, currentMemberId, isAdmin) && (
+                      <div className="flex items-center gap-0.5">
+                        <EditBazarDialog
+                          bazar={bazar}
+                          products={products}
+                          members={members}
+                          isAdmin={isAdmin}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(bazar.id)}
+                          className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                          title={t("বাজার মুছুন", "Delete bazar")}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -383,6 +417,31 @@ export function BazarExplorer({
               </div>
             );
           })
+        )}
+
+        {/* Add Bazar Action Directly Below the List */}
+        {displayItems.length > 0 && (
+          <div className="pt-1">
+            <AddBazarDialog
+              products={products}
+              members={members}
+              currentMemberId={currentMemberId}
+              defaultMonth={month}
+              defaultYear={year}
+              isAdmin={isAdmin}
+              trigger={
+                <button
+                  type="button"
+                  className="w-full py-3 px-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-slate-800 hover:border-amber-500/50 dark:hover:border-amber-500/50 bg-gray-50/40 dark:bg-slate-900/40 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 text-gray-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 flex items-center justify-center gap-2 text-xs font-bold transition-all cursor-pointer group shadow-2xs"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Plus size={14} />
+                  </div>
+                  <span>{t("আরও বাজার যোগ করুন", "Add Another Bazar")}</span>
+                </button>
+              }
+            />
+          </div>
         )}
       </div>
     </div>

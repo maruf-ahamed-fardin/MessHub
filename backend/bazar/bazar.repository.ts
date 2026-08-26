@@ -96,16 +96,86 @@ export async function createBazar(data: {
 
 export async function updateBazar(
   id: string,
-  data: { note?: string; receiptUrl?: string }
+  data: {
+    date?: Date;
+    buyerId?: string;
+    note?: string;
+    receiptUrl?: string;
+    items?: Array<{
+      productId?: string;
+      productName: string;
+      quantity: number;
+      unit: string;
+      unitPrice: number;
+      note?: string;
+    }>;
+  }
 ) {
-  const bazar = await prisma.bazar.findUnique({ where: { id } });
+  const bazar = await prisma.bazar.findUnique({ where: { id }, include: { items: true } });
   if (!bazar) throw new Error("Bazar entry not found.");
-  const month = bazar.date.getMonth() + 1;
-  const year = bazar.date.getFullYear();
+  const targetDate = data.date || bazar.date;
+  const month = targetDate.getMonth() + 1;
+  const year = targetDate.getFullYear();
   if (await isMonthFinalized(month, year)) {
     throw new Error("This month is finalized. Bazar entries cannot be modified.");
   }
-  return prisma.bazar.update({ where: { id }, data });
+
+  let validBuyerId = data.buyerId || bazar.buyerId;
+  if (data.buyerId) {
+    const existingMember = await prisma.memberProfile.findUnique({ where: { id: data.buyerId } });
+    if (!existingMember) {
+      const byUser = await prisma.memberProfile.findUnique({ where: { userId: data.buyerId } });
+      if (byUser) validBuyerId = byUser.id;
+    }
+  }
+
+  if (data.items && data.items.length > 0) {
+    const totalAmount = data.items.reduce((sum, item) => {
+      const q = item.quantity !== undefined && item.quantity > 0 ? item.quantity : 1;
+      return sum + roundMoney(q * item.unitPrice);
+    }, 0);
+
+    return prisma.$transaction(async (tx) => {
+      await tx.bazarItem.deleteMany({ where: { bazarId: id } });
+
+      return tx.bazar.update({
+        where: { id },
+        data: {
+          date: data.date,
+          buyerId: validBuyerId,
+          note: data.note,
+          receiptUrl: data.receiptUrl,
+          totalAmount,
+          items: {
+            create: data.items!.map((item) => {
+              const q = item.quantity !== undefined && item.quantity > 0 ? item.quantity : 1;
+              return {
+                productId: item.productId,
+                productName: item.productName,
+                quantity: q,
+                unit: item.unit || "kg",
+                unitPrice: item.unitPrice,
+                totalPrice: roundMoney(q * item.unitPrice),
+                note: item.note,
+              };
+            }),
+          },
+        },
+        include: { items: true },
+      });
+    });
+  }
+
+  return prisma.bazar.update({
+    where: { id },
+    data: {
+      date: data.date,
+      buyerId: validBuyerId,
+      note: data.note,
+      receiptUrl: data.receiptUrl,
+    },
+    include: { items: true },
+  });
 }
 
 export async function deleteBazar(id: string) {

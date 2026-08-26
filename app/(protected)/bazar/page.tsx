@@ -32,11 +32,12 @@ export default async function BazarPage({ searchParams }: BazarPageProps) {
   const year = rawParams.year ? parseInt(rawParams.year, 10) : currYear;
   const isCurrentMonth = month === currMonth && year === currYear;
 
-  const [bazarList, products, members, schedules] = await Promise.all([
+  const [bazarList, products, members, schedules, pendingSwaps] = await Promise.all([
     getBazarList(month, year),
     getProducts(),
     getAllMembers(),
     getWeeklyBazarSchedule(),
+    import("@/backend/bazar/bazar-schedule.repository").then((m) => m.getPendingBazarSwapRequests()),
   ]);
 
   const totalAmount = bazarList.reduce((sum, b) => sum + toNumber(b.totalAmount), 0);
@@ -52,21 +53,11 @@ export default async function BazarPage({ searchParams }: BazarPageProps) {
             : `${formatMonthYear(month, year)} - এর সংরক্ষিত বাজার খরচ: ${formatCurrency(totalAmount)}`
         }
         action={
-          <div className="flex items-center gap-2 flex-wrap">
-            <SettlementMonthSelector
-              selectedMonth={month}
-              selectedYear={year}
-              baseUrl="/bazar"
-            />
-            <AddBazarDialog
-              products={products}
-              members={members}
-              currentMemberId={currentMemberId}
-              defaultMonth={month}
-              defaultYear={year}
-              isAdmin={isAdmin}
-            />
-          </div>
+          <SettlementMonthSelector
+            selectedMonth={month}
+            selectedYear={year}
+            baseUrl="/bazar"
+          />
         }
       />
 
@@ -78,6 +69,8 @@ export default async function BazarPage({ searchParams }: BazarPageProps) {
             schedules={schedules}
             members={members}
             isAdmin={isAdmin}
+            currentMemberId={currentMemberId}
+            pendingSwaps={pendingSwaps}
           />
         </div>
 

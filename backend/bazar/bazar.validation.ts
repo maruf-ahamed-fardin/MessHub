@@ -22,5 +22,15 @@ export const createProductSchema = z.object({
   unit: z.string().min(1).max(20),
 });
 
+export const updateBazarSchema = z.object({
+  id: z.string().min(1),
+  date: z.coerce.date().optional(),
+  buyerId: z.string().min(1).optional(),
+  note: z.string().max(500).optional(),
+  receiptUrl: z.string().optional(),
+  items: z.array(bazarItemSchema).min(1).optional(),
+});
+
 export type CreateBazarInput = z.infer<typeof createBazarSchema>;
+export type UpdateBazarInput = z.infer<typeof updateBazarSchema>;
 export type BazarItemInput = z.infer<typeof bazarItemSchema>;

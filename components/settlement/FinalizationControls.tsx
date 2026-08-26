@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { finalizeSettlementAction, reopenSettlementAction } from "@/app/actions/app.actions";
-import { formatMonthYear } from "@/lib/utils/date";
+import { formatMonthYear, getCurrentMonthYear } from "@/lib/utils/date";
 import { useRouter } from "next/navigation";
-import { Lock, LockOpen, Loader2 } from "lucide-react";
+import { Lock, LockOpen, Loader2, Sparkles } from "lucide-react";
 import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface FinalizationControlsProps { month: number; year: number; isFinalized: boolean; }
@@ -16,8 +16,11 @@ export function FinalizationControls({ month, year, isFinalized }: FinalizationC
   const router = useRouter();
   const monthLabel = formatMonthYear(month, year);
   const { t } = usePreferences();
+  const { month: currMonth, year: currYear } = getCurrentMonthYear();
+  const isCurrentMonth = month === currMonth && year === currYear;
 
   const handleFinalize = async () => {
+    if (isCurrentMonth) return;
     setLoading(true);
     try { await finalizeSettlementAction(month, year); router.refresh(); }
     finally { setLoading(false); }
@@ -28,6 +31,15 @@ export function FinalizationControls({ month, year, isFinalized }: FinalizationC
     try { await reopenSettlementAction(month, year); router.refresh(); }
     finally { setLoading(false); }
   };
+
+  if (isCurrentMonth) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800 shadow-xs">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span>{t("চলতি মাস চলমান (মাস শেষে ফাইনাল হবে)", "Running Month Active")}</span>
+      </div>
+    );
+  }
 
   if (isFinalized) {
     return (
