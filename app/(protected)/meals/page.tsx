@@ -13,20 +13,38 @@ import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Meals & Rate Engine" };
 
-export default async function MealsPage() {
-  const [session, T] = await Promise.all([auth(), getServerT()]);
-  const { month, year } = getCurrentMonthYear();
-  const isAdmin = session?.user.role === "ADMIN";
+interface MealsPageProps {
+  searchParams?: Promise<{ date?: string; month?: string; year?: string }>;
+}
+
+export default async function MealsPage({ searchParams }: MealsPageProps) {
+  const [session, T, resolvedParams] = await Promise.all([
+    auth(),
+    getServerT(),
+    searchParams,
+  ]);
 
   const now = new Date();
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
-  const [calendarData, members, todayMeals, todayGuestMeals, analytics] = await Promise.all([
-    getMealsCalendar(month, year),
+  let selectedDate = today;
+  if (resolvedParams?.date) {
+    const parts = resolvedParams.date.split("-").map(Number);
+    if (parts.length === 3 && !parts.some(isNaN)) {
+      selectedDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    }
+  }
+
+  const selectedMonth = selectedDate.getUTCMonth() + 1;
+  const selectedYear = selectedDate.getUTCFullYear();
+  const isAdmin = session?.user.role === "ADMIN";
+
+  const [calendarData, members, dayMeals, dayGuestMeals, analytics] = await Promise.all([
+    getMealsCalendar(selectedMonth, selectedYear),
     getAllMembers(),
-    getAllMealsForDate(today),
-    getGuestMealsForDate(today),
-    getMonthlyMealAnalytics(month, year),
+    getAllMealsForDate(selectedDate),
+    getGuestMealsForDate(selectedDate),
+    getMonthlyMealAnalytics(selectedMonth, selectedYear),
   ]);
 
   return (
@@ -34,30 +52,34 @@ export default async function MealsPage() {
       <PageHeader
         title={T.pages.meals.title}
         description={T.pages.meals.description}
+        action={
+          <MealCalendar
+            calendarData={calendarData}
+            month={selectedMonth}
+            year={selectedYear}
+            selectedDate={selectedDate}
+          />
+        }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2">
-          <DailyMealGrid
-            date={today}
-            members={members}
-            meals={todayMeals}
-            guestMeals={todayGuestMeals}
-            currentMemberId={session?.user.memberId ?? null}
-            isAdmin={isAdmin}
-            month={month}
-            year={year}
-          />
-        </div>
-        <div className="lg:col-span-1 space-y-4">
-          <p className="section-heading">{T.pages.meals.monthlyCalendar}</p>
-          <MealCalendar calendarData={calendarData} month={month} year={year} />
-        </div>
-      </div>
+      <DailyMealGrid
+        date={selectedDate}
+        members={members}
+        meals={dayMeals}
+        guestMeals={dayGuestMeals}
+        currentMemberId={session?.user.memberId ?? null}
+        isAdmin={isAdmin}
+        month={selectedMonth}
+        year={selectedYear}
+      />
 
       {/* Comprehensive Monthly Meal Rate & Member Breakdown Sheet */}
       <div className="pt-2">
-        <MonthlyMealAnalyticsSheet analytics={analytics} />
+        <MonthlyMealAnalyticsSheet
+          analytics={analytics}
+          currentMemberId={session?.user.memberId ?? undefined}
+          isAdmin={isAdmin}
+        />
       </div>
     </div>
   );

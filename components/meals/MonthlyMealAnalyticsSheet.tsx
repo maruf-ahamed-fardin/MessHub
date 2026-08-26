@@ -46,7 +46,7 @@ export function MonthlyMealAnalyticsSheet({
   isAdmin = false,
 }: MonthlyMealAnalyticsSheetProps) {
   const { t } = usePreferences();
-  const [viewMode, setViewMode] = useState<"my" | "all">(isAdmin ? "all" : "my");
+  const [viewMode, setViewMode] = useState<"my" | "all">("all");
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
 
   const {
@@ -62,7 +62,7 @@ export function MonthlyMealAnalyticsSheet({
 
   const isCurrent = month === currentMonth && year === currentYear;
 
-  // Filter list to only current user unless admin chooses "all"
+  // Filter list to only current user unless viewing "all"
   const myBreakdown =
     memberBreakdowns.find((m) => m.memberId === currentMemberId) ||
     memberBreakdowns[0] ||
@@ -93,10 +93,11 @@ export function MonthlyMealAnalyticsSheet({
             <span className="text-xs font-black text-gray-900 dark:text-slate-100 truncate">
               {engineTitle}
             </span>
-            <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300/60 dark:border-amber-800 shrink-0">
-              {mealRateLabel}: <strong>{formatCurrency(mealRate)}</strong>
-              <span className="text-[9px] font-normal text-amber-700 dark:text-amber-400">/{t("মিল", "meal")}</span>
-            </span>
+            <div className="flex items-center gap-1 bg-amber-500/10 dark:bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/20">
+              <span className="text-[11px] font-bold text-amber-900 dark:text-amber-300">
+                {mealRateLabel}: <strong>{formatCurrency(mealRate)}</strong> / {t("মিল", "meal")}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -127,56 +128,50 @@ export function MonthlyMealAnalyticsSheet({
       </div>
 
       {/* 2. Member-by-Member Breakdown Table */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2.5 bg-gray-50/70 dark:bg-slate-800/60">
+      <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs">
+        <div className="px-4 py-3.5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2.5 bg-gray-50/70 dark:bg-slate-800/60">
           <div>
             <h4 className="text-sm font-black text-gray-900 dark:text-slate-100">
               {viewMode === "my"
                 ? t("আপনার মিল ও বাজার হিসাব", "Your Meal & Bazar Breakdown")
-                : t("সদস্যদের মিল ও বাজার হিসাবের তালিকা", "Member Meal & Bazar Breakdown")}
+                : t("সকল সদস্যের ব্যক্তিগত মিল ও খরচের তালিকা", "All Members Meal & Expense List")}
             </h4>
             <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
               {t(
-                "কার কতটি মিল হয়েছে, মিল বাবদ কত খরচ এবং বাজার বাবদ কার কত জমা/পাওনা",
-                "Individual meal counts, food cost, and bazar balance breakdown"
+                "মেসের কার কতটি মিল হয়েছে, মিল বাবদ কার কত খরচ এবং বাজার বাবদ কার কত জমা/পাওনা",
+                "Individual meal counts, food cost, and bazar balance breakdown for each member"
               )}
             </p>
           </div>
 
-          {isAdmin ? (
-            <div className="flex items-center gap-1 p-0.5 bg-gray-200/80 dark:bg-slate-700/80 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setViewMode("my")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer select-none flex items-center gap-1",
-                  viewMode === "my"
-                    ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-2xs"
-                    : "text-gray-600 dark:text-slate-400"
-                )}
-              >
-                <User size={12} />
-                <span>{t("আমার হিসাব", "My Breakdown")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("all")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer select-none flex items-center gap-1",
-                  viewMode === "all"
-                    ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-2xs"
-                    : "text-gray-600 dark:text-slate-400"
-                )}
-              >
-                <Users size={12} />
-                <span>{t("সব মেম্বার", "All Members")}</span>
-              </button>
-            </div>
-          ) : (
-            <span className="text-xs font-bold text-gray-500 dark:text-slate-400 bg-gray-200/60 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-              {t("ব্যক্তিগত হিসাব", "Personal Breakdown")}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 p-1 bg-gray-200/80 dark:bg-slate-700/80 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setViewMode("all")}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer select-none flex items-center gap-1.5",
+                viewMode === "all"
+                  ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-2xs"
+                  : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+              )}
+            >
+              <Users size={13} />
+              <span>{t(`সকল সদস্য (${memberBreakdowns.length})`, `All Members (${memberBreakdowns.length})`)}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("my")}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer select-none flex items-center gap-1.5",
+                viewMode === "my"
+                  ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-2xs"
+                  : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+              )}
+            >
+              <User size={13} />
+              <span>{t("আমার হিসাব", "My Breakdown")}</span>
+            </button>
+          </div>
         </div>
 
         {/* Desktop Table */}

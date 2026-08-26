@@ -11,6 +11,12 @@ interface RoomGridProps {
   isAdmin: boolean;
 }
 
+const defaultRoomRents: Record<string, number> = {
+  "room-1": 4500,
+  "room-2": 3500,
+  "room-3": 2500,
+};
+
 export function RoomGrid({ rooms }: RoomGridProps) {
   const { t } = usePreferences();
 
@@ -24,7 +30,8 @@ export function RoomGrid({ rooms }: RoomGridProps) {
         const totalSeats = room.seats?.length || 0;
         const occupiedSeats = room.seats?.filter((s: any) => s.isOccupied).length || 0;
         const isFull = occupiedSeats === totalSeats && totalSeats > 0;
-        const totalRoomRent = totalSeats * 3500;
+        const defaultSeatRent = defaultRoomRents[room.id] || (totalSeats === 3 ? 2500 : 3500);
+        const totalRoomRent = room.seats?.reduce((sum: number, s: any) => sum + (s.currentMember?.seatRent || defaultSeatRent), 0) || (totalSeats * defaultSeatRent);
 
         return (
           <div
@@ -61,7 +68,7 @@ export function RoomGrid({ rooms }: RoomGridProps) {
                 const member = seat.currentMember;
                 const memberName = member?.user?.name ?? (seat.isOccupied ? "Member" : t("খালি সিট", "Vacant"));
                 const initials = memberName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-                const rent = member?.seatRent || 3500;
+                const rent = member?.seatRent || defaultSeatRent;
 
                 return (
                   <div

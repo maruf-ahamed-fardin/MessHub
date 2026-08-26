@@ -41,9 +41,9 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
   for (const member of members) {
     const existing = meals.find((m) => m.memberId === member.id);
     initialMap[member.id] = {
-      breakfast: existing ? Boolean(existing.breakfast) : true,
-      lunch: existing ? Boolean(existing.lunch) : true,
-      dinner: existing ? Boolean(existing.dinner) : true,
+      breakfast: existing ? Boolean(existing.breakfast) : !isPastDate,
+      lunch: existing ? Boolean(existing.lunch) : !isPastDate,
+      dinner: existing ? Boolean(existing.dinner) : !isPastDate,
     };
   }
 
@@ -52,6 +52,29 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [guestDialogOpen, setGuestDialogOpen] = useState(false);
   const [addingGuest, setAddingGuest] = useState(false);
+
+  // Sync state whenever date, meals, or guestMeals props update
+  useState(() => {
+    // Initial map set
+  });
+
+  // Re-sync on prop change
+  const [prevDateStr, setPrevDateStr] = useState(date.toISOString());
+  const currentDateStr = date.toISOString();
+  if (prevDateStr !== currentDateStr) {
+    setPrevDateStr(currentDateStr);
+    const updatedMap: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
+    for (const member of members) {
+      const existing = meals.find((m) => m.memberId === member.id);
+      updatedMap[member.id] = {
+        breakfast: existing ? Boolean(existing.breakfast) : !isPastDate,
+        lunch: existing ? Boolean(existing.lunch) : !isPastDate,
+        dinner: existing ? Boolean(existing.dinner) : !isPastDate,
+      };
+    }
+    setMealState(updatedMap);
+    setGuestList(guestMeals ?? []);
+  }
 
   // 1. Calculate member meal counts
   const memberBreakfast = Object.values(mealState).filter((m) => m.breakfast).length;
@@ -174,8 +197,59 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
     day: "numeric",
   });
 
+  const maxFutureDate = new Date(today);
+  maxFutureDate.setDate(maxFutureDate.getDate() + 7);
+  const isBeyond7Days = checkDate.getTime() > maxFutureDate.getTime();
+
+  const canEditMemberMeal = (memberId: string) => {
+    if (isAdmin) return true;
+    if (isPastDate) return false;
+    if (isBeyond7Days) return false;
+    return memberId === currentMemberId;
+  };
+
+  const canAddGuestMeal = isAdmin || (!isPastDate && !isBeyond7Days);
+
   return (
     <div className="space-y-4">
+      {/* Past Date Notice Banner */}
+      {isPastDate && (
+        <div className="bg-amber-500/10 border border-amber-300 dark:border-amber-700/60 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">🕰️</span>
+            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+              {t(`পূর্ববর্তী দিন (${formattedDate}) এর মিল হিস্ট্রি দেখা হচ্ছে (শুধুমাত্র Admin পরিবর্তন করতে পারবেন)`, `Viewing meal history for past date (${formattedDate}) (Admin only edit)`)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/meals")}
+            className="text-xs font-bold text-primary hover:underline cursor-pointer shrink-0"
+          >
+            {t("আজকের দিনে ফিরুন ➔", "Back to Today ➔")}
+          </button>
+        </div>
+      )}
+
+      {/* Future Beyond 7 Days Notice Banner */}
+      {isBeyond7Days && (
+        <div className="bg-blue-500/10 border border-blue-300 dark:border-blue-700/60 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">🗓️</span>
+            <span className="text-xs font-bold text-blue-900 dark:text-blue-200">
+              {t(`ভবিষ্যতের ৭ দিনের বেশি পরের তারিখ (${formattedDate})। সাধারণ মেম্বাররা সর্বোচ্চ ৭ দিন পর্যন্ত মিল অন/অফ করতে পারবেন।`, `Date is beyond 7 days in future (${formattedDate}). Members can edit up to 7 days ahead.`)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/meals")}
+            className="text-xs font-bold text-primary hover:underline cursor-pointer shrink-0"
+          >
+            {t("আজকের দিনে ফিরুন ➔", "Back to Today ➔")}
+          </button>
+        </div>
+      )}
+
       {/* 1. Live Meal Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-xl p-3.5 flex items-center gap-3">
@@ -244,7 +318,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
               {t(`মেম্বারদের মিল তালিকা (${formattedDate})`, `Member Meal List (${formattedDate})`)}
             </p>
             <p className="text-xs text-gray-400 dark:text-slate-500">
-              {t("মিল অন বা অফ করতে বাটনে চাপুন", "Click button to toggle meal")}
+              {t("মিল অন বা অফ করতে বাটনে চাপুন (নিজের মিল সর্বোচ্চ ৭ দিন অগ্রিম করা যাবে)", "Toggle meal button (Own meals editable up to 7 days ahead)")}
             </p>
           </div>
           <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full">
@@ -270,21 +344,32 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
               .join("")
               .slice(0, 2)
               .toUpperCase();
+            const canEditThisMember = canEditMemberMeal(member.id);
 
             return (
               <div
                 key={member.id}
-                className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] items-center px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition-colors"
+                className={cn(
+                  "grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] items-center px-4 py-3 transition-colors",
+                  member.id === currentMemberId
+                    ? "bg-primary/5 dark:bg-primary/10"
+                    : "hover:bg-gray-50/50 dark:hover:bg-slate-800/40"
+                )}
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className="text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300">
+                    <AvatarFallback className={cn("text-xs font-semibold", member.id === currentMemberId ? "bg-primary text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300")}>
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">
-                      {member.user?.name ?? member.name}
+                    <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                      <span>{member.user?.name ?? member.name}</span>
+                      {member.id === currentMemberId && (
+                        <span className="text-[9px] font-extrabold bg-primary/20 text-primary px-1.5 py-0.2 rounded-md">
+                          {t("আপনি", "You")}
+                        </span>
+                      )}
                     </p>
                     <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">
                       {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সক্রিয় মেম্বার", "Active Member")}
@@ -295,7 +380,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                 {MEAL_KEYS.map((field) => {
                   const on = state[field];
                   const isLoading = loadingKey === `${member.id}-${field}`;
-                  const canEditThisMeal = isAdmin || (!isPastDate && member.id === currentMemberId);
+                  const canEditThisMeal = canEditThisMember;
 
                   return (
                     <div key={field} className="flex justify-center">
@@ -305,7 +390,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                         onClick={() => handleToggle(member.id, field)}
                         className={cn(
                           "w-16 sm:w-20 h-7 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 select-none shadow-xs",
-                          canEditThisMeal ? "active:scale-95 cursor-pointer" : "opacity-60 cursor-not-allowed",
+                          canEditThisMeal ? "active:scale-95 cursor-pointer" : "opacity-50 cursor-not-allowed",
                           on
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
                             : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300",
@@ -315,15 +400,19 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                           !canEditThisMeal
                             ? isPastDate
                               ? t("অতীতের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Past meals can only be edited by Admin")
-                              : t("অন্য মেম্বারের মিল পরিবর্তন করা যাবে না", "Cannot edit another member's meal")
+                              : isBeyond7Days
+                              ? t("ভবিষ্যতের সর্বোচ্চ ৭ দিন পর্যন্ত মিল পরিবর্তন করা যাবে", "Meals can only be edited up to 7 days ahead")
+                              : member.id !== currentMemberId
+                              ? t("অন্য সদস্যের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Only Admin can edit another member's meal")
+                              : t("অনুমতি নেই", "No permission")
                             : on
-                            ? t("বন্ধ করতে চাপুন", "Click to turn OFF")
-                            : t("চালু করতে চাপুন", "Click to turn ON")
+                            ? t("মিল বন্ধ করতে চাপুন", "Click to turn OFF")
+                            : t("মিল চালু করতে চাপুন", "Click to turn ON")
                         }
                       >
                         <span>{on ? t("চালু", "ON") : t("বন্ধ", "OFF")}</span>
                         <span className="text-[10px]">{on ? "✓" : "✕"}</span>
-                        {!canEditThisMeal && isPastDate && <span className="text-[9px]">🔒</span>}
+                        {!canEditThisMeal && <span className="text-[9px] opacity-70">🔒</span>}
                       </button>
                     </div>
                   );
@@ -351,7 +440,11 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
           <Dialog open={guestDialogOpen} onOpenChange={setGuestDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5 h-8 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button
+                size="sm"
+                disabled={!canAddGuestMeal}
+                className="gap-1.5 h-8 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+              >
                 <Plus size={14} />
                 <span>{t("+ গেস্ট মিল যোগ করুন", "+ Add Guest Meal")}</span>
               </Button>
@@ -363,14 +456,16 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
               <form onSubmit={handleAddGuestMeal} className="space-y-3.5 mt-2">
                 <div className="space-y-1">
                   <Label>{t("মেম্বার (কার গেস্ট) *", "Host Member *")}</Label>
-                  <Select name="memberId" defaultValue={members[0]?.id ?? ""}>
+                  <Select name="memberId" defaultValue={currentMemberId ?? members[0]?.id ?? ""}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {members.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.user?.name ?? m.name}
-                        </SelectItem>
-                      ))}
+                      {members
+                        .filter((m) => isAdmin || m.id === currentMemberId)
+                        .map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.user?.name ?? m.name} {m.id === currentMemberId ? `(${t("আপনি", "You")})` : ""}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

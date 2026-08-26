@@ -6,7 +6,6 @@ import {
   Users, BedDouble, DoorOpen, CheckCircle2,
 } from "lucide-react";
 import { AddMemberDialog } from "@/components/members/AddMemberDialog";
-import { AddRoomDialog } from "@/components/members/AddRoomDialog";
 import { RoomGrid } from "@/components/members/RoomGrid";
 import { MemberList } from "@/components/members/MemberList";
 import { usePreferences } from "@/lib/context/PreferencesContext";
@@ -136,7 +135,6 @@ export function RoomsAndMembersHub({
         {/* Action Buttons */}
         {isAdmin && (
           <div className="flex items-center gap-2">
-            <AddRoomDialog />
             <AddMemberDialog rooms={rooms} />
           </div>
         )}

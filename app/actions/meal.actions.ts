@@ -33,8 +33,16 @@ export async function updateMealAction(formData: {
     const targetDate = new Date(dateObj);
     targetDate.setUTCHours(0, 0, 0, 0);
 
-    if (targetDate < today && session.user.role !== "ADMIN") {
-      throw new Error("Past meals can only be edited by an Admin.");
+    const maxFutureDate = new Date(today);
+    maxFutureDate.setUTCDate(maxFutureDate.getUTCDate() + 7);
+
+    if (session.user.role !== "ADMIN") {
+      if (targetDate < today) {
+        throw new Error("Past meals can only be edited by an Admin.");
+      }
+      if (targetDate > maxFutureDate) {
+        throw new Error("Meals can only be edited up to 7 days in advance.");
+      }
     }
 
     await upsertMeal({
@@ -46,6 +54,7 @@ export async function updateMealAction(formData: {
     });
   } catch (err) {
     console.error("Error in updateMealAction:", err);
+    throw err;
   }
   revalidateAllMealRoutes();
   return { success: true };
@@ -68,8 +77,16 @@ export async function toggleMealAction(
     const targetDate = new Date(d);
     targetDate.setUTCHours(0, 0, 0, 0);
 
-    if (targetDate < today && session.user.role !== "ADMIN") {
-      throw new Error("Past meals can only be edited by an Admin.");
+    const maxFutureDate = new Date(today);
+    maxFutureDate.setUTCDate(maxFutureDate.getUTCDate() + 7);
+
+    if (session.user.role !== "ADMIN") {
+      if (targetDate < today) {
+        throw new Error("Past meals can only be edited by an Admin.");
+      }
+      if (targetDate > maxFutureDate) {
+        throw new Error("Meals can only be edited up to 7 days in advance.");
+      }
     }
 
     const existing = await prisma.meal.findUnique({
@@ -89,6 +106,7 @@ export async function toggleMealAction(
     });
   } catch (err) {
     console.error("Error in toggleMealAction:", err);
+    throw err;
   }
   revalidateAllMealRoutes();
   return { success: true };
@@ -110,6 +128,23 @@ export async function createGuestMealAction(data: {
     const [y, m, d] = data.date.split("-").map(Number);
     const dateObj = new Date(Date.UTC(y, m - 1, d));
 
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const targetDate = new Date(dateObj);
+    targetDate.setUTCHours(0, 0, 0, 0);
+
+    const maxFutureDate = new Date(today);
+    maxFutureDate.setUTCDate(maxFutureDate.getUTCDate() + 7);
+
+    if (session.user.role !== "ADMIN") {
+      if (targetDate < today) {
+        throw new Error("Past guest meals can only be edited by an Admin.");
+      }
+      if (targetDate > maxFutureDate) {
+        throw new Error("Guest meals can only be added up to 7 days in advance.");
+      }
+    }
+
     await createGuestMeal({
       ...data,
       date: dateObj,
@@ -117,6 +152,7 @@ export async function createGuestMealAction(data: {
     });
   } catch (err) {
     console.error("Error in createGuestMealAction:", err);
+    throw err;
   }
   revalidateAllMealRoutes();
   return { success: true };
