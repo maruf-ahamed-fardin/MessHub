@@ -3,21 +3,34 @@ import { auth } from "@/lib/auth/config";
 import { getBazarList, getProducts } from "@/backend/bazar/bazar.repository";
 import { getWeeklyBazarSchedule } from "@/backend/bazar/bazar-schedule.repository";
 import { getAllMembers } from "@/backend/members/member.repository";
-import { getCurrentMonthYear } from "@/lib/utils/date";
+import { getCurrentMonthYear, formatMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AddBazarDialog } from "@/components/bazar/AddBazarDialog";
 import { BazarScheduleSection } from "@/components/bazar/BazarScheduleSection";
 import { BazarExplorer } from "@/components/bazar/BazarExplorer";
+import { SettlementMonthSelector } from "@/components/settlement/SettlementMonthSelector";
 import { toNumber } from "@/backend/services/meal-calculation.service";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Bazar" };
 
-export default async function BazarPage() {
-  const [session, T] = await Promise.all([auth(), getServerT()]);
-  const { month, year } = getCurrentMonthYear();
+interface BazarPageProps {
+  searchParams?: Promise<{ month?: string; year?: string }>;
+}
+
+export default async function BazarPage({ searchParams }: BazarPageProps) {
+  const [session, T, rawParams] = await Promise.all([
+    auth(),
+    getServerT(),
+    searchParams ? searchParams : Promise.resolve({} as { month?: string; year?: string }),
+  ]);
+  const { month: currMonth, year: currYear } = getCurrentMonthYear();
   const isAdmin = session?.user.role === "ADMIN";
+
+  const month = rawParams.month ? Math.max(1, Math.min(12, parseInt(rawParams.month, 10))) : currMonth;
+  const year = rawParams.year ? parseInt(rawParams.year, 10) : currYear;
+  const isCurrentMonth = month === currMonth && year === currYear;
 
   const [bazarList, products, members, schedules] = await Promise.all([
     getBazarList(month, year),
@@ -27,18 +40,33 @@ export default async function BazarPage() {
   ]);
 
   const totalAmount = bazarList.reduce((sum, b) => sum + toNumber(b.totalAmount), 0);
+  const currentMemberId = session?.user.memberId ?? members[0]?.id ?? "admin-user";
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={T.pages.bazar.title}
-        description={`${T.pages.bazar.description}: ${formatCurrency(totalAmount)}`}
+        description={
+          isCurrentMonth
+            ? `${T.pages.bazar.description}: ${formatCurrency(totalAmount)}`
+            : `${formatMonthYear(month, year)} - এর সংরক্ষিত বাজার খরচ: ${formatCurrency(totalAmount)}`
+        }
         action={
-          <AddBazarDialog
-            products={products}
-            members={members}
-            currentMemberId={session?.user.memberId ?? "member-admin"}
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <SettlementMonthSelector
+              selectedMonth={month}
+              selectedYear={year}
+              baseUrl="/bazar"
+            />
+            <AddBazarDialog
+              products={products}
+              members={members}
+              currentMemberId={currentMemberId}
+              defaultMonth={month}
+              defaultYear={year}
+              isAdmin={isAdmin}
+            />
+          </div>
         }
       />
 
@@ -62,10 +90,11 @@ export default async function BazarPage() {
             month={month}
             year={year}
             isAdmin={isAdmin}
-            currentMemberId={session?.user.memberId ?? "member-admin"}
+            currentMemberId={currentMemberId}
           />
         </div>
       </div>
     </div>
   );
 }
+

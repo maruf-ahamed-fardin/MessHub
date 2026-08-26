@@ -1,19 +1,19 @@
 import { z } from "zod";
 
 export const bazarItemSchema = z.object({
-  productId: z.string().cuid().optional(),
+  productId: z.string().optional(),
   productName: z.string().min(1, "Product name is required").max(100),
-  quantity: z.coerce.number().positive("Quantity must be positive"),
-  unit: z.string().min(1, "Unit is required").max(20),
+  quantity: z.coerce.number().min(0).optional().default(1),
+  unit: z.string().optional().default("kg"),
   unitPrice: z.coerce.number().min(0, "Price must be non-negative"),
   note: z.string().max(200).optional(),
 });
 
 export const createBazarSchema = z.object({
   date: z.coerce.date(),
-  buyerId: z.string().cuid(),
+  buyerId: z.string().min(1, "Buyer ID is required"),
   note: z.string().max(500).optional(),
-  receiptUrl: z.string().url().optional().or(z.literal("")),
+  receiptUrl: z.string().optional(),
   items: z.array(bazarItemSchema).min(1, "At least one item is required"),
 });
 

@@ -38,10 +38,17 @@ export function BazarExplorer({
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
 
-  const [selectedDay, setSelectedDay] = useState<number>(today.getDate());
+  const isCurrentMonth = today.getMonth() + 1 === month && today.getFullYear() === year;
+  const initialDay = isCurrentMonth ? today.getDate() : 1;
+  const [selectedDay, setSelectedDay] = useState<number>(initialDay);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [viewAll, setViewAll] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const isCurrent = today.getMonth() + 1 === month && today.getFullYear() === year;
+    setSelectedDay(isCurrent ? today.getDate() : 1);
+  }, [month, year]);
 
   // Close calendar popover on outside click
   useEffect(() => {
@@ -296,6 +303,9 @@ export function BazarExplorer({
                 products={products}
                 members={members}
                 currentMemberId={currentMemberId}
+                defaultMonth={month}
+                defaultYear={year}
+                isAdmin={isAdmin}
               />
             </div>
           </div>

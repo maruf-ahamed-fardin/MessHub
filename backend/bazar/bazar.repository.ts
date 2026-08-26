@@ -45,28 +45,49 @@ export async function createBazar(data: {
     throw new Error("This month is finalized. Bazar entries cannot be added.");
   }
 
+  // Ensure buyerId resolves to a valid MemberProfile
+  let validBuyerId = data.buyerId;
+  const existingMember = await prisma.memberProfile.findUnique({ where: { id: validBuyerId } });
+  if (!existingMember) {
+    const byUser = await prisma.memberProfile.findUnique({ where: { userId: validBuyerId } });
+    if (byUser) {
+      validBuyerId = byUser.id;
+    } else {
+      const firstMember = await prisma.memberProfile.findFirst({ where: { isActive: true } });
+      if (firstMember) {
+        validBuyerId = firstMember.id;
+      }
+    }
+  }
+
   const totalAmount = data.items.reduce(
-    (sum, item) => sum + roundMoney(item.quantity * item.unitPrice),
+    (sum, item) => {
+      const q = item.quantity !== undefined && item.quantity > 0 ? item.quantity : 1;
+      return sum + roundMoney(q * item.unitPrice);
+    },
     0
   );
 
   return prisma.bazar.create({
     data: {
       date: data.date,
-      buyerId: data.buyerId,
+      buyerId: validBuyerId,
       totalAmount,
       note: data.note,
       receiptUrl: data.receiptUrl,
       items: {
-        create: data.items.map((item) => ({
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unit: item.unit,
-          unitPrice: item.unitPrice,
-          totalPrice: roundMoney(item.quantity * item.unitPrice),
-          note: item.note,
-        })),
+        create: data.items.map((item) => {
+          const q = item.quantity !== undefined && item.quantity > 0 ? item.quantity : 1;
+          return {
+            productId: item.productId,
+            productName: item.productName,
+            quantity: q,
+            unit: item.unit || "kg",
+            unitPrice: item.unitPrice,
+            totalPrice: roundMoney(q * item.unitPrice),
+            note: item.note,
+          };
+        }),
       },
     },
     include: { items: true },
