@@ -25,6 +25,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* MessHub Design Tokens */
     --background: 210 20% 98%;
     --foreground: 215 25% 15%;
@@ -87,6 +88,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 224 30% 9%;
     --foreground: 210 20% 98%;
     --card: 224 28% 13%;
@@ -111,6 +113,17 @@
   * {
     border-color: hsl(var(--border));
     box-sizing: border-box;
+  }
+
+  /* Reset browser native number input spinner buttons across all themes */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
 
   html {

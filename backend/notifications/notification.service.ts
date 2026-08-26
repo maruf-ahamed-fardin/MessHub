@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatRelativeDate, formatShortDate } from "@/lib/utils/date";
 
@@ -14,9 +14,48 @@ export interface LiveNotificationItem {
   read: boolean;
 }
 
+export async function notifyAllUsersAboutBazarSwap(data: {
+  swappedDate: Date;
+  newAssigneeName: string;
+  previousAssigneeName?: string;
+  reason?: string;
+}) {
+  try {
+    const db = getPrisma();
+    const users = await db.user.findMany({ select: { id: true } });
+    const formattedDate = data.swappedDate.toLocaleDateString("bn-BD", {
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+    });
+
+    const title = `🔄 বাজার শিডিউল সোয়াপ: ${data.newAssigneeName}`;
+    const desc = data.previousAssigneeName
+      ? `${formattedDate} তারিখের বাজার দায়িত্ব ${data.previousAssigneeName} থেকে পরিবর্তন হয়ে ${data.newAssigneeName}-এর নামে নির্ধারিত হয়েছে।`
+      : `${formattedDate} তারিখের বাজার দায়িত্ব ${data.newAssigneeName}-এর নামে নির্ধারিত হয়েছে।`;
+
+    const fullDesc = data.reason ? `${desc} (কারণ: ${data.reason})` : desc;
+
+    for (const u of users) {
+      const notifId = "notif-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+      await db.$executeRawUnsafe(
+        `INSERT INTO "notifications" ("id", "userId", "title", "message", "type", "relatedType", "isRead", "createdAt")
+         VALUES (?, ?, ?, ?, 'GENERAL', 'bazar_schedule', 0, ?)`,
+        notifId,
+        u.id,
+        title,
+        fullDesc,
+        new Date().toISOString()
+      );
+    }
+  } catch (err) {
+    console.warn("Failed to create broadcast notification:", err);
+  }
+}
+
 /**
  * Dynamically aggregates live notifications from all actions in the mess:
- * - Bazar entries
+ * - Bazar entries & Swaps
  * - Member payments
  * - Shared expenses & bills
  * - Cleaning & household tasks
@@ -25,6 +64,7 @@ export interface LiveNotificationItem {
  * - Daily Bazar schedule
  */
 export async function getLiveNotifications(currentMemberId?: string): Promise<LiveNotificationItem[]> {
+  const db = getPrisma();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -38,58 +78,79 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
     guestMeals,
     posts,
     bazarSchedules,
+    dbNotifications,
   ] = await Promise.all([
-    prisma.notice.findMany({
+    db.notice.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
       include: { author: { select: { name: true } } },
     }),
-    prisma.bazar.findMany({
+    db.bazar.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
       include: { buyerMember: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.payment.findMany({
+    db.payment.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
       include: { member: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.expense.findMany({
+    db.expense.findMany({
       take: 4,
       orderBy: { createdAt: "desc" },
       include: { paidBy: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.cleaningTask.findMany({
+    db.cleaningTask.findMany({
       take: 4,
       orderBy: { createdAt: "desc" },
       include: { assignedMember: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.householdTask.findMany({
+    db.householdTask.findMany({
       take: 4,
       orderBy: { createdAt: "desc" },
       include: { assignedMember: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.guestMeal.findMany({
+    db.guestMeal.findMany({
       take: 4,
       orderBy: { createdAt: "desc" },
       include: { addedBy: { include: { user: { select: { name: true } } } } },
     }),
-    prisma.communityPost.findMany({
+    db.communityPost.findMany({
       take: 4,
       orderBy: { createdAt: "desc" },
       include: { author: { select: { name: true } } },
     }),
-    prisma.bazarSchedule.findMany({
+    db.bazarSchedule.findMany({
       where: { date: { gte: today } },
       take: 3,
       orderBy: { date: "asc" },
       include: { member: { include: { user: { select: { name: true } } } } },
     }),
+    db.notification.findMany({
+      where: { relatedType: "bazar_schedule" },
+      take: 6,
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const items: LiveNotificationItem[] = [];
 
-  // 1. Notices
+  // 1. Swap & System Notifications
+  for (const n of dbNotifications) {
+    items.push({
+      id: `notif-${n.id}`,
+      category: "bazar",
+      title: n.title,
+      desc: n.message,
+      time: formatRelativeDate(n.createdAt),
+      createdAt: n.createdAt,
+      href: "/bazar",
+      type: "BAZAR_SWAP",
+      read: n.isRead,
+    });
+  }
+
+  // 2. Notices
   for (const n of notices) {
     items.push({
       id: `notice-${n.id}`,
@@ -99,19 +160,19 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
       time: formatRelativeDate(n.createdAt),
       createdAt: n.createdAt,
       href: "/notices",
-      type: n.priority,
+      type: "NOTICE",
       read: false,
     });
   }
 
-  // 2. Bazar Purchases
+  // 3. Bazar Entries
   for (const b of bazars) {
     const buyer = b.buyerMember?.user?.name ?? "মেম্বার";
     items.push({
       id: `bazar-${b.id}`,
       category: "bazar",
-      title: `🛒 ${buyer} বাজার যুক্ত করেছেন: ${formatCurrency(Number(b.totalAmount))}`,
-      desc: b.note || `মেসের জন্য কাঁচাবাজার ও খাদ্যসামগ্রী ক্রয় করা হয়েছে।`,
+      title: `🛒 ${buyer} ${formatCurrency(b.totalAmount)} টাকার বাজার করেছেন`,
+      desc: `তারিখ: ${formatShortDate(b.date)} • আইটেম: ${b.note || "দৈনিক বাজার খরচ"}`,
       time: formatRelativeDate(b.createdAt),
       createdAt: b.createdAt,
       href: "/bazar",
@@ -120,51 +181,34 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
     });
   }
 
-  // 3. Payments
+  // 4. Payments
   for (const p of payments) {
-    const payer = p.member?.user?.name ?? "মেম্বার";
+    const memberName = p.member?.user?.name ?? "মেম্বার";
     items.push({
       id: `pay-${p.id}`,
       category: "payment",
-      title: `💳 ${payer} টাকা জমা দিয়েছেন: ${formatCurrency(Number(p.amount))}`,
-      desc: p.note || `মেথড: ${p.method} • মেস ফান্ডে জমা হয়েছে।`,
+      title: `💰 ${memberName} ${formatCurrency(p.amount)} টাকা জমা দিয়েছেন`,
+      desc: `পেমেন্ট মেথড: ${p.method}${p.note ? ` • নোট: ${p.note}` : ""}`,
       time: formatRelativeDate(p.createdAt),
       createdAt: p.createdAt,
-      href: "/payments",
+      href: "/deposits",
       type: "PAYMENT",
       read: false,
     });
   }
 
-  // 4. Shared Expenses & Bills
+  // 5. Shared Expenses
   for (const e of expenses) {
     const payer = e.paidBy?.user?.name ?? "মেম্বার";
     items.push({
       id: `exp-${e.id}`,
-      category: "payment",
-      title: `🧾 ${e.title} বিল যুক্ত হয়েছে: ${formatCurrency(Number(e.amount))}`,
-      desc: `পরিশোধকারী: ${payer} • ক্যাটাগরি: ${e.category}`,
+      category: "bazar",
+      title: `📑 নতুন বিল / খরচ: ${e.title} (${formatCurrency(e.amount)})`,
+      desc: `পরিশোধ করেছেন: ${payer} • ক্যাটাগরি: ${e.category}`,
       time: formatRelativeDate(e.createdAt),
       createdAt: e.createdAt,
       href: "/expenses",
       type: "EXPENSE",
-      read: false,
-    });
-  }
-
-  // 5. Today & Upcoming Bazar Duties
-  for (const bs of bazarSchedules) {
-    const buyer = bs.member?.user?.name ?? "মেম্বার";
-    const isToday = new Date(bs.date).toDateString() === today.toDateString();
-    items.push({
-      id: `duty-bazar-${bs.id}`,
-      category: "bazar",
-      title: isToday ? `🛒 আজকের বাজার দায়িত্ব: ${buyer}` : `🗓️ আগামী বাজার শিডিউল: ${buyer} (${bs.dayName})`,
-      desc: bs.note || `সাপ্তাহিক রোটেশন অনুযায়ী বাজার করার দায়িত্ব।`,
-      time: isToday ? "আজকের দায়িত্ব" : formatShortDate(bs.date),
-      createdAt: bs.createdAt,
-      href: "/bazar",
-      type: "BAZAR_SCHEDULE",
       read: false,
     });
   }
@@ -174,9 +218,9 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
     const assignee = ct.assignedMember?.user?.name ?? "মেম্বার";
     items.push({
       id: `clean-${ct.id}`,
-      category: "duty",
+      category: "house",
       title: `🧹 ক্লিনিং ডিউটি: ${ct.title}`,
-      desc: `দায়িত্বে: ${assignee} • স্থান: ${ct.location}`,
+      desc: `দায়িত্বে: ${assignee} • স্ট্যাটাস: ${ct.status === "DONE" ? "সম্পন্ন ✓" : "পেন্ডিং"}`,
       time: formatRelativeDate(ct.createdAt),
       createdAt: ct.createdAt,
       href: "/house",

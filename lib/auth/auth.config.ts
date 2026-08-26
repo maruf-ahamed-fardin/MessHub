@@ -1,12 +1,12 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const DEFAULT_MOCK_USER = {
-  id: "admin-user",
+  id: "cmt8ki8ht000034v30e8sczxh",
   name: "Admin (You)",
   email: "admin@messhub.app",
   image: null,
   role: "ADMIN",
-  memberId: "member-admin",
+  memberId: "admin-member-1",
 };
 
 export const DEFAULT_MOCK_SESSION = {

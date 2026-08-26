@@ -40,7 +40,7 @@ export default async function BazarPage({ searchParams }: BazarPageProps) {
     import("@/backend/bazar/bazar-schedule.repository").then((m) => m.getPendingBazarSwapRequests()),
   ]);
 
-  const totalAmount = bazarList.reduce((sum, b) => sum + toNumber(b.totalAmount), 0);
+  const totalAmount = bazarList.reduce((sum: number, b: any) => sum + toNumber(b.totalAmount), 0);
   const currentMemberId = session?.user.memberId ?? members[0]?.id ?? "admin-user";
 
   return (
