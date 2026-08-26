@@ -239,7 +239,9 @@ export function MonthlyMealAnalyticsSheet({
                         </Avatar>
                         <div className="min-w-0">
                           <p className="font-bold text-gray-900 dark:text-slate-100 truncate">{m.memberName}</p>
-                          <p className="text-[10px] text-gray-400 truncate">{m.seat}</p>
+                          <p className="text-[10px] text-gray-400 truncate">
+                            {typeof m.seat === "string" ? m.seat : (m.seat as any)?.label ?? "Member"}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -322,7 +324,9 @@ export function MonthlyMealAnalyticsSheet({
                     </Avatar>
                     <div className="min-w-0">
                       <p className="text-xs font-extrabold text-gray-900 dark:text-slate-100 truncate">{m.memberName}</p>
-                      <p className="text-[10px] font-medium text-gray-400 truncate">{m.seat}</p>
+                      <p className="text-[10px] font-medium text-gray-400 truncate">
+                        {typeof m.seat === "string" ? m.seat : (m.seat as any)?.label ?? "Member"}
+                      </p>
                     </div>
                   </div>
 

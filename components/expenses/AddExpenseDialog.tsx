@@ -50,7 +50,7 @@ export function AddExpenseDialog({ members }: { members: any[] }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5 h-8 text-xs">
+        <Button size="sm" className="gap-1.5 h-8.5 px-3 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer">
           <Plus size={14} /> {t("খরচ যোগ করুন", "Add Expense")}
         </Button>
       </DialogTrigger>

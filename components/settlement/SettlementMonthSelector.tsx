@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils/cn";
 interface SettlementMonthSelectorProps {
   selectedMonth: number;
   selectedYear: number;
+  baseUrl?: string;
 }
 
 const MONTH_NAMES = [
@@ -43,6 +44,7 @@ const MONTH_NAMES = [
 export function SettlementMonthSelector({
   selectedMonth,
   selectedYear,
+  baseUrl = "/settlement",
 }: SettlementMonthSelectorProps) {
   const router = useRouter();
   const { t, language } = usePreferences();
@@ -62,9 +64,9 @@ export function SettlementMonthSelector({
   const navigateTo = (m: number, y: number) => {
     setOpen(false);
     if (m === currentMonth && y === currentYear) {
-      router.push("/settlement");
+      router.push(baseUrl);
     } else {
-      router.push(`/settlement?month=${m}&year=${y}`);
+      router.push(`${baseUrl}?month=${m}&year=${y}`);
     }
   };
 
