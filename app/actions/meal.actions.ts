@@ -1,11 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth/config";
 import { requireAuth, assertCanModifyMember } from "@/backend/permissions/permission.service";
 import { upsertMeal } from "@/backend/meals/meal.repository";
 import { createGuestMeal, deleteGuestMeal } from "@/backend/guest-meals/guest-meal.repository";
 import { prisma } from "@/lib/db/prisma";
+
+function revalidateAllMealRoutes() {
+  revalidatePath("/meals");
+  revalidatePath("/dashboard");
+  revalidatePath("/settlement");
+  revalidatePath("/members");
+  revalidatePath("/calendar");
+}
 
 export async function updateMealAction(formData: {
   memberId: string;
@@ -40,8 +47,7 @@ export async function updateMealAction(formData: {
   } catch (err) {
     console.error("Error in updateMealAction:", err);
   }
-  revalidatePath("/meals");
-  revalidatePath("/dashboard");
+  revalidateAllMealRoutes();
   return { success: true };
 }
 
@@ -84,8 +90,7 @@ export async function toggleMealAction(
   } catch (err) {
     console.error("Error in toggleMealAction:", err);
   }
-  revalidatePath("/meals");
-  revalidatePath("/dashboard");
+  revalidateAllMealRoutes();
   return { success: true };
 }
 
@@ -113,8 +118,7 @@ export async function createGuestMealAction(data: {
   } catch (err) {
     console.error("Error in createGuestMealAction:", err);
   }
-  revalidatePath("/guest-meals");
-  revalidatePath("/dashboard");
+  revalidateAllMealRoutes();
   return { success: true };
 }
 
@@ -131,6 +135,6 @@ export async function deleteGuestMealAction(id: string) {
   } catch (err) {
     console.error("Error in deleteGuestMealAction:", err);
   }
-  revalidatePath("/guest-meals");
+  revalidateAllMealRoutes();
   return { success: true };
 }

@@ -1,13 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth/config";
 import { requireAdmin, requireAuth } from "@/backend/permissions/permission.service";
 import { createBazar, deleteBazar } from "@/backend/bazar/bazar.repository";
 import { createBazarSchema } from "@/backend/bazar/bazar.validation";
 import { createExpense, deleteExpense, upsertUtilityBill } from "@/backend/expenses/expense.repository";
 import { createPayment, deletePayment } from "@/backend/payments/payment.repository";
 import { z } from "zod";
+
+function revalidateAllFinancialRoutes() {
+  revalidatePath("/bazar");
+  revalidatePath("/meals");
+  revalidatePath("/expenses");
+  revalidatePath("/payments");
+  revalidatePath("/settlement");
+  revalidatePath("/members");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+}
 
 export async function createBazarAction(data: unknown) {
   try {
@@ -17,8 +27,7 @@ export async function createBazarAction(data: unknown) {
   } catch (err) {
     console.warn("DB offline (demo mode createBazar):", err);
   }
-  revalidatePath("/bazar");
-  revalidatePath("/dashboard");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -36,7 +45,7 @@ export async function deleteBazarAction(id: string) {
   } catch (err) {
     console.warn("DB offline (demo mode deleteBazar):", err);
   }
-  revalidatePath("/bazar");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -48,9 +57,7 @@ export async function updateBazarScheduleAction(scheduleId: string, memberId: st
   } catch (err) {
     console.warn("DB error in updateBazarSchedule:", err);
   }
-  revalidatePath("/bazar");
-  revalidatePath("/calendar");
-  revalidatePath("/dashboard");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -69,9 +76,7 @@ export async function assignBazarScheduleAction(dateStr: string, memberId: strin
   } catch (err) {
     console.warn("DB error in assignBazarSchedule:", err);
   }
-  revalidatePath("/bazar");
-  revalidatePath("/calendar");
-  revalidatePath("/dashboard");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -93,7 +98,7 @@ export async function createExpenseAction(data: unknown) {
   } catch (err) {
     console.warn("DB offline (demo mode createExpense):", err);
   }
-  revalidatePath("/expenses");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -104,7 +109,7 @@ export async function deleteExpenseAction(id: string) {
   } catch (err) {
     console.warn("DB offline (demo mode deleteExpense):", err);
   }
-  revalidatePath("/expenses");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -124,7 +129,7 @@ export async function upsertUtilityAction(data: unknown) {
   } catch (err) {
     console.warn("DB offline (demo mode upsertUtility):", err);
   }
-  revalidatePath("/expenses");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -144,8 +149,7 @@ export async function createPaymentAction(data: unknown) {
   } catch (err) {
     console.warn("DB offline (demo mode createPayment):", err);
   }
-  revalidatePath("/payments");
-  revalidatePath("/dashboard");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
 
@@ -156,6 +160,6 @@ export async function deletePaymentAction(id: string) {
   } catch (err) {
     console.warn("DB offline (demo mode deletePayment):", err);
   }
-  revalidatePath("/payments");
+  revalidateAllFinancialRoutes();
   return { success: true };
 }
