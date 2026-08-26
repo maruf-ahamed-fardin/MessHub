@@ -78,7 +78,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full w-60 shrink-0 border-r overflow-y-auto no-scrollbar",
+        "flex flex-col h-full w-60 shrink-0 border-r overflow-hidden",
         "bg-[hsl(var(--sidebar))] border-[hsl(var(--sidebar-border))]",
         className
       )}
@@ -86,7 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Logo */}
       <Link
         href="/dashboard"
-        className="flex items-center gap-2.5 px-4 py-5 border-b border-[hsl(var(--sidebar-border))] hover:opacity-90 transition-all cursor-pointer"
+        className="flex items-center gap-2.5 px-4 py-5 border-b border-[hsl(var(--sidebar-border))] hover:opacity-90 transition-all cursor-pointer shrink-0"
         title="MessHub"
       >
         <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-2xs">
@@ -98,7 +98,7 @@ export function Sidebar({ className }: SidebarProps) {
       </Link>
 
       {/* Nav */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto no-scrollbar py-3 px-2 space-y-0.5">
         {NAV_SECTIONS.map((section, si) => (
           <div key={si}>
             {section.label && (
@@ -126,7 +126,7 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* Bottom */}
-      <div className="p-2 border-t border-[hsl(var(--sidebar-border))] space-y-0.5">
+      <div className="p-2 border-t border-[hsl(var(--sidebar-border))] space-y-0.5 shrink-0">
         <Link href="/settings" className={cn("nav-item", pathname === "/settings" && "active")}>
           <Settings size={16} />
           <span>{T.nav.settings}</span>

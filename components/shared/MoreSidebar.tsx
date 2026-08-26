@@ -84,17 +84,18 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300",
+          "fixed inset-0 z-[60] bg-black/50 backdrop-blur-xs transition-opacity duration-300",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         aria-hidden="true"
+        onClick={onClose}
       />
 
       {/* Sidebar Panel */}
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-[300px] max-w-[90vw] bg-white dark:bg-slate-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-800",
+          "fixed top-0 left-0 z-[70] h-dvh w-[300px] max-w-[85vw] bg-white dark:bg-slate-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-800 overflow-hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -164,7 +165,7 @@ export function MoreSidebar({ isOpen, onClose, user }: MoreSidebarProps) {
         </div>
 
         {/* Footer — Profile & Sign Out */}
-        <div className="px-2 py-3 border-t border-gray-100 dark:border-slate-800 space-y-0.5 shrink-0">
+        <div className="px-2 py-3 border-t border-gray-100 dark:border-slate-800 space-y-0.5 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-white dark:bg-slate-900">
           <Link
             href="/settings"
             onClick={onClose}

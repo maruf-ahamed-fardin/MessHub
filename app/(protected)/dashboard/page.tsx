@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
-import { calculateMemberFoodCost, calculateMealRate } from "@/backend/services/meal-calculation.service";
-import { calculateMemberRunningBalance } from "@/backend/services/balance.service";
+import { getAllMembersRunningBalances } from "@/backend/services/balance.service";
 import { getActiveNotices } from "@/backend/community/community.repository";
 import { getCurrentMonthYear } from "@/lib/utils/date";
 import { ModernDashboard } from "@/components/dashboard/ModernDashboard";
@@ -60,15 +59,12 @@ export default async function DashboardPage() {
       dbRooms,
       dbSeats,
       weeklyMealsList,
-      bazarAgg,
-      utilityAgg,
-      paymentsAgg,
       todaySchedule,
       todayCleaning,
       dbBazar,
       dbPayments,
       notices,
-      calculatedMealRate,
+      batchBalances,
     ] = await Promise.all([
       prisma.memberProfile.findUnique({
         where: { id: currentMemberId },
@@ -85,17 +81,6 @@ export default async function DashboardPage() {
       prisma.seat.count(),
       prisma.meal.findMany({
         where: { date: { gte: sevenDaysAgo, lte: today } },
-      }),
-      prisma.bazar.aggregate({
-        where: { date: { gte: startDate, lte: endDate } },
-        _sum: { totalAmount: true },
-      }),
-      prisma.utilityBill.aggregate({
-        where: { month, year },
-        _sum: { amount: true },
-      }),
-      prisma.payment.aggregate({
-        _sum: { amount: true },
       }),
       prisma.bazarSchedule.findFirst({
         where: { date: today },
@@ -117,15 +102,15 @@ export default async function DashboardPage() {
         include: { member: { include: { user: { select: { name: true } } } } },
       }),
       getActiveNotices(),
-      calculateMealRate(month, year),
+      getAllMembersRunningBalances(month, year),
     ]);
 
-    mealRate = calculatedMealRate;
+    mealRate = batchBalances.mealRate;
     totalMembers = allMembers.length;
     totalRooms = dbRooms || 3;
     totalSeats = dbSeats || 7;
 
-    // 2. Process current member stats
+    // 2. Process current member stats in-memory (0 extra DB calls)
     if (member) {
       const todayMealFound = weeklyMealsList.find(
         (m) => m.memberId === member.id && new Date(m.date).toDateString() === today.toDateString()
@@ -133,10 +118,12 @@ export default async function DashboardPage() {
       if (todayMealFound) {
         todayMeal = todayMealFound;
       }
-      const calculated = await calculateMemberFoodCost(member.id, month, year, mealRate);
-      foodCost = calculated.foodCost;
-      totalMeals = calculated.totalMeals;
-      balance = await calculateMemberRunningBalance(member.id);
+      const memberStat = batchBalances.balances[member.id];
+      if (memberStat) {
+        foodCost = memberStat.foodCost;
+        totalMeals = memberStat.totalMeals;
+        balance = memberStat.balance;
+      }
     }
 
     // 3. Process today's meal totals
@@ -153,10 +140,10 @@ export default async function DashboardPage() {
       todayTotalMeals = { breakfast: b, lunch: l, dinner: d, total: b + l + d };
     }
 
-    // 4. Financial sums
-    monthBazarExpense = Number(bazarAgg._sum.totalAmount) || 2450;
-    monthUtilityBills = Number(utilityAgg._sum.amount) || 31850;
-    const totalPayments = Number(paymentsAgg._sum.amount) || 26500;
+    // 4. Financial sums from batched calculations
+    monthBazarExpense = batchBalances.monthBazarExpense || 2450;
+    monthUtilityBills = batchBalances.monthUtilityBills || 31850;
+    const totalPayments = batchBalances.totalPayments || 26500;
     totalFundInHand = Math.max(0, totalPayments - monthBazarExpense);
 
     // 5. Schedules & Duties
@@ -168,20 +155,15 @@ export default async function DashboardPage() {
       cleaningAssignee = todayCleaning.assignedMember?.user?.name ?? "Member";
     }
 
-    // 6. Member live status & balance in parallel
-    memberStatusList = await Promise.all(
-      allMembers.map(async (m) => {
-        const [paidAgg, mbBalance] = await Promise.all([
-          prisma.payment.aggregate({ where: { memberId: m.id }, _sum: { amount: true } }),
-          calculateMemberRunningBalance(m.id),
-        ]);
-        return {
-          ...m,
-          totalPaid: Number(paidAgg._sum.amount) || 0,
-          balance: mbBalance,
-        };
-      })
-    );
+    // 6. Member live status & balance mapped in-memory (0 extra DB calls)
+    memberStatusList = allMembers.map((m) => {
+      const stat = batchBalances.balances[m.id];
+      return {
+        ...m,
+        totalPaid: stat?.totalPaid ?? 0,
+        balance: stat?.balance ?? 0,
+      };
+    });
 
     // 7. Process weekly trend in-memory (0 extra DB calls)
     const trendList = [];

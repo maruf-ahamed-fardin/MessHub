@@ -131,11 +131,11 @@ export function TopBar({ user }: TopBarProps) {
           {/* 2. Notifications Popover */}
           <NotificationPopover />
 
-          {/* 3. Hamburger Menu Button — opens MoreSidebar */}
+          {/* 3. Hamburger Menu Button — opens MoreSidebar on mobile */}
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-800 dark:hover:text-slate-100 transition-all cursor-pointer active:scale-95"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-800 dark:hover:text-slate-100 transition-all cursor-pointer active:scale-95 md:hidden"
             aria-label={T.topbar.openMenu}
           >
             <Menu size={20} strokeWidth={2.2} />

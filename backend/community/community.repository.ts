@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 
 export async function getPosts(limit = 30) {
@@ -89,7 +90,7 @@ export async function deletePost(id: string) {
   return prisma.communityPost.delete({ where: { id } });
 }
 
-export async function getActiveNotices() {
+export const getActiveNotices = cache(async () => {
   return prisma.notice.findMany({
     where: {
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
@@ -97,7 +98,7 @@ export async function getActiveNotices() {
     include: { author: { select: { name: true } } },
     orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
   });
-}
+});
 
 export async function createNotice(data: {
   title: string;

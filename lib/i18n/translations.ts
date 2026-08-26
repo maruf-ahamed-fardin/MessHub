@@ -53,7 +53,7 @@ export const translations = {
   // ─── Dashboard ────────────────────────────────────────────────
   dashboard: {
     welcome:          { bn: "স্বাগতম",              en: "Welcome" },
-    mealBooking:      { bn: "মিল বুকিং",            en: "Meal Booking" },
+    mealBooking:      { bn: "মিল এন্ট্রি",            en: "Meal Entry" },
     bazarEntry:       { bn: "+ বাজার এন্ট্রি",      en: "+ Bazar Entry" },
     moneyTransaction: { bn: "টাকা লেনদেন",          en: "Money Transaction" },
     messNotice:       { bn: "📢 মেস নোটিশ",         en: "📢 Mess Notice" },
@@ -242,7 +242,7 @@ export const translations = {
     },
     meals: {
       title:           { bn: "মিলস ও রেট ইঞ্জিন",    en: "Meals & Rate Engine" },
-      description:     { bn: "দৈনিক মিল বুকিং, গেস্ট মিল ও লাইভ মিল রেট হিসাব", en: "Daily meal booking, guest meals & live meal rate calculation" },
+      description:     { bn: "দৈনিক মিল এন্ট্রি, গেস্ট মিল ও লাইভ মিল রেট হিসাব", en: "Daily meal entry, guest meals & live meal rate calculation" },
       monthlyCalendar: { bn: "মাসিক ক্যালেন্ডার",    en: "Monthly Calendar" },
     },
     expenses: {

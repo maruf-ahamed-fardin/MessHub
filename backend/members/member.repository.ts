@@ -1,10 +1,11 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 import bcrypt from "bcryptjs";
 import { MemberProfile, User } from "@prisma/client";
 
 export type MemberWithUser = MemberProfile & { user: User };
 
-export async function getAllMembers(includeInactive = false) {
+export const getAllMembers = cache(async (includeInactive = false) => {
   return prisma.memberProfile.findMany({
     where: includeInactive ? {} : { isActive: true },
     include: {
@@ -13,9 +14,9 @@ export async function getAllMembers(includeInactive = false) {
     },
     orderBy: { user: { name: "asc" } },
   });
-}
+});
 
-export async function getMemberById(id: string) {
+export const getMemberById = cache(async (id: string) => {
   return prisma.memberProfile.findUnique({
     where: { id },
     include: {
@@ -23,9 +24,9 @@ export async function getMemberById(id: string) {
       seat: { include: { room: true } },
     },
   });
-}
+});
 
-export async function getMemberByUserId(userId: string) {
+export const getMemberByUserId = cache(async (userId: string) => {
   return prisma.memberProfile.findUnique({
     where: { userId },
     include: {
@@ -33,7 +34,7 @@ export async function getMemberByUserId(userId: string) {
       seat: { include: { room: true } },
     },
   });
-}
+});
 
 export async function createMember(data: {
   name: string;

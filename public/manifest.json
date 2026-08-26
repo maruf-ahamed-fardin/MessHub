@@ -32,7 +32,7 @@
     {
       "name": "Meals",
       "url": "/meals",
-      "description": "Meal booking and daily counts"
+      "description": "Meal entry and daily counts"
     },
     {
       "name": "Community Feed",

@@ -9,10 +9,14 @@ import {
 } from "./meal-calculation.service";
 import { calculateGuestMealCost, getTotalGuestMeals } from "./guest-meal.service";
 import { getTotalUtility } from "./utility.service";
-import { getTotalOtherExpense, calculateMemberExpenseShare } from "./expense-calculation.service";
+import {
+  getTotalOtherExpense,
+  calculateMemberExpenseShare,
+  getMonthlyHouseExpense,
+} from "./expense-calculation.service";
 import { getMemberTotalPayments, calculateBalance } from "./balance.service";
 import { SettlementSummary } from "@/types";
-import { getCurrentMonthYear } from "@/lib/utils/date";
+import { getCurrentMonthYear, getMonthRange } from "@/lib/utils/date";
 
 /**
  * Calculate the full monthly settlement for a given month/year.
@@ -22,60 +26,160 @@ export async function calculateMonthlySettlement(
   month: number,
   year: number
 ): Promise<SettlementSummary> {
-  // Get all active members
-  const members = await prisma.memberProfile.findMany({
-    where: { isActive: true },
-    include: { user: { select: { name: true, image: true } } },
-  });
+  const { startDate, endDate } = getMonthRange(month, year);
 
-  const activeCount = members.length;
+  // Single parallel batch for ALL data needed for monthly settlement
+  const [
+    members,
+    allMeals,
+    allGuestMeals,
+    allPayments,
+    allBazars,
+    utilityBills,
+    expenses,
+    houseExpenses,
+  ] = await Promise.all([
+    prisma.memberProfile.findMany({
+      where: { isActive: true },
+      include: { user: { select: { name: true, image: true } } },
+    }),
+    prisma.meal.findMany({
+      where: {
+        date: { gte: startDate, lte: endDate },
+        member: { isActive: true },
+      },
+      select: { memberId: true, breakfast: true, lunch: true, dinner: true },
+    }),
+    prisma.guestMeal.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      select: { memberId: true, quantity: true },
+    }),
+    prisma.payment.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      select: { memberId: true, amount: true },
+    }),
+    prisma.bazar.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      select: { totalAmount: true },
+    }),
+    prisma.utilityBill.findMany({
+      where: { month, year },
+      select: { amount: true },
+    }),
+    prisma.expense.findMany({
+      where: { date: { gte: startDate, lte: endDate } },
+      select: { amount: true, sharingMethod: true, selectedMemberIds: true },
+    }),
+    getMonthlyHouseExpense(month, year),
+  ]);
 
-  // Core calculations
-  const [foodExpense, totalNormalMeals, totalUtility, totalOtherExpense, totalGuestMeals] =
-    await Promise.all([
-      getTotalFoodExpense(month, year),
-      getTotalNormalMeals(month, year),
-      getTotalUtility(month, year),
-      getTotalOtherExpense(month, year),
-      getTotalGuestMeals(month, year),
-    ]);
+  const activeCount = members.length || 1;
+
+  // 1. Food totals & Meal rate
+  const foodExpense = allBazars.reduce((sum: number, b: { totalAmount: number | string }) => sum + toNumber(b.totalAmount), 0);
+  const memberMealCountMap: Record<string, number> = {};
+  for (const member of members) {
+    memberMealCountMap[member.id] = 0;
+  }
+
+  let totalNormalMeals = 0;
+  for (const meal of allMeals) {
+    let count = 0;
+    if (meal.breakfast) count++;
+    if (meal.lunch) count++;
+    if (meal.dinner) count++;
+    if (count > 0) {
+      memberMealCountMap[meal.memberId] = (memberMealCountMap[meal.memberId] || 0) + count;
+      totalNormalMeals += count;
+    }
+  }
 
   const mealRate = totalNormalMeals > 0 ? roundMoney(foodExpense / totalNormalMeals) : 0;
-  const utilityPerMember = activeCount > 0 ? roundMoney(totalUtility / activeCount) : 0;
 
-  // Per-member calculations
-  const memberSummaries = await Promise.all(
-    members.map(async (member) => {
-      const [{ totalMeals }, { guestMealCost }, totalPaid, otherCost] = await Promise.all([
-        getMemberTotalMeals(member.id, month, year).then((totalMeals) => ({ totalMeals })),
-        calculateGuestMealCost(member.id, month, year, mealRate),
-        getMemberTotalPayments(member.id, month, year),
-        calculateMemberExpenseShare(member.id, month, year, activeCount),
-      ]);
+  // 2. Guest meals per member
+  const memberGuestMap: Record<string, number> = {};
+  let totalGuestMeals = 0;
+  for (const g of allGuestMeals) {
+    const qty = Number(g.quantity) || 1;
+    memberGuestMap[g.memberId] = (memberGuestMap[g.memberId] || 0) + qty;
+    totalGuestMeals += qty;
+  }
 
-      const foodCost = roundMoney(totalMeals * mealRate);
-      const seatRent = toNumber(member.seatRent);
-      const utilityCost = utilityPerMember;
-      const totalCost = roundMoney(foodCost + guestMealCost + utilityCost + seatRent + otherCost);
-      const balance = calculateBalance(totalPaid, totalCost);
+  // 3. Utility per member
+  const totalUtility = utilityBills.reduce((sum: number, u: { amount: number | string }) => sum + toNumber(u.amount), 0);
+  const utilityPerMember = roundMoney(totalUtility / activeCount);
 
-      return {
-        memberId: member.id,
-        memberName: member.user?.name ?? "Unknown",
-        avatar: member.user?.image ?? null,
-        totalMeals,
-        foodCost,
-        guestMealCost,
-        utilityCost,
-        seatRent,
-        otherCost,
-        totalCost,
-        totalPaid,
-        balance,
-        status: balance >= 0 ? ("REFUND" as const) : ("DUE" as const),
-      };
-    })
-  );
+  // 4. Other & House expenses per member
+  const houseCostPerMember = houseExpenses.totalHouseCost > 0 ? houseExpenses.totalHouseCost / activeCount : 0;
+  const memberExpenseMap: Record<string, number> = {};
+  for (const member of members) {
+    memberExpenseMap[member.id] = houseCostPerMember;
+  }
+
+  let totalOtherExpense = houseExpenses.totalHouseCost;
+  for (const exp of expenses) {
+    const amt = toNumber(exp.amount);
+    totalOtherExpense += amt;
+    if (exp.sharingMethod === "EQUAL") {
+      const share = amt / activeCount;
+      for (const member of members) {
+        memberExpenseMap[member.id] += share;
+      }
+    } else if (exp.sharingMethod === "SELECTED_MEMBERS") {
+      const selected = exp.selectedMemberIds ? exp.selectedMemberIds.split(",").filter(Boolean) : [];
+      if (selected.length > 0) {
+        const share = amt / selected.length;
+        for (const sid of selected) {
+          if (memberExpenseMap[sid] !== undefined) {
+            memberExpenseMap[sid] += share;
+          }
+        }
+      }
+    } else if (exp.sharingMethod === "MEAL_BASED") {
+      for (const member of members) {
+        const mMeals = memberMealCountMap[member.id] || 0;
+        const ratio = totalNormalMeals > 0 ? mMeals / totalNormalMeals : 1 / activeCount;
+        memberExpenseMap[member.id] += amt * ratio;
+      }
+    }
+  }
+
+  // 5. Payments per member
+  const memberPaidMap: Record<string, number> = {};
+  for (const p of allPayments) {
+    const amt = toNumber(p.amount);
+    memberPaidMap[p.memberId] = (memberPaidMap[p.memberId] || 0) + amt;
+  }
+
+  // 6. Member summaries
+  const memberSummaries = members.map((member: (typeof members)[number]) => {
+    const totalMeals = memberMealCountMap[member.id] || 0;
+    const foodCost = roundMoney(totalMeals * mealRate);
+    const guestCount = memberGuestMap[member.id] || 0;
+    const guestMealCost = roundMoney(guestCount * mealRate);
+    const seatRent = toNumber(member.seatRent);
+    const utilityCost = utilityPerMember;
+    const otherCost = roundMoney(memberExpenseMap[member.id] || 0);
+    const totalCost = roundMoney(foodCost + guestMealCost + utilityCost + seatRent + otherCost);
+    const totalPaid = roundMoney(memberPaidMap[member.id] || 0);
+    const balance = calculateBalance(totalPaid, totalCost);
+
+    return {
+      memberId: member.id,
+      memberName: member.user?.name ?? "Unknown",
+      avatar: member.user?.image ?? null,
+      totalMeals,
+      foodCost,
+      guestMealCost,
+      utilityCost,
+      seatRent,
+      otherCost,
+      totalCost,
+      totalPaid,
+      balance,
+      status: balance >= 0 ? ("REFUND" as const) : ("DUE" as const),
+    };
+  });
 
   return {
     month,
