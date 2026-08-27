@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { OfflineIndicator } from "@/components/shared/OfflineIndicator";
 import { TopBar } from "@/components/shared/TopBar";
+import { AIAssistantWidget } from "@/components/ai/AIAssistantWidget";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const session = (await auth()) ?? DEFAULT_MOCK_SESSION;
@@ -20,6 +21,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <div className="page-container fade-in">{children}</div>
         </main>
       </div>
+
+      {/* Global AI Assistant Floating Buddy */}
+      <AIAssistantWidget user={session.user} />
 
       {/* Mobile Bottom Nav */}
       <BottomNav />

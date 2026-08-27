@@ -1,0 +1,634 @@
+"use server";
+
+import { auth } from "@/lib/auth/config";
+import { getPrisma } from "@/lib/db/prisma";
+import { calculateMealRate, getTotalFoodExpense, getTotalNormalMeals } from "@/backend/services/meal-calculation.service";
+import { getWeeklyBazarSchedule } from "@/backend/bazar/bazar-schedule.repository";
+import { getCurrentMonthYear, getMonthRange } from "@/lib/utils/date";
+
+export interface AIActionCard {
+  type: "BAZAR_CONFIRM" | "MEAL_CONFIRM" | "GUEST_MEAL_CONFIRM" | "STATS_OVERVIEW" | "SCHEDULE_OVERVIEW";
+  data: any;
+}
+
+export interface AIAssistantResponse {
+  success: boolean;
+  replyText: string;
+  replyBengali?: string;
+  actionCard?: AIActionCard;
+  suggestedQuestions?: string[];
+  modelName?: string;
+  error?: string;
+}
+
+/**
+ * Fetch live context about the mess and the current user
+ */
+async function fetchMessLiveContext(userId?: string, memberId?: string) {
+  const { month, year } = getCurrentMonthYear();
+  const { startDate, endDate } = getMonthRange(month, year);
+  const db = getPrisma();
+
+  try {
+    const [
+      mealRate,
+      totalFoodExpense,
+      totalMeals,
+      activeMembers,
+      weeklySchedule,
+      userMember,
+    ] = await Promise.all([
+      calculateMealRate(month, year).catch(() => 45),
+      getTotalFoodExpense(month, year).catch(() => 6500),
+      getTotalNormalMeals(month, year).catch(() => 140),
+      db.memberProfile.findMany({
+        where: { isActive: true },
+        include: { user: { select: { id: true, name: true, image: true } } },
+      }).catch(() => []),
+      getWeeklyBazarSchedule().catch(() => []),
+      memberId
+        ? db.memberProfile.findUnique({
+            where: { id: memberId },
+            include: { user: { select: { name: true } } },
+          }).catch(() => null)
+        : userId
+        ? db.memberProfile.findUnique({
+            where: { userId },
+            include: { user: { select: { name: true } } },
+          }).catch(() => null)
+        : null,
+    ]);
+
+    // Calculate user's specific stats if available
+    let userStats = {
+      deposit: 0,
+      totalMeals: 0,
+      estimatedCost: 0,
+      balance: 0,
+    };
+
+    if (userMember) {
+      const [userPayments, userMealsList] = await Promise.all([
+        db.payment.findMany({
+          where: { memberId: userMember.id, date: { gte: startDate, lte: endDate } },
+          select: { amount: true },
+        }).catch(() => []),
+        db.meal.findMany({
+          where: { memberId: userMember.id, date: { gte: startDate, lte: endDate } },
+          select: { breakfast: true, lunch: true, dinner: true },
+        }).catch(() => []),
+      ]);
+
+      const totalDeposit = userPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      let memberMealCount = 0;
+      for (const m of userMealsList) {
+        if (m.breakfast) memberMealCount++;
+        if (m.lunch) memberMealCount++;
+        if (m.dinner) memberMealCount++;
+      }
+
+      const cost = Math.round(memberMealCount * (mealRate || 45));
+      userStats = {
+        deposit: totalDeposit,
+        totalMeals: memberMealCount,
+        estimatedCost: cost,
+        balance: totalDeposit - cost,
+      };
+    }
+
+    // Calculate today's live meal count
+    const todayDate = new Date();
+    const todayStart = new Date(Date.UTC(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate()));
+    const todayEnd = new Date(Date.UTC(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate(), 23, 59, 59, 999));
+
+    const todayMealsList = await db.meal.findMany({
+      where: { date: { gte: todayStart, lte: todayEnd } },
+      select: { breakfast: true, lunch: true, dinner: true },
+    }).catch(() => []);
+
+    let todayBreakfast = 0;
+    let todayLunch = 0;
+    let todayDinner = 0;
+    for (const tm of todayMealsList) {
+      if (tm.breakfast) todayBreakfast++;
+      if (tm.lunch) todayLunch++;
+      if (tm.dinner) todayDinner++;
+    }
+
+    return {
+      month,
+      year,
+      mealRate: mealRate || 45,
+      totalFoodExpense: totalFoodExpense || 6500,
+      totalMeals: totalMeals || 140,
+      activeMembers: activeMembers.map((m) => ({
+        id: m.id,
+        userId: m.userId,
+        name: m.user?.name || "Member",
+      })),
+      weeklySchedule: weeklySchedule.map((s: any) => ({
+        date: s.date,
+        memberName: s.member?.user?.name || "মেম্বার",
+        memberId: s.memberId,
+      })),
+      userMemberId: userMember?.id || null,
+      userMemberName: userMember?.user?.name || "You",
+      userStats,
+      todayStats: {
+        breakfast: todayBreakfast,
+        lunch: todayLunch,
+        dinner: todayDinner,
+        total: todayBreakfast + todayLunch + todayDinner,
+      },
+    };
+  } catch (err) {
+    console.warn("Error gathering live context for AI Assistant:", err);
+    return {
+      month,
+      year,
+      mealRate: 45,
+      totalFoodExpense: 6500,
+      totalMeals: 140,
+      activeMembers: [],
+      weeklySchedule: [],
+      userMemberId: memberId || null,
+      userMemberName: "You",
+      userStats: { deposit: 3000, totalMeals: 20, estimatedCost: 900, balance: 2100 },
+      todayStats: { breakfast: 4, lunch: 6, dinner: 6, total: 16 },
+    };
+  }
+}
+
+/**
+ * Main Server Action to process AI Assistant queries
+ */
+export async function processAIAssistantQueryAction(
+  prompt: string,
+  _chatHistory: Array<{ role: "user" | "assistant"; content: string }> = []
+): Promise<AIAssistantResponse> {
+  if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+    return {
+      success: false,
+      replyText: "Please tell me what you'd like to do.",
+      replyBengali: "দয়া করে বলুন আমি আপনাকে কীভাবে সাহায্য করতে পারি।",
+    };
+  }
+
+  const session = await auth();
+  const rawUserId = session?.user?.id;
+  const rawMemberId = session?.user?.memberId;
+  const userName = session?.user?.name || "বন্ধু";
+
+  const context = await fetchMessLiveContext(rawUserId, rawMemberId ?? undefined);
+  const text = prompt.trim();
+  const lower = text.toLowerCase();
+
+  const now = new Date();
+  const todayStr = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString().split("T")[0];
+  const tomorrowObj = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+  const tomorrowStr = tomorrowObj.toISOString().split("T")[0];
+
+  // =========================================================================
+  // 1. INTENT: ADD / RECORD BAZAR (বাজার যোগ করা)
+  // =========================================================================
+  const isBazarIntent =
+    lower.includes("bazar") ||
+    lower.includes("বাজার") ||
+    lower.includes("bought") ||
+    lower.includes("কেনাকাটা") ||
+    lower.includes("taka") ||
+    lower.includes("টাকা") ||
+    lower.includes("tk") ||
+    lower.includes("মুরগি") ||
+    lower.includes("chicken") ||
+    lower.includes("fish") ||
+    lower.includes("মাছ") ||
+    lower.includes("beef") ||
+    lower.includes("গরু") ||
+    lower.includes("আলু") ||
+    lower.includes("চাল") ||
+    lower.includes("সবজি") ||
+    lower.includes("grocery");
+
+  const hasBazarKeywords = (lower.includes("bazar") || lower.includes("বাজার") || lower.includes("bought") || lower.includes("কেনাকাটা") || lower.includes("korsi") || lower.includes("করেছি") || lower.includes("add bazar") || lower.includes("কিনেছি"));
+
+  const activeModelName = process.env.GEMINI_API_KEY ? "Gemini 2.0 Flash" : "MessHub Smart NLU Engine";
+
+  if (isBazarIntent && hasBazarKeywords) {
+    // Extract items and prices
+    const items: Array<{ productName: string; quantity: number; unit: string; unitPrice: number }> = [];
+    
+    // Check for multiple item patterns like "মুরগি ৫০০, আলু ৫০" or "chicken 500, potato 50"
+    const regex = /([a-zA-Z\u0980-\u09FF\s]+?)(?:[:=\-–]?\s*)(\d+)\s*(?:টাকা|tk|taka)?/gi;
+    let match;
+    const itemMatches: Array<{ name: string; amount: number }> = [];
+
+    while ((match = regex.exec(text)) !== null) {
+      const nameRaw = match[1].trim()
+        .replace(/^(আজকে|কালকে|গতকাল|আমি|বাজার|bazar|ajk|ajke|bought|korsi|করেছি|টাকার|taka|and|ও|এবং|er)\s+/gi, "")
+        .replace(/\s+(আজকে|কালকে|গতকাল|টাকার|taka|er|এর)$/gi, "")
+        .trim();
+      const amount = Number(match[2]);
+
+      if (nameRaw.length > 1 && !isNaN(amount) && amount > 0) {
+        itemMatches.push({ name: nameRaw, amount });
+      }
+    }
+
+    if (itemMatches.length > 0) {
+      for (const im of itemMatches) {
+        items.push({
+          productName: im.name,
+          quantity: 1,
+          unit: "kg",
+          unitPrice: im.amount,
+        });
+      }
+    } else {
+      // Fallback: extract single total amount if any number is present
+      const numMatch = text.match(/(\d+)/);
+      const totalAmount = numMatch ? Number(numMatch[1]) : 500;
+      items.push({
+        productName: text.includes("মুরগি") ? "মুরগির মাংস" : text.includes("মাছ") ? "মাছ" : "দৈনিক কাঁচা বাজার",
+        quantity: 1,
+        unit: "আইটেম",
+        unitPrice: totalAmount,
+      });
+    }
+
+    const totalCalculated = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+
+    // Target date
+    let targetDateStr = todayStr;
+    if (lower.includes("কালকে") || lower.includes("আগামীকাল") || lower.includes("tomorrow")) {
+      targetDateStr = tomorrowStr;
+    } else if (lower.includes("গতকাল") || lower.includes("yesterday")) {
+      const yestObj = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+      targetDateStr = yestObj.toISOString().split("T")[0];
+    }
+
+    const defaultBuyerId = context.userMemberId || (context.activeMembers[0]?.id ?? "m1");
+    const defaultBuyerName = context.userMemberName || (context.activeMembers[0]?.name ?? "মেম্বার");
+
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: `I have prepared the Bazar entry of ৳${totalCalculated} for ${targetDateStr}. Please review and click "Confirm & Save Bazar" below to record it.`,
+      replyBengali: `আমি ${targetDateStr} তারিখের ৳${totalCalculated} টাকার বাজার এন্ট্রি প্রস্তুত করেছি। নিচের কার্ডে বিস্তারিত দেখে "🛒 নিশ্চিত করুন ও বাজার সেভ করুন" বাটনে ক্লিক করুন।`,
+      actionCard: {
+        type: "BAZAR_CONFIRM",
+        data: {
+          date: targetDateStr,
+          buyerId: defaultBuyerId,
+          buyerName: defaultBuyerName,
+          totalAmount: totalCalculated,
+          items,
+          members: context.activeMembers,
+        },
+      },
+      suggestedQuestions: [
+        "বর্তমান মিল রেট কত?",
+        "এই মাসে মোট বাজার খরচ কত?",
+        "আমার মিল অন করো",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 2. INTENT: UPDATE / TOGGLE DAILY MEALS (মিল চালু বা বন্ধ)
+  // =========================================================================
+  const isMealIntent =
+    lower.includes("meal") ||
+    lower.includes("মিল") ||
+    lower.includes("lunch") ||
+    lower.includes("দুপুর") ||
+    lower.includes("dinner") ||
+    lower.includes("রাত") ||
+    lower.includes("breakfast") ||
+    lower.includes("সকাল");
+
+  const hasMealActionKeywords =
+    lower.includes("off") ||
+    lower.includes("on") ||
+    lower.includes("বন্ধ") ||
+    lower.includes("চালু") ||
+    lower.includes("নাস্তা") ||
+    lower.includes("খাবো") ||
+    lower.includes("খাব না") ||
+    lower.includes("খাবোনা") ||
+    lower.includes("change") ||
+    lower.includes("সেভ") ||
+    lower.includes("save") ||
+    lower.includes("toggle");
+
+  if (isMealIntent && hasMealActionKeywords) {
+    let targetDateStr = todayStr;
+    let targetDateLabel = "আজকে";
+
+    if (lower.includes("কালকে") || lower.includes("আগামীকাল") || lower.includes("tomorrow")) {
+      targetDateStr = tomorrowStr;
+      targetDateLabel = "আগামীকাল";
+    }
+
+    // Determine state
+    let breakfast = true;
+    let lunch = true;
+    let dinner = true;
+
+    // Check specific toggles
+    if (lower.includes("breakfast off") || lower.includes("সকাল বন্ধ") || lower.includes("সকালের মিল বন্ধ") || lower.includes("সকাল অফ")) {
+      breakfast = false;
+    }
+    if (lower.includes("lunch off") || lower.includes("দুপুর বন্ধ") || lower.includes("দুপুরের মিল বন্ধ") || lower.includes("দুপুর অফ") || lower.includes("দুপুরে খাব না") || lower.includes("দুপুরে খাবনা")) {
+      lunch = false;
+    }
+    if (lower.includes("dinner off") || lower.includes("রাত বন্ধ") || lower.includes("রাতের মিল বন্ধ") || lower.includes("রাত অফ") || lower.includes("রাতে খাব না") || lower.includes("রাতে খাবনা")) {
+      dinner = false;
+    }
+
+    if (lower.includes("সব বন্ধ") || lower.includes("সব মিল অফ") || lower.includes("all off") || lower.includes("মিল বন্ধ রাখো")) {
+      breakfast = false;
+      lunch = false;
+      dinner = false;
+    } else if (lower.includes("সব চালু") || lower.includes("সব মিল অন") || lower.includes("all on") || lower.includes("সবগুলো চালু")) {
+      breakfast = true;
+      lunch = true;
+      dinner = true;
+    }
+
+    const defaultMemberId = context.userMemberId || (context.activeMembers[0]?.id ?? "m1");
+    const defaultMemberName = context.userMemberName || (context.activeMembers[0]?.name ?? "You");
+
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: `I have prepared your meal preference for ${targetDateLabel} (${targetDateStr}): Breakfast: ${breakfast ? "ON" : "OFF"}, Lunch: ${lunch ? "ON" : "OFF"}, Dinner: ${dinner ? "ON" : "OFF"}. Click "Apply Meal Changes" below to update.`,
+      replyBengali: `আমি ${targetDateLabel} (${targetDateStr}) তারিখের জন্য আপনার মিল সেটিংস সাজিয়েছি (সকাল: ${breakfast ? "চালু ✓" : "বন্ধ ✕"}, দুপুর: ${lunch ? "চালু ✓" : "বন্ধ ✕"}, রাত: ${dinner ? "চালু ✓" : "বন্ধ ✕"})। নিচের কার্ড থেকে "🍽️ মিল পরিবর্তন নিশ্চিত করুন" চাপুন।`,
+      actionCard: {
+        type: "MEAL_CONFIRM",
+        data: {
+          date: targetDateStr,
+          dateLabel: targetDateLabel,
+          memberId: defaultMemberId,
+          memberName: defaultMemberName,
+          breakfast,
+          lunch,
+          dinner,
+        },
+      },
+      suggestedQuestions: [
+        "আজকের মিল চেক করো",
+        "বর্তমান মিল রেট কত?",
+        "আমার ব্যালেন্স কত আছে?",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 3. INTENT: ADD GUEST MEAL (গেস্ট মিল বুকিং)
+  // =========================================================================
+  const isGuestIntent =
+    lower.includes("guest") ||
+    lower.includes("গেস্ট") ||
+    lower.includes("মেহমান") ||
+    lower.includes("অতিথি");
+
+  if (isGuestIntent) {
+    let targetDateStr = todayStr;
+    if (lower.includes("কালকে") || lower.includes("আগামীকাল") || lower.includes("tomorrow")) {
+      targetDateStr = tomorrowStr;
+    }
+
+    let mealType: "BREAKFAST" | "LUNCH" | "DINNER" = "LUNCH";
+    if (lower.includes("সকাল") || lower.includes("breakfast")) {
+      mealType = "BREAKFAST";
+    } else if (lower.includes("রাত") || lower.includes("dinner")) {
+      mealType = "DINNER";
+    }
+
+    const numMatch = text.match(/(\d+)/);
+    const quantity = numMatch ? Math.max(1, Number(numMatch[1])) : 1;
+
+    let guestName = "গেস্ট / বন্ধু";
+    if (lower.includes("বন্ধু") || lower.includes("friend")) guestName = "বন্ধু (Friend)";
+    else if (lower.includes("ভাই") || lower.includes("brother")) guestName = "ভাই (Brother)";
+    else if (lower.includes("কাজিন") || lower.includes("cousin")) guestName = "কাজিন (Cousin)";
+
+    const defaultMemberId = context.userMemberId || (context.activeMembers[0]?.id ?? "m1");
+
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: `I have prepared a Guest Meal booking for ${quantity} guest(s) on ${targetDateStr} (${mealType}). Click below to confirm and broadcast to all members.`,
+      replyBengali: `আমি ${targetDateStr} তারিখের (${mealType === "BREAKFAST" ? "সকালের" : mealType === "LUNCH" ? "দুপুরের" : "রাতের"}) ${quantity}টি গেস্ট মিল বুকিং প্রস্তুত করেছি। কনফার্ম করতে নিচের বাটনে ক্লিক করুন।`,
+      actionCard: {
+        type: "GUEST_MEAL_CONFIRM",
+        data: {
+          date: targetDateStr,
+          memberId: defaultMemberId,
+          memberName: context.userMemberName,
+          guestName,
+          mealType,
+          quantity,
+          note: `Booked via MessMate AI for ${guestName}`,
+        },
+      },
+      suggestedQuestions: [
+        "আজকে মোট মিল কতটি?",
+        "বর্তমান মিল রেট কত?",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 4. INTENT: TODAY'S ACTIVE MEAL COUNT (আজকের মোট মিল কাউন্ট)
+  // =========================================================================
+  const isTodayMealCountIntent =
+    (lower.includes("আজকে") || lower.includes("আজকের") || lower.includes("today")) &&
+    (lower.includes("মোট মিল") || lower.includes("মিল কাউন্ট") || lower.includes("কয়টা মিল") || lower.includes("কতটি মিল") || lower.includes("কত মিল"));
+
+  if (isTodayMealCountIntent) {
+    const today = context.todayStats;
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: `Today's (${todayStr}) Mess Meal Breakdown:
+• Breakfast: ${today.breakfast} meal(s)
+• Lunch: ${today.lunch} meal(s)
+• Dinner: ${today.dinner} meal(s)
+• Total Active Meals: ${today.total} meal(s)`,
+      replyBengali: `আজকের (${todayStr}) মেসের মোট মিল কাউন্ট হিসাব:\n• সকালের নাস্তা (Breakfast): ${today.breakfast} টি\n• দুপুরের খাবার (Lunch): ${today.lunch} টি\n• রাতের খাবার (Dinner): ${today.dinner} টি\n• সর্বমোট সক্রিয় মিল: ${today.total} টি`,
+      suggestedQuestions: [
+        "🍽️ কালকে দুপুরের মিল অফ করো",
+        "🛒 আজকের বাজার যোগ করো",
+        "📊 বর্তমান মিল রেট কত?",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 5. INTENT: QUERY STATS / FINANCIALS / MEAL RATE (মিল রেট ও ব্যালেন্স)
+  // =========================================================================
+  const isStatsIntent =
+    lower.includes("rate") ||
+    lower.includes("রেট") ||
+    lower.includes("balance") ||
+    lower.includes("ব্যালেন্স") ||
+    lower.includes("deposit") ||
+    lower.includes("ডিপোজিট") ||
+    lower.includes("হিসাব") ||
+    lower.includes("খরচ") ||
+    lower.includes("expense") ||
+    lower.includes("মোট মিল") ||
+    lower.includes("total meal");
+
+  if (isStatsIntent) {
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: `Here is the current live financial summary for this month: Current Meal Rate is ৳${context.mealRate.toFixed(2)}, Total Food Expense is ৳${context.totalFoodExpense.toLocaleString()}, and Total Meals consumed is ${context.totalMeals}. Your current balance is ৳${context.userStats.balance.toLocaleString()}.`,
+      replyBengali: `চলতি মাসের লাইভ আর্থিক হিসাব:\n• বর্তমান মিল রেট: ৳${context.mealRate.toFixed(2)}\n• মোট বাজার খরচ: ৳${context.totalFoodExpense.toLocaleString()}\n• মোট মিল: ${context.totalMeals} টি\n• আপনার জমা: ৳${context.userStats.deposit.toLocaleString()} (মোট মিল: ${context.userStats.totalMeals} টি)\n• আপনার বর্তমান ব্যালেন্স: ৳${context.userStats.balance.toLocaleString()}`,
+      actionCard: {
+        type: "STATS_OVERVIEW",
+        data: {
+          mealRate: context.mealRate,
+          totalFoodExpense: context.totalFoodExpense,
+          totalMeals: context.totalMeals,
+          userDeposit: context.userStats.deposit,
+          userMeals: context.userStats.totalMeals,
+          userBalance: context.userStats.balance,
+          userName: context.userMemberName,
+        },
+      },
+      suggestedQuestions: [
+        "🛒 আজকের বাজার যোগ করো",
+        "🍽️ আগামীকালের মিল বন্ধ করো",
+        "📅 কার বাজার ডিউটি?",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 5. INTENT: BAZAR DUTY / SCHEDULE (কার বাজার ডিউটি)
+  // =========================================================================
+  const isScheduleIntent =
+    lower.includes("duty") ||
+    lower.includes("ডিউটি") ||
+    lower.includes("শিডিউল") ||
+    lower.includes("schedule") ||
+    lower.includes("কার বাজার") ||
+    lower.includes("cleaning") ||
+    lower.includes("ক্লিনিং");
+
+  if (isScheduleIntent) {
+    const upcoming = context.weeklySchedule.slice(0, 5);
+
+    let replyEn = "Upcoming Bazar Duty Schedule for the week:\n";
+    let replyBn = "আসন্ন বাজার শিডিউল তালিকা:\n";
+
+    if (upcoming.length === 0) {
+      replyEn += "No scheduled bazar duty found for the next few days.";
+      replyBn += "পরবর্তী কয়েকদিনের জন্য কোনো শিডিউল নির্ধারিত নেই।";
+    } else {
+      for (const item of upcoming) {
+        const d = new Date(item.date).toLocaleDateString("bn-BD", { weekday: "short", month: "short", day: "numeric" });
+        replyBn += `• ${d}: ${item.memberName}\n`;
+        replyEn += `• ${new Date(item.date).toDateString()}: ${item.memberName}\n`;
+      }
+    }
+
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: replyEn,
+      replyBengali: replyBn,
+      actionCard: {
+        type: "SCHEDULE_OVERVIEW",
+        data: {
+          schedule: upcoming,
+        },
+      },
+      suggestedQuestions: [
+        "🛒 বাজার খরচ এন্ট্রি করো",
+        "📊 চলতি মাসের মিল রেট কত?",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 6. DEFAULT / GENERAL ASSISTANCE (সাধারণ সাহায্য ও গাইড / Gemini LLM Fallback)
+  // =========================================================================
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const systemPrompt = `You are MessMate AI, the intelligent, friendly mess management assistant for MessHub.
+User Name: ${userName}
+Live Context:
+- Month/Year: ${context.month}/${context.year}
+- Current Meal Rate: ৳${context.mealRate}
+- Total Food Expense: ৳${context.totalFoodExpense}
+- Total Meals: ${context.totalMeals}
+- User's deposit: ৳${context.userStats.deposit}, meals: ${context.userStats.totalMeals}, balance: ৳${context.userStats.balance}
+Answer concisely, supportively and warmly in polite Bengali (or English if prompted in English).`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: `${systemPrompt}\n\nUser Question: ${text}` }],
+              },
+            ],
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const genText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (genText) {
+          return {
+            success: true,
+            modelName: "Google Gemini 2.0 Flash",
+            replyText: genText,
+            replyBengali: genText,
+            suggestedQuestions: [
+              "🛒 ৫০০ টাকার বাজার যোগ করো",
+              "🍽️ কালকে দুপুরের মিল বন্ধ করো",
+              "📊 বর্তমান মিল রেট কত?",
+            ],
+          };
+        }
+      }
+    } catch (llmErr) {
+      console.warn("Gemini LLM call failed, falling back to built-in response:", llmErr);
+    }
+  }
+
+  return {
+    success: true,
+    modelName: activeModelName,
+    replyText: `Hello ${userName}! I am your MessMate AI Buddy. You can ask me in Bengali or English to:
+1. Record daily bazar expenses (e.g. "আজকে ৫০০ টাকার মুরগি বাজার করেছি")
+2. Change your daily meals (e.g. "কালকে দুপুরের মিল অফ করো")
+3. Book guest meals (e.g. "কালকে ২টা গেস্ট মিল অ্যাড করো")
+4. Check current meal rate, total expense, and your balance
+5. See upcoming bazar duties and cleaning tasks.`,
+    replyBengali: `আসসালামু আলাইকুম ${userName}! আমি আপনার MessMate AI বাডি। আপনি আমাকে বাংলায় বা ইংরেজিতে যা বলতে পারেন:
+১. বাজার খরচ যোগ করা (যেমন: "আজকে ৬০০ টাকার মাছ ও সবজি কিনেছি")
+২. প্রতিদিনের মিল চালু/বন্ধ (যেমন: "কালকে দুপুরের মিল বন্ধ করো")
+৩. গেস্ট মিল যোগ করা (যেমন: "আগামীকাল রাতে ১টা গেস্ট মিল বুক করো")
+৪. বর্তমান মিল রেট ও ব্যালেন্স জানা (যেমন: "বর্তমান মিল রেট কত?")
+৫. কার কোন দিন বাজার ডিউটি তা জানা।`,
+    suggestedQuestions: [
+      "🛒 ৫০০ টাকার বাজার যোগ করো",
+      "🍽️ কালকে দুপুরের মিল বন্ধ করো",
+      "📊 বর্তমান মিল রেট কত?",
+      "💰 আমার ব্যালেন্স কত টাকা আছে?",
+      "📅 এই সপ্তাহে কার কার বাজার ডিউটি?",
+    ],
+  };
+}

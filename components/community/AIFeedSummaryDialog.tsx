@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, X, CheckCircle2, Megaphone, Utensils, ShoppingCart, Zap, RefreshCw } from "lucide-react";
+import { X, CheckCircle2, Megaphone, Utensils, ShoppingCart, Zap, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import { GeminiAiIcon } from "@/components/ai/GeminiAiIcon";
 import { parsePostContent } from "./CommunityFeedHub";
 
 interface AIFeedSummaryDialogProps {
@@ -58,7 +59,7 @@ export function AIFeedSummaryDialog({ posts, onClose }: AIFeedSummaryDialogProps
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-md">
-              <Sparkles size={18} className="animate-pulse" />
+              <GeminiAiIcon size={18} className="animate-pulse text-amber-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">

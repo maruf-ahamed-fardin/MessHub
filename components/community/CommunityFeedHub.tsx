@@ -65,6 +65,7 @@ import { compressImageFile, formatFileSize, CompressionResult } from "@/lib/util
 import { usePreferences } from "@/lib/context/PreferencesContext";
 import { VoiceRecorder, VoicePlayer, VoiceNoteData } from "./VoiceRecordPlayer";
 import { AIFeedSummaryDialog } from "./AIFeedSummaryDialog";
+import { GeminiAiIcon } from "@/components/ai/GeminiAiIcon";
 
 export interface MemberItem {
   id: string;
@@ -1086,7 +1087,7 @@ export function CommunityFeedHub({
             onClick={() => setShowAISummaryModal(true)}
             className="h-8 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-black gap-1.5 shadow-xs hover:shadow-md hover:scale-105 transition-all cursor-pointer shrink-0"
           >
-            <Sparkles size={13} className="animate-spin" />
+            <GeminiAiIcon size={14} className="animate-pulse text-amber-300" />
             <span>{t("✨ AI সামারি", "✨ AI TL;DR")}</span>
           </Button>
         </div>
