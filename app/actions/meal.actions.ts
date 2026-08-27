@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, assertCanModifyMember } from "@/backend/permissions/permission.service";
 import { upsertMeal } from "@/backend/meals/meal.repository";
 import { createGuestMeal, deleteGuestMeal } from "@/backend/guest-meals/guest-meal.repository";
+import { notifyAllUsersAboutMealSave } from "@/backend/notifications/notification.service";
 import { prisma } from "@/lib/db/prisma";
 
 function revalidateAllMealRoutes() {
@@ -12,6 +13,7 @@ function revalidateAllMealRoutes() {
   revalidatePath("/settlement");
   revalidatePath("/members");
   revalidatePath("/calendar");
+  revalidatePath("/notifications");
 }
 
 export async function updateMealAction(formData: {
@@ -52,8 +54,115 @@ export async function updateMealAction(formData: {
       lunch: Boolean(formData.lunch),
       dinner: Boolean(formData.dinner),
     });
+
+    // Notify all users in the mess about the meal update
+    const targetMember = await prisma.memberProfile.findUnique({
+      where: { id: formData.memberId },
+      include: { user: { select: { name: true } } },
+    });
+    const updaterName = session.user.name || (session.user.role === "ADMIN" ? "Admin" : "Member");
+    const targetMemberName = targetMember?.user?.name || "Member";
+    const isSelf = session.user.memberId === formData.memberId;
+    const isAdmin = session.user.role === "ADMIN";
+
+    await notifyAllUsersAboutMealSave({
+      targetMemberName,
+      updaterName,
+      isSelf,
+      isAdmin,
+      date: dateObj,
+      breakfast: formData.breakfast,
+      lunch: formData.lunch,
+      dinner: formData.dinner,
+    });
   } catch (err) {
     console.error("Error in updateMealAction:", err);
+    throw err;
+  }
+  revalidateAllMealRoutes();
+  return { success: true };
+}
+
+export async function saveBulkDailyMealsAction(data: {
+  date: string;
+  updates: Array<{
+    memberId: string;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+  }>;
+}) {
+  try {
+    const session = await requireAuth();
+    if (!data.updates || data.updates.length === 0) {
+      return { success: true };
+    }
+
+    const isSingleSelf = data.updates.length === 1 && data.updates[0].memberId === session.user.memberId;
+    if (!isSingleSelf && session.user.role !== "ADMIN") {
+      throw new Error("Unauthorized: Only Admins can modify other members' meals.");
+    }
+
+    const [y, m, d] = data.date.split("-").map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const targetDate = new Date(dateObj);
+    targetDate.setUTCHours(0, 0, 0, 0);
+
+    const maxFutureDate = new Date(today);
+    maxFutureDate.setUTCDate(maxFutureDate.getUTCDate() + 7);
+
+    if (session.user.role !== "ADMIN") {
+      if (targetDate < today) {
+        throw new Error("Past meals can only be edited by an Admin.");
+      }
+      if (targetDate > maxFutureDate) {
+        throw new Error("Meals can only be edited up to 7 days in advance.");
+      }
+    }
+
+    for (const update of data.updates) {
+      await upsertMeal({
+        memberId: update.memberId,
+        date: dateObj,
+        breakfast: Boolean(update.breakfast),
+        lunch: Boolean(update.lunch),
+        dinner: Boolean(update.dinner),
+      });
+    }
+
+    const updaterName = session.user.name || (session.user.role === "ADMIN" ? "Admin" : "Member");
+    if (data.updates.length === 1) {
+      const single = data.updates[0];
+      const targetMember = await prisma.memberProfile.findUnique({
+        where: { id: single.memberId },
+        include: { user: { select: { name: true } } },
+      });
+      const targetMemberName = targetMember?.user?.name || "Member";
+      await notifyAllUsersAboutMealSave({
+        targetMemberName,
+        updaterName,
+        isSelf: session.user.memberId === single.memberId,
+        isAdmin: session.user.role === "ADMIN",
+        date: dateObj,
+        breakfast: single.breakfast,
+        lunch: single.lunch,
+        dinner: single.dinner,
+      });
+    } else {
+      await notifyAllUsersAboutMealSave({
+        targetMemberName: `${data.updates.length} Members`,
+        updaterName,
+        isSelf: false,
+        isAdmin: session.user.role === "ADMIN",
+        date: dateObj,
+        count: data.updates.length,
+      });
+    }
+  } catch (err) {
+    console.error("Error in saveBulkDailyMealsAction:", err);
     throw err;
   }
   revalidateAllMealRoutes();

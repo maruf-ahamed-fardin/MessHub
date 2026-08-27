@@ -53,6 +53,65 @@ export async function notifyAllUsersAboutBazarSwap(data: {
   }
 }
 
+export async function notifyAllUsersAboutMealSave(data: {
+  targetMemberName: string;
+  updaterName: string;
+  isSelf: boolean;
+  isAdmin: boolean;
+  date: Date;
+  breakfast?: boolean;
+  lunch?: boolean;
+  dinner?: boolean;
+  count?: number;
+}) {
+  try {
+    const db = getPrisma();
+    const users = await db.user.findMany({ select: { id: true } });
+    const formattedDate = data.date.toLocaleDateString("bn-BD", {
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+      year: "numeric",
+    });
+
+    let title: string;
+    let desc: string;
+
+    if (data.count && data.count > 1) {
+      title = `🍽️ মিল আপডেট: ${data.count} জন মেম্বারের মিল সেভ হয়েছে`;
+      desc = `${data.updaterName}, ${formattedDate} তারিখের ${data.count} জন মেম্বারের মিল তালিকা সেভ ও আপডেট করেছেন।`;
+    } else {
+      const bStr = data.breakfast !== undefined ? (data.breakfast ? "সকাল: চালু ✓" : "সকাল: বন্ধ ✕") : "";
+      const lStr = data.lunch !== undefined ? (data.lunch ? "দুপুর: চালু ✓" : "দুপুর: বন্ধ ✕") : "";
+      const dStr = data.dinner !== undefined ? (data.dinner ? "রাত: চালু ✓" : "রাত: বন্ধ ✕") : "";
+      const mealStatusParts = [bStr, lStr, dStr].filter(Boolean).join(", ");
+
+      if (data.isSelf) {
+        title = `🍽️ মিল সেভ: ${data.targetMemberName}`;
+        desc = `${data.targetMemberName} নিজের ${formattedDate} তারিখের মিল সেভ করেছেন (${mealStatusParts})।`;
+      } else {
+        title = `🍽️ মিল সেভ: ${data.targetMemberName}`;
+        desc = `${data.updaterName}, ${data.targetMemberName}-এর ${formattedDate} তারিখের মিল পরিবর্তন ও সেভ করেছেন (${mealStatusParts})।`;
+      }
+    }
+
+    for (const u of users) {
+      const notifId = "notif-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+      await db.$executeRawUnsafe(
+        `INSERT INTO "notifications" ("id", "userId", "title", "message", "type", "relatedType", "isRead", "createdAt")
+         VALUES (?, ?, ?, ?, 'GENERAL', 'meal_update', 0, ?)`,
+        notifId,
+        u.id,
+        title,
+        desc,
+        new Date().toISOString()
+      );
+    }
+  } catch (err) {
+    console.warn("Failed to broadcast meal update notification:", err);
+  }
+}
+
 /**
  * Dynamically aggregates live notifications from all actions in the mess:
  * - Bazar entries & Swaps
@@ -62,6 +121,7 @@ export async function notifyAllUsersAboutBazarSwap(data: {
  * - Guest meals
  * - Notices & Community posts
  * - Daily Bazar schedule
+ * - Daily Meal Saves
  */
 export async function getLiveNotifications(currentMemberId?: string): Promise<LiveNotificationItem[]> {
   const db = getPrisma();
@@ -127,25 +187,26 @@ export async function getLiveNotifications(currentMemberId?: string): Promise<Li
       include: { member: { include: { user: { select: { name: true } } } } },
     }),
     db.notification.findMany({
-      where: { relatedType: "bazar_schedule" },
-      take: 6,
+      where: { relatedType: { in: ["bazar_schedule", "meal_update"] } },
+      take: 8,
       orderBy: { createdAt: "desc" },
     }),
   ]);
 
   const items: LiveNotificationItem[] = [];
 
-  // 1. Swap & System Notifications
+  // 1. Swap & System & Meal Notifications
   for (const n of dbNotifications) {
+    const isMeal = n.relatedType === "meal_update";
     items.push({
       id: `notif-${n.id}`,
-      category: "bazar",
+      category: isMeal ? "meal" : "bazar",
       title: n.title,
       desc: n.message,
       time: formatRelativeDate(n.createdAt),
       createdAt: n.createdAt,
-      href: "/bazar",
-      type: "BAZAR_SWAP",
+      href: isMeal ? "/meals" : "/bazar",
+      type: isMeal ? "MEAL_UPDATE" : "BAZAR_SWAP",
       read: n.isRead,
     });
   }

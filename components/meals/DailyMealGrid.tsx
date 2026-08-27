@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils/cn";
-import { updateMealAction, createGuestMealAction, deleteGuestMealAction } from "@/app/actions/meal.actions";
+import { updateMealAction, saveBulkDailyMealsAction, createGuestMealAction, deleteGuestMealAction } from "@/app/actions/meal.actions";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Utensils, Sun, Moon, Flame, UserPlus, Trash2, Plus, Loader2 } from "lucide-react";
+import { Utensils, Sun, Moon, Flame, UserPlus, Trash2, Plus, Loader2, Save, Check, Bell, Lock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ const MEAL_KEYS = ["breakfast", "lunch", "dinner"] as const;
 export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberId, isAdmin }: DailyMealGridProps) {
   const router = useRouter();
   const { t, language } = usePreferences();
+  const [isPending, startTransition] = useTransition();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -36,52 +37,83 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
   checkDate.setHours(0, 0, 0, 0);
   const isPastDate = checkDate.getTime() < today.getTime();
 
-  // Initial member meal state
-  const initialMap: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
-  for (const member of members) {
-    const existing = meals.find((m) => m.memberId === member.id);
-    initialMap[member.id] = {
-      breakfast: existing ? Boolean(existing.breakfast) : !isPastDate,
-      lunch: existing ? Boolean(existing.lunch) : !isPastDate,
-      dinner: existing ? Boolean(existing.dinner) : !isPastDate,
-    };
-  }
+  const maxFutureDate = new Date(today);
+  maxFutureDate.setDate(maxFutureDate.getDate() + 7);
+  const isBeyond7Days = checkDate.getTime() > maxFutureDate.getTime();
 
-  const [mealState, setMealState] = useState(initialMap);
-  const [guestList, setGuestList] = useState<any[]>(guestMeals ?? []);
-  const [loadingKey, setLoadingKey] = useState<string | null>(null);
-  const [guestDialogOpen, setGuestDialogOpen] = useState(false);
-  const [addingGuest, setAddingGuest] = useState(false);
-
-  // Sync state whenever date, meals, or guestMeals props update
-  useState(() => {
-    // Initial map set
-  });
-
-  // Re-sync on prop change
-  const [prevDateStr, setPrevDateStr] = useState(date.toISOString());
-  const currentDateStr = date.toISOString();
-  if (prevDateStr !== currentDateStr) {
-    setPrevDateStr(currentDateStr);
-    const updatedMap: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
+  // 1. Build initial mapping from DB props
+  const buildInitialMap = () => {
+    const map: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
     for (const member of members) {
       const existing = meals.find((m) => m.memberId === member.id);
-      updatedMap[member.id] = {
+      map[member.id] = {
         breakfast: existing ? Boolean(existing.breakfast) : !isPastDate,
         lunch: existing ? Boolean(existing.lunch) : !isPastDate,
         dinner: existing ? Boolean(existing.dinner) : !isPastDate,
       };
     }
-    setMealState(updatedMap);
+    return map;
+  };
+
+  const [savedMealState, setSavedMealState] = useState(buildInitialMap);
+  const [mealState, setMealState] = useState(buildInitialMap);
+  const [guestList, setGuestList] = useState<any[]>(guestMeals ?? []);
+
+  const [savingMemberId, setSavingMemberId] = useState<string | null>(null);
+  const [justSavedIds, setJustSavedIds] = useState<Set<string>>(new Set());
+  const [savingAll, setSavingAll] = useState(false);
+  const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
+
+  const [guestDialogOpen, setGuestDialogOpen] = useState(false);
+  const [addingGuest, setAddingGuest] = useState(false);
+
+  // Sync state if date prop changes
+  const [prevDateStr, setPrevDateStr] = useState(date.toISOString());
+  const currentDateStr = date.toISOString();
+  if (prevDateStr !== currentDateStr) {
+    setPrevDateStr(currentDateStr);
+    const newMap = buildInitialMap();
+    setSavedMealState(newMap);
+    setMealState(newMap);
     setGuestList(guestMeals ?? []);
+    setJustSavedIds(new Set());
+    setNotificationMsg(null);
   }
 
-  // 1. Calculate member meal counts
+  // Permission helper:
+  // - Admin can edit everyone
+  // - Regular member can ONLY edit their own row (memberId === currentMemberId)
+  // - Non-admin cannot edit past dates or >7 days future
+  const canEditMemberMeal = (memberId: string) => {
+    if (isAdmin) return true;
+    if (isPastDate) return false;
+    if (isBeyond7Days) return false;
+    return memberId === currentMemberId;
+  };
+
+  const canAddGuestMeal = isAdmin || (!isPastDate && !isBeyond7Days);
+
+  // Check if a member has unsaved changes
+  const isMemberDirty = (memberId: string) => {
+    const current = mealState[memberId];
+    const saved = savedMealState[memberId];
+    if (!current || !saved) return false;
+    return (
+      current.breakfast !== saved.breakfast ||
+      current.lunch !== saved.lunch ||
+      current.dinner !== saved.dinner
+    );
+  };
+
+  // List of all member IDs with unsaved changes
+  const dirtyMemberIds = members.filter((m) => canEditMemberMeal(m.id) && isMemberDirty(m.id)).map((m) => m.id);
+
+  // 1. Member meal totals
   const memberBreakfast = Object.values(mealState).filter((m) => m.breakfast).length;
   const memberLunch = Object.values(mealState).filter((m) => m.lunch).length;
   const memberDinner = Object.values(mealState).filter((m) => m.dinner).length;
 
-  // 2. Calculate guest meal counts
+  // 2. Guest meal totals
   const guestBreakfast = guestList
     .filter((g) => g.mealType === "BREAKFAST")
     .reduce((sum, g) => sum + (Number(g.quantity) || 1), 0);
@@ -100,39 +132,138 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
   const dateStr = new Date(date).toISOString().split("T")[0];
 
-  // Toggle member meal
-  const handleToggle = async (memberId: string, field: typeof MEAL_KEYS[number]) => {
+  // Toggle meal locally in state
+  const handleToggle = (memberId: string, field: typeof MEAL_KEYS[number]) => {
+    if (!canEditMemberMeal(memberId)) return;
+
+    setMealState((prev) => {
+      const current = prev[memberId] ?? { breakfast: true, lunch: true, dinner: true };
+      return {
+        ...prev,
+        [memberId]: {
+          ...current,
+          [field]: !current[field],
+        },
+      };
+    });
+  };
+
+  // Save a single member's meals
+  const handleSaveMember = async (memberId: string) => {
+    if (!canEditMemberMeal(memberId)) return;
+
     const current = mealState[memberId] ?? { breakfast: true, lunch: true, dinner: true };
-    const nextVal = {
-      ...current,
-      [field]: !current[field],
-    };
-
-    setMealState((prev) => ({
-      ...prev,
-      [memberId]: nextVal,
-    }));
-
-    setLoadingKey(`${memberId}-${field}`);
+    setSavingMemberId(memberId);
+    setNotificationMsg(null);
 
     try {
       await updateMealAction({
         memberId,
         date: dateStr,
-        breakfast: nextVal.breakfast,
-        lunch: nextVal.lunch,
-        dinner: nextVal.dinner,
+        breakfast: current.breakfast,
+        lunch: current.lunch,
+        dinner: current.dinner,
       });
-      router.refresh();
-    } catch (err) {
-      console.error("Failed to update meal:", err);
-      setMealState((prev) => ({
+
+      // Update baseline saved state
+      setSavedMealState((prev) => ({
         ...prev,
-        [memberId]: current,
+        [memberId]: { ...current },
       }));
+
+      // Flash success
+      setJustSavedIds((prev) => new Set([...prev, memberId]));
+      setTimeout(() => {
+        setJustSavedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(memberId);
+          return next;
+        });
+      }, 3000);
+
+      const targetMember = members.find((m) => m.id === memberId);
+      const name = targetMember?.user?.name ?? targetMember?.name ?? "মেম্বার";
+      setNotificationMsg(
+        t(
+          `✓ ${name}-এর মিল সেভ হয়েছে এবং সকল মেম্বারদের নোটিফিকেশন পাঠানো হয়েছে!`,
+          `✓ Meals for ${name} saved and broadcast notification sent to all members!`
+        )
+      );
+
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err: any) {
+      console.error("Failed to save meal:", err);
+      alert(err.message || "Failed to save meal");
     } finally {
-      setLoadingKey(null);
+      setSavingMemberId(null);
     }
+  };
+
+  // Save all dirty members at once (Admin or multiple self)
+  const handleSaveAllDirty = async () => {
+    if (dirtyMemberIds.length === 0) return;
+
+    setSavingAll(true);
+    setNotificationMsg(null);
+
+    const updates = dirtyMemberIds.map((id) => ({
+      memberId: id,
+      breakfast: mealState[id].breakfast,
+      lunch: mealState[id].lunch,
+      dinner: mealState[id].dinner,
+    }));
+
+    try {
+      await saveBulkDailyMealsAction({
+        date: dateStr,
+        updates,
+      });
+
+      // Update saved state for all
+      setSavedMealState((prev) => {
+        const next = { ...prev };
+        for (const u of updates) {
+          next[u.memberId] = { breakfast: u.breakfast, lunch: u.lunch, dinner: u.dinner };
+        }
+        return next;
+      });
+
+      // Flash success for all saved
+      setJustSavedIds(new Set(dirtyMemberIds));
+      setTimeout(() => {
+        setJustSavedIds(new Set());
+      }, 3000);
+
+      setNotificationMsg(
+        t(
+          `✓ ${dirtyMemberIds.length} জন মেম্বারের মিল সেভ হয়েছে এবং সবাইকে নোটিফিকেশন পাঠানো হয়েছে!`,
+          `✓ Meals for ${dirtyMemberIds.length} members saved and broadcasted to everyone!`
+        )
+      );
+
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err: any) {
+      console.error("Failed to save all meals:", err);
+      alert(err.message || "Failed to save meals");
+    } finally {
+      setSavingAll(false);
+    }
+  };
+
+  // Quick helper for Admin: Set all ON or all OFF
+  const handleAdminSetAll = (value: boolean) => {
+    if (!isAdmin) return;
+    setMealState((prev) => {
+      const next = { ...prev };
+      for (const m of members) {
+        next[m.id] = { breakfast: value, lunch: value, dinner: value };
+      }
+      return next;
+    });
   };
 
   // Add guest meal
@@ -159,7 +290,6 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
       member: hostMember,
     };
 
-    // Optimistic update
     setGuestList((prev) => [newGuestEntry, ...prev]);
     setGuestDialogOpen(false);
 
@@ -172,7 +302,9 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         quantity,
         note,
       });
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (err) {
       console.error("Failed to create guest meal:", err);
     } finally {
@@ -185,7 +317,9 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
     setGuestList((prev) => prev.filter((g) => g.id !== id));
     try {
       await deleteGuestMealAction(id);
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (err) {
       console.error("Failed to delete guest meal:", err);
     }
@@ -195,30 +329,23 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
     weekday: "long",
     month: "long",
     day: "numeric",
+    year: "numeric",
   });
 
-  const maxFutureDate = new Date(today);
-  maxFutureDate.setDate(maxFutureDate.getDate() + 7);
-  const isBeyond7Days = checkDate.getTime() > maxFutureDate.getTime();
-
-  const canEditMemberMeal = (memberId: string) => {
-    if (isAdmin) return true;
-    if (isPastDate) return false;
-    if (isBeyond7Days) return false;
-    return memberId === currentMemberId;
-  };
-
-  const canAddGuestMeal = isAdmin || (!isPastDate && !isBeyond7Days);
+  const isOwnDirty = currentMemberId ? isMemberDirty(currentMemberId) : false;
 
   return (
     <div className="space-y-4">
-      {/* Past Date Notice Banner */}
+      {/* 1. Past Date Notice Banner */}
       {isPastDate && (
         <div className="bg-amber-500/10 border border-amber-300 dark:border-amber-700/60 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2">
             <span className="text-sm">🕰️</span>
             <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-              {t(`পূর্ববর্তী দিন (${formattedDate}) এর মিল হিস্ট্রি দেখা হচ্ছে (শুধুমাত্র Admin পরিবর্তন করতে পারবেন)`, `Viewing meal history for past date (${formattedDate}) (Admin only edit)`)}
+              {t(
+                `পূর্ববর্তী দিন (${formattedDate}) এর মিল হিস্ট্রি দেখা হচ্ছে (শুধুমাত্র Admin পরিবর্তন করতে পারবেন)`,
+                `Viewing meal history for past date (${formattedDate}) (Admin only edit)`
+              )}
             </span>
           </div>
           <button
@@ -231,13 +358,16 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         </div>
       )}
 
-      {/* Future Beyond 7 Days Notice Banner */}
+      {/* 2. Future Beyond 7 Days Notice Banner */}
       {isBeyond7Days && (
         <div className="bg-blue-500/10 border border-blue-300 dark:border-blue-700/60 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2">
             <span className="text-sm">🗓️</span>
             <span className="text-xs font-bold text-blue-900 dark:text-blue-200">
-              {t(`ভবিষ্যতের ৭ দিনের বেশি পরের তারিখ (${formattedDate})। সাধারণ মেম্বাররা সর্বোচ্চ ৭ দিন পর্যন্ত মিল অন/অফ করতে পারবেন।`, `Date is beyond 7 days in future (${formattedDate}). Members can edit up to 7 days ahead.`)}
+              {t(
+                `ভবিষ্যতের ৭ দিনের বেশি পরের তারিখ (${formattedDate})। সাধারণ মেম্বাররা সর্বোচ্চ ৭ দিন পর্যন্ত মিল অন/অফ করতে পারবেন।`,
+                `Date is beyond 7 days in future (${formattedDate}). Members can edit up to 7 days ahead.`
+              )}
             </span>
           </div>
           <button
@@ -250,7 +380,26 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         </div>
       )}
 
-      {/* 1. Live Meal Summary Cards */}
+      {/* 3. Broadcast Success / Info Notification Banner */}
+      {notificationMsg && (
+        <div className="bg-emerald-500/15 border border-emerald-500/40 text-emerald-950 dark:text-emerald-200 rounded-2xl p-3.5 flex items-center justify-between gap-2 animate-in fade-in shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <Check size={16} strokeWidth={3} />
+            </div>
+            <p className="text-xs sm:text-sm font-black">{notificationMsg}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setNotificationMsg(null)}
+            className="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:opacity-75 cursor-pointer px-2 py-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* 4. Live Meal Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-xl p-3.5 flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-300 shrink-0">
@@ -310,31 +459,122 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         </div>
       </div>
 
-      {/* 2. Main Member Meal Table */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/40">
+      {/* 5. Main Member Meal Table */}
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs">
+        {/* Table Header Controls */}
+        <div className="p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-              {t(`মেম্বারদের মিল তালিকা (${formattedDate})`, `Member Meal List (${formattedDate})`)}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-slate-500">
-              {t("মিল অন বা অফ করতে বাটনে চাপুন (নিজের মিল সর্বোচ্চ ৭ দিন অগ্রিম করা যাবে)", "Toggle meal button (Own meals editable up to 7 days ahead)")}
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
+                {t(`মেম্বারদের মিল তালিকা (${formattedDate})`, `Member Meal List (${formattedDate})`)}
+              </p>
+              <span className="text-[11px] font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+                {t(`${members.length} জন মেম্বার`, `${members.length} Members`)}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+              <Bell size={12} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <span>
+                {t(
+                  "মিল সেট করে 'সেভ করুন' চাপুন। প্রতিটি সেভে সবার কাছে নোটিফিকেশন পৌঁছে যাবে।",
+                  "Set meals and click 'Save'. Every save broadcasts a notification to all members."
+                )}
+              </span>
             </p>
           </div>
-          <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-            {t(`${members.length} জন মেম্বার`, `${members.length} Members`)}
-          </span>
+
+          {/* Action buttons (Admin bulk save or member quick save) */}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {isAdmin && (
+              <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-gray-200 dark:border-slate-700">
+                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 px-1">
+                  {t("Admin কুইক:", "Admin Quick:")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleAdminSetAll(true)}
+                  className="text-[10px] font-bold px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 cursor-pointer"
+                  title={t("সব মেম্বারের সব মিল চালু করুন", "Set All Meals ON for everyone")}
+                >
+                  {t("সবাই চালু", "All ON")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAdminSetAll(false)}
+                  className="text-[10px] font-bold px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800 rounded-lg hover:bg-rose-100 cursor-pointer"
+                  title={t("সব মেম্বারের সব মিল বন্ধ করুন", "Set All Meals OFF for everyone")}
+                >
+                  {t("সবাই বন্ধ", "All OFF")}
+                </button>
+              </div>
+            )}
+
+            {dirtyMemberIds.length > 0 && (
+              <Button
+                size="sm"
+                onClick={handleSaveAllDirty}
+                disabled={savingAll || isPending}
+                className="gap-1.5 h-8 text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-indigo-500/25 animate-pulse cursor-pointer"
+              >
+                {savingAll ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>{t("সেভ হচ্ছে…", "Saving…")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={13} />
+                    <span>
+                      {t(
+                        `সকল পরিবর্তন সেভ করুন (${dirtyMemberIds.length})`,
+                        `Save All Changes (${dirtyMemberIds.length})`
+                      )}
+                    </span>
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Table Header */}
-        <div className="grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] border-b border-gray-100 dark:border-slate-800 px-4 py-2.5 bg-gray-50/30 dark:bg-slate-800/20 text-xs font-semibold text-gray-500 dark:text-slate-400">
-          <span>{t("মেম্বারের নাম", "Member Name")}</span>
-          <span className="text-center">{t("সকাল", "Breakfast")}</span>
-          <span className="text-center">{t("দুপুর", "Lunch")}</span>
-          <span className="text-center">{t("রাত", "Dinner")}</span>
+        {/* Member Unsaved Changes Banner for Logged-in User */}
+        {isOwnDirty && currentMemberId && (
+          <div className="px-4 py-2.5 bg-amber-500/15 border-b border-amber-300/80 dark:border-amber-700/60 flex items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                {t(
+                  "আপনার আজকের মিল সেটিং পরিবর্তন করা হয়েছে কিন্তু সেভ করা হয়নি!",
+                  "You have unsaved changes to your daily meal setting!"
+                )}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => handleSaveMember(currentMemberId)}
+              disabled={savingMemberId === currentMemberId || isPending}
+              className="h-7 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white gap-1 shrink-0 cursor-pointer shadow-xs"
+            >
+              {savingMemberId === currentMemberId ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Save size={12} />
+              )}
+              <span>{t("আমার মিল সেভ করুন", "Save My Meal")}</span>
+            </Button>
+          </div>
+        )}
+
+        {/* Table Column Headers */}
+        <div className="grid grid-cols-[1fr_repeat(3,65px)_85px] sm:grid-cols-[1fr_repeat(3,95px)_110px] border-b border-gray-100 dark:border-slate-800 px-4 py-2.5 bg-gray-50/40 dark:bg-slate-800/30 text-xs font-bold text-gray-500 dark:text-slate-400">
+          <span>{t("মেম্বার", "Member")}</span>
+          <span className="text-center">{t("☀️ সকাল", "☀️ Breakfast")}</span>
+          <span className="text-center">{t("🍽️ দুপুর", "🍽️ Lunch")}</span>
+          <span className="text-center">{t("🌙 রাত", "🌙 Dinner")}</span>
+          <span className="text-center">{t("সেভ / অবস্থা", "Save / Status")}</span>
         </div>
 
-        {/* Members List */}
+        {/* Members List Rows */}
         <div className="divide-y divide-gray-100 dark:divide-slate-800">
           {members.map((member) => {
             const state = mealState[member.id] ?? { breakfast: true, lunch: true, dinner: true };
@@ -344,92 +584,164 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
               .join("")
               .slice(0, 2)
               .toUpperCase();
+            
+            const isSelf = member.id === currentMemberId;
             const canEditThisMember = canEditMemberMeal(member.id);
+            const isDirty = isMemberDirty(member.id);
+            const isSaving = savingMemberId === member.id;
+            const wasJustSaved = justSavedIds.has(member.id);
 
             return (
               <div
                 key={member.id}
                 className={cn(
-                  "grid grid-cols-[1fr_repeat(3,75px)] sm:grid-cols-[1fr_repeat(3,105px)] items-center px-4 py-3 transition-colors",
-                  member.id === currentMemberId
+                  "grid grid-cols-[1fr_repeat(3,65px)_85px] sm:grid-cols-[1fr_repeat(3,95px)_110px] items-center px-4 py-3 transition-colors",
+                  isSelf
                     ? "bg-primary/5 dark:bg-primary/10"
+                    : isDirty
+                    ? "bg-amber-50/30 dark:bg-amber-950/20"
                     : "hover:bg-gray-50/50 dark:hover:bg-slate-800/40"
                 )}
               >
-                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                {/* 1. Member Profile Cell */}
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-1 sm:pr-2">
                   <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className={cn("text-xs font-semibold", member.id === currentMemberId ? "bg-primary text-white" : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300")}>
+                    <AvatarFallback
+                      className={cn(
+                        "text-xs font-bold",
+                        isSelf
+                          ? "bg-primary text-white shadow-xs"
+                          : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300"
+                      )}
+                    >
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate flex items-center gap-1.5">
                       <span>{member.user?.name ?? member.name}</span>
-                      {member.id === currentMemberId && (
-                        <span className="text-[9px] font-extrabold bg-primary/20 text-primary px-1.5 py-0.2 rounded-md">
+                      {isSelf && (
+                        <span className="text-[9px] font-black bg-primary/20 text-primary px-1.5 py-0.2 rounded-md shrink-0">
                           {t("আপনি", "You")}
                         </span>
                       )}
                     </p>
-                    <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate">
+                    <p className="text-[10px] sm:text-[11px] text-gray-400 dark:text-slate-500 truncate">
                       {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সক্রিয় মেম্বার", "Active Member")}
                     </p>
                   </div>
                 </div>
 
+                {/* 2. Meal Toggles (Breakfast, Lunch, Dinner) */}
                 {MEAL_KEYS.map((field) => {
                   const on = state[field];
-                  const isLoading = loadingKey === `${member.id}-${field}`;
-                  const canEditThisMeal = canEditThisMember;
 
                   return (
-                    <div key={field} className="flex justify-center">
+                    <div key={field} className="flex justify-center px-0.5 sm:px-1">
                       <button
                         type="button"
-                        disabled={!canEditThisMeal || isLoading}
+                        disabled={!canEditThisMember || isSaving || savingAll}
                         onClick={() => handleToggle(member.id, field)}
                         className={cn(
-                          "w-16 sm:w-20 h-7 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 select-none shadow-xs",
-                          canEditThisMeal ? "active:scale-95 cursor-pointer" : "opacity-50 cursor-not-allowed",
+                          "w-14 sm:w-20 h-7 rounded-full text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-0.5 sm:gap-1 select-none shadow-2xs",
+                          canEditThisMember
+                            ? "active:scale-95 cursor-pointer"
+                            : "opacity-40 cursor-not-allowed",
                           on
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
-                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300",
-                          isLoading && "opacity-60"
+                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300"
                         )}
                         title={
-                          !canEditThisMeal
+                          !canEditThisMember
                             ? isPastDate
                               ? t("অতীতের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Past meals can only be edited by Admin")
                               : isBeyond7Days
                               ? t("ভবিষ্যতের সর্বোচ্চ ৭ দিন পর্যন্ত মিল পরিবর্তন করা যাবে", "Meals can only be edited up to 7 days ahead")
-                              : member.id !== currentMemberId
+                              : !isSelf
                               ? t("অন্য সদস্যের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Only Admin can edit another member's meal")
                               : t("অনুমতি নেই", "No permission")
                             : on
-                            ? t("মিল বন্ধ করতে চাপুন", "Click to turn OFF")
-                            : t("মিল চালু করতে চাপুন", "Click to turn ON")
+                            ? t("মিল বন্ধ করতে চাপুন (সেভ করতে ভুলবেন না)", "Click to turn OFF (remember to save)")
+                            : t("মিল চালু করতে চাপুন (সেভ করতে ভুলবেন না)", "Click to turn ON (remember to save)")
                         }
                       >
                         <span>{on ? t("চালু", "ON") : t("বন্ধ", "OFF")}</span>
                         <span className="text-[10px]">{on ? "✓" : "✕"}</span>
-                        {!canEditThisMeal && <span className="text-[9px] opacity-70">🔒</span>}
                       </button>
                     </div>
                   );
                 })}
+
+                {/* 3. Dedicated Save / Status Button */}
+                <div className="flex justify-center pl-1 sm:pl-2">
+                  {canEditThisMember ? (
+                    <button
+                      type="button"
+                      disabled={isSaving || savingAll || (!isDirty && !wasJustSaved)}
+                      onClick={() => handleSaveMember(member.id)}
+                      className={cn(
+                        "w-full max-w-[95px] h-7 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 select-none shadow-2xs",
+                        isSaving
+                          ? "bg-indigo-600 text-white opacity-80 cursor-wait"
+                          : wasJustSaved
+                          ? "bg-emerald-600 text-white cursor-default"
+                          : isDirty
+                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white active:scale-95 cursor-pointer shadow-indigo-500/25 ring-2 ring-indigo-400/50 animate-pulse"
+                          : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 opacity-70 hover:opacity-100 cursor-pointer"
+                      )}
+                      title={
+                        isDirty
+                          ? t("পরিবর্তন সেভ করুন ও সবাইকে নোটিফিকেশন পাঠান", "Save changes & broadcast notification")
+                          : wasJustSaved
+                          ? t("সফলভাবে সেভ হয়েছে", "Saved successfully")
+                          : t("মিল সেভ করা আছে (পুনরায় সেভ করতে পারেন)", "Saved (click to re-save)")
+                      }
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 size={11} className="animate-spin" />
+                          <span className="text-[10px]">{t("সেভ…", "Saving…")}</span>
+                        </>
+                      ) : wasJustSaved ? (
+                        <>
+                          <Check size={12} strokeWidth={3} />
+                          <span className="text-[10px]">{t("সেভ্ড ✓", "Saved ✓")}</span>
+                        </>
+                      ) : isDirty ? (
+                        <>
+                          <Save size={12} />
+                          <span className="text-[10px]">{t("সেভ করুন", "Save")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check size={11} className="text-emerald-500" />
+                          <span className="text-[10px]">{t("সেভ করা", "Saved")}</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div
+                      className="flex items-center justify-center gap-1 text-[10px] font-semibold text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/40 border border-gray-200/60 dark:border-slate-800 px-2 py-1 rounded-lg select-none"
+                      title={t("শুধুমাত্র মেম্বার নিজে অথবা Admin পরিবর্তন ও সেভ করতে পারেন", "Only member themselves or Admin can change & save")}
+                    >
+                      <Lock size={10} className="shrink-0" />
+                      <span>{t("লকড", "Locked")}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* 3. Integrated Guest Meals Section */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+      {/* 6. Integrated Guest Meals Section */}
+      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs">
         <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-indigo-50/40 dark:bg-indigo-950/20">
           <div className="flex items-center gap-2">
             <UserPlus size={16} className="text-indigo-600 dark:text-indigo-400" />
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+              <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
                 {t("আজকের গেস্ট মিল", "Today's Guest Meals")}
               </p>
               <p className="text-xs text-indigo-700 dark:text-indigo-300">
@@ -443,7 +755,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
               <Button
                 size="sm"
                 disabled={!canAddGuestMeal}
-                className="gap-1.5 h-8 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+                className="gap-1.5 h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
               >
                 <Plus size={14} />
                 <span>{t("+ গেস্ট মিল যোগ করুন", "+ Add Guest Meal")}</span>
@@ -533,7 +845,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{g.guestName}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{g.guestName}</p>
                         <span className="text-[11px] font-medium bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 px-2 py-0.5 rounded-full">
                           {mealLabel}
                         </span>
