@@ -222,16 +222,25 @@ export async function togglePostReactionAction(data: { postId: string; userId: s
   return { success: true };
 }
 
+import { notifyAllUsersAboutNotice } from "@/backend/notifications/notification.service";
+
 export async function createNoticeAction(data: { title: string; description: string; priority: string; authorId: string; expiresAt?: string }) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     await createNotice({ ...data, expiresAt: data.expiresAt ? new Date(data.expiresAt) : undefined });
+    await notifyAllUsersAboutNotice({
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      authorName: session.user.name || "Admin",
+    });
   } catch (err) {
     console.warn("DB offline (demo mode createNotice):", err);
   }
   revalidatePath("/community");
   revalidatePath("/notices");
   revalidatePath("/dashboard");
+  revalidatePath("/notifications");
   return { success: true };
 }
 

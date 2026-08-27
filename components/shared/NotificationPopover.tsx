@@ -1,58 +1,70 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { Bell, AlertTriangle, ShoppingBasket, CreditCard, CheckCheck, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Bell, AlertTriangle, ShoppingBasket, CreditCard, CheckCheck,
+  ArrowRight, UtensilsCrossed, Megaphone, Sparkles, Wrench,
+  MessageSquare, Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import {
+  getNotificationSummaryAction,
+  markAllNotificationsAsReadAction,
+  markNotificationAsReadAction,
+} from "@/app/actions/notification.actions";
+import { LiveNotificationItem } from "@/backend/notifications/notification.service";
 
 export function NotificationPopover() {
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(3);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notifications, setNotifications] = useState<LiveNotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const popoverRef = useRef<HTMLDivElement>(null);
   const { t } = usePreferences();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const notifications = [
-    {
-      id: "n1",
-      type: "URGENT",
-      title: t("আজ রাত ৯:০০ টায় মেস মিটিং", "Mess Meeting Tonight at 9:00 PM"),
-      desc: t("ডাইনিং রুমে মিল হিসাব ও মেস সংক্রান্ত আলোচনা।", "Monthly meal calculation and settlement discussion in dining area."),
-      time: t("১০ মিনিট আগে", "10 mins ago"),
-      href: "/notices",
-      icon: AlertTriangle,
-      color: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
-    },
-    {
-      id: "n2",
-      type: "BAZAR",
-      title: t("আজকের বাজার দায়িত্ব: Admin (You)", "Today's Bazar Duty: Admin (You)"),
-      desc: t("সাপ্তাহিক রোটেশন অনুযায়ী আজকের বাজার সম্পন্ন করার অনুরোধ।", "Scheduled duty to complete mess grocery shopping today."),
-      time: t("আজকে", "Today"),
-      href: "/bazar",
-      icon: ShoppingBasket,
-      color: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-    },
-    {
-      id: "n3",
-      type: "PAYMENT",
-      title: t("নতুন পেমেন্ট জমা: ৳৮,৫০০", "New Payment Recorded: ৳8,500"),
-      desc: t("Rahim Chowdhury ক্যাশ পেমেন্ট প্রদান করেছেন।", "Rahim Chowdhury recorded cash deposit."),
-      time: t("১ ঘণ্টা আগে", "1 hour ago"),
-      href: "/payments",
-      icon: CreditCard,
-      color: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-    },
-  ];
+  // Fetch notifications from server
+  const loadNotifications = async () => {
+    try {
+      const summary = await getNotificationSummaryAction();
+      setUnreadCount(summary.unreadCount);
+      setNotifications(summary.notifications);
+    } catch (err) {
+      console.warn("Failed to load notifications:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("messhub_unread_notifs");
-      if (saved !== null) {
-        setUnreadCount(Number(saved));
-      }
-    } catch {}
+    loadNotifications();
 
+    // Auto-poll every 25 seconds
+    const interval = setInterval(loadNotifications, 25000);
+
+    // Refresh on window focus
+    const handleFocus = () => loadNotifications();
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  // Refresh when opened
+  useEffect(() => {
+    if (isOpen) {
+      loadNotifications();
+    }
+  }, [isOpen]);
+
+  // Close on outside click
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         setIsOpen(false);
@@ -62,11 +74,75 @@ export function NotificationPopover() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     try {
-      localStorage.setItem("messhub_unread_notifs", "0");
-    } catch {}
+      await markAllNotificationsAsReadAction();
+    } catch (err) {
+      console.warn("Failed to mark all as read:", err);
+    }
+  };
+
+  const handleNotificationClick = async (n: LiveNotificationItem) => {
+    setIsOpen(false);
+    if (!n.read) {
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+      try {
+        await markNotificationAsReadAction(n.id);
+      } catch (err) {
+        console.warn("Failed to mark as read:", err);
+      }
+    }
+    router.push(n.href);
+  };
+
+  const getCategoryConfig = (category: string) => {
+    switch (category) {
+      case "meal":
+        return {
+          icon: UtensilsCrossed,
+          badgeBg: "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800",
+        };
+      case "bazar":
+        return {
+          icon: ShoppingBasket,
+          badgeBg: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+        };
+      case "payment":
+        return {
+          icon: CreditCard,
+          badgeBg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+        };
+      case "notice":
+        return {
+          icon: Megaphone,
+          badgeBg: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+        };
+      case "duty":
+        return {
+          icon: Sparkles,
+          badgeBg: "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800",
+        };
+      case "house":
+        return {
+          icon: Wrench,
+          badgeBg: "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+        };
+      case "community":
+        return {
+          icon: MessageSquare,
+          badgeBg: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
+        };
+      default:
+        return {
+          icon: Bell,
+          badgeBg: "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+        };
+    }
   };
 
   return (
@@ -85,7 +161,7 @@ export function NotificationPopover() {
       >
         <Bell size={17} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-tr from-rose-500 to-red-600 px-1 text-[9px] font-black text-white shadow-xs leading-none">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-tr from-rose-500 to-red-600 px-1 text-[9px] font-black text-white shadow-xs leading-none animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -93,11 +169,11 @@ export function NotificationPopover() {
 
       {/* Floating Notification Popover */}
       {isOpen && (
-        <div className="fixed sm:absolute top-14 sm:top-full right-3 sm:right-0 w-[calc(100vw-24px)] sm:w-88 max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-800 py-0 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
+        <div className="fixed sm:absolute top-14 sm:top-full right-3 sm:right-0 w-[calc(100vw-24px)] sm:w-96 max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 py-0 z-50 animate-in fade-in-0 zoom-in-95 duration-100 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xs text-gray-900 dark:text-slate-100 uppercase tracking-wider">
+              <span className="font-bold text-xs text-gray-900 dark:text-slate-100 uppercase tracking-wider">
                 {t("নোটিফিকেশন", "Notifications")}
               </span>
               {unreadCount > 0 && (
@@ -119,32 +195,53 @@ export function NotificationPopover() {
           </div>
 
           {/* List */}
-          <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[60vh] sm:max-h-80 overflow-y-auto">
-            {notifications.map((n) => {
-              const Icon = n.icon;
-              return (
-                <Link
-                  key={n.id}
-                  href={n.href}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "flex items-start gap-3 p-3.5 hover:bg-gray-50/80 dark:hover:bg-slate-800/50 transition-colors",
-                    n.type === "URGENT" && "bg-rose-50/30 dark:bg-rose-950/20"
-                  )}
-                >
-                  <div className={cn("w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5", n.color)}>
-                    <Icon size={14} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate leading-tight">{n.title}</p>
-                      <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">{n.time}</span>
+          <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[60vh] sm:max-h-84 overflow-y-auto">
+            {isLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-2 text-gray-400">
+                <Loader2 size={20} className="animate-spin text-primary" />
+                <span className="text-xs">{t("লোড হচ্ছে…", "Loading…")}</span>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="py-12 text-center text-xs text-gray-400 dark:text-slate-500">
+                <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2 text-gray-400">
+                  <Bell size={18} className="opacity-50" />
+                </div>
+                <p className="font-bold">{t("কোনো নতুন নোটিফিকেশন নেই", "No notifications yet")}</p>
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const { icon: Icon, badgeBg } = getCategoryConfig(n.category);
+
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    className={cn(
+                      "flex items-start gap-3 p-3.5 hover:bg-gray-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer select-none",
+                      !n.read && "bg-indigo-50/35 dark:bg-indigo-950/20"
+                    )}
+                  >
+                    <div className={cn("w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 mt-0.5", badgeBg)}>
+                      <Icon size={15} />
                     </div>
-                    <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.desc}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className={cn("text-xs font-bold truncate leading-tight", !n.read ? "text-indigo-950 dark:text-indigo-100" : "text-gray-900 dark:text-slate-100")}>
+                          {n.title}
+                        </p>
+                        <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">{n.time}</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                        {n.desc}
+                      </p>
+                    </div>
+                    {!n.read && (
+                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1.5 animate-pulse" />
+                    )}
                   </div>
-                </Link>
-              );
-            })}
+                );
+              })
+            )}
           </div>
 
           {/* Footer */}
@@ -152,7 +249,7 @@ export function NotificationPopover() {
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+              className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <span>{t("সকল নোটিফিকেশন সেন্টার", "View All Notifications")}</span>
               <ArrowRight size={12} />

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, assertCanModifyMember } from "@/backend/permissions/permission.service";
 import { upsertMeal } from "@/backend/meals/meal.repository";
 import { createGuestMeal, deleteGuestMeal } from "@/backend/guest-meals/guest-meal.repository";
-import { notifyAllUsersAboutMealSave } from "@/backend/notifications/notification.service";
+import { notifyAllUsersAboutMealSave, notifyAllUsersAboutGuestMeal } from "@/backend/notifications/notification.service";
 import { prisma } from "@/lib/db/prisma";
 
 function revalidateAllMealRoutes() {
@@ -258,6 +258,19 @@ export async function createGuestMealAction(data: {
       ...data,
       date: dateObj,
       addedById: memberId,
+    });
+
+    const host = await prisma.memberProfile.findUnique({
+      where: { id: memberId },
+      include: { user: { select: { name: true } } },
+    });
+    const hostName = host?.user?.name || session.user.name || "মেম্বার";
+    await notifyAllUsersAboutGuestMeal({
+      hostName,
+      guestName: data.guestName,
+      mealType: data.mealType,
+      quantity: data.quantity,
+      date: dateObj,
     });
   } catch (err) {
     console.error("Error in createGuestMealAction:", err);

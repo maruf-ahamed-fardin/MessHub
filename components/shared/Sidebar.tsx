@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useT } from "@/lib/i18n/useT";
 
+import { getNotificationSummaryAction } from "@/app/actions/notification.actions";
+
 interface SidebarProps {
   className?: string;
 }
@@ -20,23 +22,32 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const T = useT();
-  const [unreadCount, setUnreadCount] = useState<number>(3);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const loadUnreadCount = async () => {
+    try {
+      const summary = await getNotificationSummaryAction();
+      setUnreadCount(summary.unreadCount);
+    } catch (err) {
+      console.warn("Failed to load unread count:", err);
+    }
+  };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("messhub_unread_notifs");
-      if (saved !== null) {
-        setUnreadCount(Number(saved));
-      }
-    } catch {}
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 25000);
+    const handleFocus = () => loadUnreadCount();
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   useEffect(() => {
     if (pathname === "/notifications") {
       setUnreadCount(0);
-      try {
-        localStorage.setItem("messhub_unread_notifs", "0");
-      } catch {}
     }
   }, [pathname]);
 

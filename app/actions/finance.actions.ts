@@ -8,6 +8,9 @@ import { createExpense, deleteExpense, upsertUtilityBill } from "@/backend/expen
 import { createPayment, deletePayment } from "@/backend/payments/payment.repository";
 import { z } from "zod";
 
+import { notifyAllUsersAboutBazar, notifyAllUsersAboutPayment } from "@/backend/notifications/notification.service";
+import { getPrisma } from "@/lib/db/prisma";
+
 function revalidateAllFinancialRoutes() {
   revalidatePath("/bazar");
   revalidatePath("/meals");
@@ -17,12 +20,28 @@ function revalidateAllFinancialRoutes() {
   revalidatePath("/members");
   revalidatePath("/calendar");
   revalidatePath("/dashboard");
+  revalidatePath("/notifications");
 }
 
 export async function createBazarAction(data: unknown) {
   try {
     const validated = createBazarSchema.parse(data);
-    await createBazar({ ...validated, date: new Date(validated.date) });
+    const createdBazar = await createBazar({ ...validated, date: new Date(validated.date) });
+
+    // Broadcast notification
+    const db = getPrisma();
+    const buyer = await db.memberProfile.findUnique({
+      where: { id: createdBazar.buyerId },
+      include: { user: { select: { name: true } } },
+    });
+    const buyerName = buyer?.user?.name || "মেম্বার";
+    await notifyAllUsersAboutBazar({
+      buyerName,
+      totalAmount: createdBazar.totalAmount,
+      date: new Date(validated.date),
+      note: validated.note,
+    });
+
     revalidateAllFinancialRoutes();
     return { success: true };
   } catch (err: any) {
@@ -304,6 +323,20 @@ export async function createPaymentAction(data: unknown) {
     });
     const validated = schema.parse(data);
     await createPayment({ ...validated, amount: Number(validated.amount), recordedById, date: new Date(validated.date) });
+
+    // Broadcast notification
+    const db = getPrisma();
+    const member = await db.memberProfile.findUnique({
+      where: { id: validated.memberId },
+      include: { user: { select: { name: true } } },
+    });
+    const memberName = member?.user?.name || "মেম্বার";
+    await notifyAllUsersAboutPayment({
+      memberName,
+      amount: Number(validated.amount),
+      method: validated.method,
+      note: validated.note,
+    });
   } catch (err) {
     console.warn("DB offline (demo mode createPayment):", err);
   }

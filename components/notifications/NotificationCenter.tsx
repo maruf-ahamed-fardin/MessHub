@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { LiveNotificationItem } from "@/backend/notifications/notification.service";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import {
+  markAllNotificationsAsReadAction,
+  markNotificationAsReadAction,
+  deleteNotificationAction,
+} from "@/app/actions/notification.actions";
 
 interface NotificationCenterProps {
   initialNotifications: LiveNotificationItem[];
@@ -23,18 +28,39 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await markAllNotificationsAsReadAction();
+    } catch (err) {
+      console.warn("Failed to mark all as read:", err);
+    }
   };
 
-  const handleToggleRead = (id: string) => {
+  const handleToggleRead = async (id: string) => {
+    const currentItem = notifications.find((n) => n.id === id);
+    const nextReadState = !currentItem?.read;
+
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: nextReadState } : n))
     );
+
+    if (nextReadState) {
+      try {
+        await markNotificationAsReadAction(id);
+      } catch (err) {
+        console.warn("Failed to mark notification as read:", err);
+      }
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await deleteNotificationAction(id);
+    } catch (err) {
+      console.warn("Failed to delete notification:", err);
+    }
   };
 
   const getCategoryIcon = (category: string) => {
@@ -116,7 +142,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             type="button"
             onClick={() => setActiveCategory("all")}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer select-none",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer select-none",
               activeCategory === "all"
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
@@ -128,7 +154,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             type="button"
             onClick={() => setActiveCategory("unread")}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer select-none",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer select-none",
               activeCategory === "unread"
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
@@ -140,7 +166,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             type="button"
             onClick={() => setActiveCategory("bazar_meal")}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer select-none",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer select-none",
               activeCategory === "bazar_meal"
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
@@ -152,7 +178,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             type="button"
             onClick={() => setActiveCategory("finance")}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer select-none",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer select-none",
               activeCategory === "finance"
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
@@ -164,7 +190,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             type="button"
             onClick={() => setActiveCategory("duties")}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer select-none",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer select-none",
               activeCategory === "duties"
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
@@ -176,7 +202,7 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
             type="button"
             onClick={() => setActiveCategory("notices")}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer select-none",
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer select-none",
               activeCategory === "notices"
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700/50"
@@ -233,11 +259,14 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                     <div className="flex items-center gap-2 flex-wrap">
                       <Link
                         href={n.href}
-                        className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 hover:text-indigo-600 transition-colors leading-tight"
+                        onClick={() => {
+                          if (!n.read) handleToggleRead(n.id);
+                        }}
+                        className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 transition-colors leading-tight"
                       >
                         {n.title}
                       </Link>
-                      <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md border shrink-0", tagStyle)}>
+                      <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-md border shrink-0", tagStyle)}>
                         {tagLabel}
                       </span>
                       {!n.read && (
@@ -253,6 +282,9 @@ export function NotificationCenter({ initialNotifications }: NotificationCenterP
                 <div className="flex items-center gap-1 shrink-0 pt-0.5">
                   <Link
                     href={n.href}
+                    onClick={() => {
+                      if (!n.read) handleToggleRead(n.id);
+                    }}
                     className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title={t("দেখুন", "View")}
                   >
