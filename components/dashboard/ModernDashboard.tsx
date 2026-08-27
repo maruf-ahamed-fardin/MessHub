@@ -132,7 +132,7 @@ export function ModernDashboard({
   return (
     <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* 1. Header with Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-gray-200/90 rounded-2xl p-3.5 sm:p-5 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-2xs">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl border-2 border-primary/20 shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary font-extrabold text-xs sm:text-sm">
@@ -141,14 +141,14 @@ export function ModernDashboard({
           </Avatar>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base sm:text-xl font-extrabold text-gray-900 tracking-tight truncate">
+              <h1 className="text-base sm:text-xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight truncate">
                 {T.dashboard.welcome}, {firstName}!
               </h1>
-              <Badge variant="outline" className="text-[10px] font-bold py-0 px-2 rounded-md bg-indigo-50 text-indigo-700 border-indigo-200">
+              <Badge variant="outline" className="text-[10px] font-bold py-0 px-2 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800">
                 {memberProfile?.seat ? `${memberProfile.seat.room?.name ?? "Room"} (${memberProfile.seat.label})` : "Room 101 (A)"}
               </Badge>
             </div>
-            <p className="text-[11px] sm:text-xs text-gray-400 font-medium mt-0.5">
+            <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-500 font-medium mt-0.5">
               {formattedTodayDate}
             </p>
           </div>
@@ -158,21 +158,21 @@ export function ModernDashboard({
         <div className="flex items-center gap-2 flex-wrap pt-1 sm:pt-0">
           <Link
             href="/meals"
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all cursor-pointer select-none"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-all cursor-pointer select-none"
           >
             <UtensilsCrossed size={13} className="text-primary" />
             <span>{T.dashboard.mealBooking}</span>
           </Link>
           <Link
             href="/bazar"
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50/70 border border-amber-200/80 text-amber-900 hover:bg-amber-100 transition-all cursor-pointer select-none"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-950/70 transition-all cursor-pointer select-none"
           >
-            <ShoppingBasket size={13} className="text-amber-600" />
+            <ShoppingBasket size={13} className="text-amber-600 dark:text-amber-400" />
             <span>{T.dashboard.bazarEntry}</span>
           </Link>
           <Link
             href="/payments"
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 text-white hover:bg-gray-800 shadow-2xs transition-all cursor-pointer select-none"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 text-white hover:bg-gray-800 dark:bg-slate-100 dark:text-gray-900 dark:hover:bg-white shadow-2xs transition-all cursor-pointer select-none"
           >
             <CreditCard size={13} />
             <span>{T.dashboard.moneyTransaction}</span>
@@ -195,7 +195,7 @@ export function ModernDashboard({
                 </span>
                 <h4 className="font-black text-xs sm:text-sm text-amber-950 dark:text-rose-100 truncate">{urgentNotice.title}</h4>
               </div>
-              <p className="text-xs text-amber-900/90 dark:text-rose-200/90 mt-1 leading-relaxed">{urgentNotice.content}</p>
+              <p className="text-xs text-amber-900/90 dark:text-rose-200/90 mt-1 leading-relaxed">{urgentNotice.description || urgentNotice.content}</p>
             </div>
           </div>
 
@@ -212,13 +212,15 @@ export function ModernDashboard({
       {/* 3. Top 3 Primary Cards (Clean, Focused, Minimal) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Card 1: My Financial Balance & Fund */}
-        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3 sm:gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">{T.dashboard.myBalance}</span>
+            <span className="text-[10px] font-extrabold text-gray-400 dark:text-slate-400 uppercase tracking-wider">{T.dashboard.myBalance}</span>
             <span
               className={cn(
                 "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1",
-                isCredit ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80" : "bg-rose-50 text-rose-700 border border-rose-200/80"
+                isCredit
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800"
+                  : "bg-rose-50 text-rose-700 border border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800"
               )}
             >
               {isCredit ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
@@ -227,40 +229,40 @@ export function ModernDashboard({
           </div>
 
           <div>
-            <p className={cn("text-2xl sm:text-3xl font-black tracking-tight", isCredit ? "text-emerald-700" : "text-rose-700")}>
+            <p className={cn("text-2xl sm:text-3xl font-black tracking-tight", isCredit ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400")}>
               {isCredit ? "+" : "-"}{formatCurrency(Math.abs(balance))}
             </p>
-            <p className="text-[11px] text-gray-400 mt-1">
-              {T.dashboard.totalDeposit}: <strong>{formatCurrency(10000)}</strong> • {T.dashboard.mealBillCost}: {formatCurrency(foodCost + utilityShare)}
+            <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
+              {T.dashboard.totalDeposit}: <strong className="text-gray-800 dark:text-slate-200">{formatCurrency(10000)}</strong> • {T.dashboard.mealBillCost}: {formatCurrency(foodCost + utilityShare)}
             </p>
           </div>
 
-          <div className="pt-2.5 sm:pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+          <div className="pt-2.5 sm:pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
             <span>{T.dashboard.fundBalance}:</span>
-            <strong className="text-gray-900 font-extrabold">{formatCurrency(totalFundInHand)}</strong>
+            <strong className="text-gray-900 dark:text-slate-100 font-extrabold">{formatCurrency(totalFundInHand)}</strong>
           </div>
         </div>
 
         {/* Card 2: Live Meal Rate & Today's Meals Toggle */}
-        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3 sm:gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">{T.dashboard.liveMealRate}</span>
-            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
+            <span className="text-[10px] font-extrabold text-gray-400 dark:text-slate-400 uppercase tracking-wider">{T.dashboard.liveMealRate}</span>
+            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
               {totalMeals} {T.dashboard.mealsCompleted}
             </span>
           </div>
 
           <div>
-            <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-              {formatCurrency(mealRate)} <span className="text-xs font-bold text-gray-400">{T.dashboard.perMeal}</span>
+            <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-slate-100 tracking-tight">
+              {formatCurrency(mealRate)} <span className="text-xs font-bold text-gray-400 dark:text-slate-500">{T.dashboard.perMeal}</span>
             </p>
-            <p className="text-[11px] text-gray-400 mt-1">
-              {T.dashboard.foodCost}: <strong>{formatCurrency(foodCost)}</strong>
+            <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
+              {T.dashboard.foodCost}: <strong className="text-gray-800 dark:text-slate-200">{formatCurrency(foodCost)}</strong>
             </p>
           </div>
 
           {/* Interactive Today's Meal Quick Switches */}
-          <div className="pt-2.5 sm:pt-3 border-t border-gray-100 flex items-center justify-between gap-1.5 sm:gap-2">
+          <div className="pt-2.5 sm:pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-2">
             {[
               { key: "breakfast" as const, label: T.dashboard.breakfast, emoji: "☀️" },
               { key: "lunch" as const, label: T.dashboard.lunch, emoji: "🍽️" },
@@ -276,8 +278,8 @@ export function ModernDashboard({
                   className={cn(
                     "flex-1 py-1.5 px-1 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer select-none",
                     isOn
-                      ? "bg-emerald-50/90 border-emerald-200 text-emerald-800 shadow-2xs hover:bg-emerald-100"
-                      : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100"
+                      ? "bg-emerald-50/90 border-emerald-200 text-emerald-800 shadow-2xs hover:bg-emerald-100 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/80"
+                      : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700"
                   )}
                   title={`Click to switch ${label} meal`}
                 >
@@ -291,10 +293,10 @@ export function ModernDashboard({
         </div>
 
         {/* Card 3: Today's Key Schedule & Duties */}
-        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">{T.dashboard.todaySchedule}</span>
-            <Clock size={13} className="text-gray-400" />
+        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
+            <span className="text-[10px] font-extrabold text-gray-400 dark:text-slate-400 uppercase tracking-wider">{T.dashboard.todaySchedule}</span>
+            <Clock size={13} className="text-gray-400 dark:text-slate-500" />
           </div>
 
           <div className="space-y-2">
@@ -333,9 +335,9 @@ export function ModernDashboard({
             </Link>
           </div>
 
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+          <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400">
             <span>{T.dashboard.todayCooking}</span>
-            <strong className="text-gray-900 font-extrabold">{todayTotalMeals.total} {T.meals.total}</strong>
+            <strong className="text-gray-900 dark:text-slate-100 font-extrabold">{todayTotalMeals.total} {T.meals.total}</strong>
           </div>
         </div>
       </div>
@@ -352,7 +354,7 @@ export function ModernDashboard({
         {/* Monthly Expense Share Breakdown */}
         <ExpenseBreakdownChart
           rent={24500}
-          utilities={7350}
+          utilities={monthUtilityBills}
           bazar={monthBazarExpense}
           household={0}
           totalMembers={totalMembers}
@@ -362,11 +364,11 @@ export function ModernDashboard({
       {/* 5. 7-Member Live Roster & Recent Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* Left: 7-Member Directory (2 Cols) */}
-        <div className="lg:col-span-2 bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <Users size={15} className="text-primary" />
-              <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">
+              <h4 className="font-bold text-xs text-gray-900 dark:text-slate-100 uppercase tracking-wider">
                 {T.dashboard.membersStatus}
               </h4>
             </div>
@@ -376,7 +378,7 @@ export function ModernDashboard({
             </Link>
           </div>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-slate-800">
             {memberStatusList.map((m, idx) => {
               const name = m.user?.name ?? m.name ?? `Member ${idx + 1}`;
               const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -386,7 +388,7 @@ export function ModernDashboard({
               const isMemCredit = memBal >= 0;
 
               return (
-                <div key={m.id} className="py-2.5 flex items-center justify-between gap-2 sm:gap-3 hover:bg-gray-50/60 px-1 sm:px-2 rounded-xl transition-colors">
+                <div key={m.id} className="py-2.5 flex items-center justify-between gap-2 sm:gap-3 hover:bg-gray-50/60 dark:hover:bg-slate-800/60 px-1 sm:px-2 rounded-xl transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Avatar className="h-8 w-8 shrink-0">
                       <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
@@ -394,19 +396,19 @@ export function ModernDashboard({
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 truncate leading-tight">{name}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{roomInfo}</p>
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate leading-tight">{name}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{roomInfo}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 sm:gap-4 shrink-0 text-right">
                     <div>
-                      <p className="text-[10px] text-gray-400">{T.dashboard.deposit}</p>
-                      <p className="text-xs font-bold text-gray-900">{formatCurrency(totalPaid)}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500">{T.dashboard.deposit}</p>
+                      <p className="text-xs font-bold text-gray-900 dark:text-slate-100">{formatCurrency(totalPaid)}</p>
                     </div>
                     <div className="w-16 sm:w-20 text-right">
-                      <p className="text-[10px] text-gray-400">{T.dashboard.balanceText}</p>
-                      <span className={cn("text-xs font-extrabold", isMemCredit ? "text-emerald-700" : "text-rose-600")}>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500">{T.dashboard.balanceText}</p>
+                      <span className={cn("text-xs font-extrabold", isMemCredit ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
                         {isMemCredit ? "+" : ""}{formatCurrency(memBal)}
                       </span>
                     </div>
@@ -418,9 +420,9 @@ export function ModernDashboard({
         </div>
 
         {/* Right: Recent Feed & Quick Links */}
-        <div className="bg-white border border-gray-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
+            <h4 className="font-bold text-xs text-gray-900 dark:text-slate-100 uppercase tracking-wider">
               {T.dashboard.recentActivity}
             </h4>
             <Link href="/payments" className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1">
@@ -429,15 +431,15 @@ export function ModernDashboard({
             </Link>
           </div>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-slate-800">
             {recentActivities.slice(0, 4).map((act) => (
               <div key={act.id} className="py-2.5 flex items-center justify-between gap-2.5">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-gray-900 truncate leading-tight">{act.title}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{formatShortDate(act.time)}</p>
+                  <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate leading-tight">{act.title}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{formatShortDate(act.time)}</p>
                 </div>
                 {act.amount !== null && (
-                  <span className="text-xs font-extrabold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-xs font-extrabold text-gray-900 dark:text-slate-100 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md shrink-0">
                     {formatCurrency(act.amount)}
                   </span>
                 )}
@@ -445,10 +447,10 @@ export function ModernDashboard({
             ))}
           </div>
 
-          <div className="pt-2 border-t border-gray-100">
+          <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
             <Link
               href="/calendar"
-              className="w-full py-2 px-3 rounded-xl border border-gray-200/80 bg-gray-50/80 hover:bg-gray-100 text-xs font-bold text-gray-700 flex items-center justify-center gap-1.5 transition-colors text-center"
+              className="w-full py-2 px-3 rounded-xl border border-gray-200/80 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-xs font-bold text-gray-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition-colors text-center"
             >
               <span>{T.dashboard.calendarSchedule}</span>
             </Link>

@@ -62,9 +62,10 @@ export default async function MyProfilePage() {
       seatRent = Number(dbMember.seatRent) || 0;
 
       const totalMembers = (await prisma.memberProfile.count({ where: { isActive: true } })) || 7;
+      const calcMealRate = await calculateMealRate(month, year);
+      mealRate = calcMealRate;
 
       const [
-        calcMealRate,
         guestData,
         utilityData,
         otherCost,
@@ -72,7 +73,6 @@ export default async function MyProfilePage() {
         paidAgg,
         rawUtilityBills,
       ] = await Promise.all([
-        calculateMealRate(month, year),
         calculateGuestMealCost(member.id, month, year, mealRate),
         calculateUtilityShare(month, year, totalMembers),
         calculateMemberExpenseShare(member.id, month, year, totalMembers),
@@ -86,8 +86,6 @@ export default async function MyProfilePage() {
         }),
         prisma.utilityBill.findMany({ where: { month, year } }),
       ]);
-
-      mealRate = calcMealRate;
       const foodData = await calculateMemberFoodCost(member.id, month, year, mealRate);
       foodCost = foodData.foodCost;
       totalMeals = foodData.totalMeals;

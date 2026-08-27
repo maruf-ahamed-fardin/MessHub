@@ -22,12 +22,13 @@ export default async function DashboardPage() {
   const endDate = new Date(year, month, 0, 23, 59, 59);
 
   // Defaults
-  let member = null;
+  let member: any = null;
   let todayMeal: any = { breakfast: true, lunch: true, dinner: true };
   let mealRate = 81.67;
   let foodCost = 490.02;
   let totalMeals = 6;
   let balance = 4960;
+  let utilityShare = 4550;
   let totalMembers = 7;
   let totalRooms = 3;
   let totalSeats = 7;
@@ -50,24 +51,26 @@ export default async function DashboardPage() {
   sevenDaysAgo.setDate(today.getDate() - 6);
 
   try {
-    const currentMemberId = session?.user.memberId ?? "member-admin";
+    const userMemberId = session?.user.memberId;
+    const userId = session?.user.id;
 
     // 1. Concurrently fetch all primary data in a single parallel batch
     const [
-      member,
+      dbMember,
       allMembers,
       dbRooms,
       dbSeats,
       weeklyMealsList,
       todaySchedule,
       todayCleaning,
+      dbUpcomingTasks,
       dbBazar,
       dbPayments,
       notices,
       batchBalances,
     ] = await Promise.all([
-      prisma.memberProfile.findUnique({
-        where: { id: currentMemberId },
+      prisma.memberProfile.findFirst({
+        where: userMemberId ? { id: userMemberId } : userId ? { userId } : { isActive: true },
         include: { seat: { include: { room: true } }, user: true },
       }),
       prisma.memberProfile.findMany({
@@ -91,6 +94,12 @@ export default async function DashboardPage() {
         include: { assignedMember: { include: { user: { select: { name: true } } } } },
         orderBy: { dueDate: "asc" },
       }),
+      prisma.cleaningTask.findMany({
+        where: { dueDate: { gte: today }, status: "PENDING" },
+        include: { assignedMember: { include: { user: { select: { name: true } } } } },
+        take: 3,
+        orderBy: { dueDate: "asc" },
+      }),
       prisma.bazar.findMany({
         take: 3,
         orderBy: { createdAt: "desc" },
@@ -105,6 +114,7 @@ export default async function DashboardPage() {
       getAllMembersRunningBalances(month, year),
     ]);
 
+    member = dbMember;
     mealRate = batchBalances.mealRate;
     totalMembers = allMembers.length;
     totalRooms = dbRooms || 3;
@@ -123,6 +133,7 @@ export default async function DashboardPage() {
         foodCost = memberStat.foodCost;
         totalMeals = memberStat.totalMeals;
         balance = memberStat.balance;
+        utilityShare = memberStat.utilityShare ?? 4550;
       }
     }
 
@@ -153,6 +164,15 @@ export default async function DashboardPage() {
     if (todayCleaning) {
       todayCleaningTask = todayCleaning.title;
       cleaningAssignee = todayCleaning.assignedMember?.user?.name ?? "Member";
+    }
+    if (dbUpcomingTasks.length > 0) {
+      upcomingTasks = dbUpcomingTasks.map((t) => ({
+        id: t.id,
+        type: "CLEANING",
+        title: t.title,
+        assignedTo: t.assignedMember?.user?.name ?? "Member",
+        dueDate: t.dueDate,
+      }));
     }
 
     // 6. Member live status & balance mapped in-memory (0 extra DB calls)
@@ -212,7 +232,7 @@ export default async function DashboardPage() {
       foodCost={foodCost}
       totalMeals={totalMeals}
       mealRate={mealRate}
-      utilityShare={4550}
+      utilityShare={utilityShare}
       todayMeal={todayMeal}
       totalMembers={totalMembers}
       totalRooms={totalRooms}
