@@ -65,7 +65,7 @@ export function SettingsForm({ settings }: { settings: any }) {
   };
 
   return (
-    <div className="max-w-3xl space-y-5 pb-20">
+    <div className="w-full space-y-5 pb-20">
       {/* 1. TOP APP PREFERENCES (Language & Theme Switches + PWA Banner) */}
       <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

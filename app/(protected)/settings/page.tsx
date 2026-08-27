@@ -27,7 +27,7 @@ export default async function SettingsPage() {
   } catch {}
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto space-y-5">
       <PageHeader title={T.pages.settings.title} description={T.pages.settings.description} />
       <SettingsForm settings={settings} />
     </div>

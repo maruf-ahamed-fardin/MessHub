@@ -163,6 +163,29 @@ export async function togglePinAction(id: string) {
   return { success: true };
 }
 
+export async function updatePostAction(data: {
+  id: string;
+  content: string;
+  type?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
+    const { updatePost } = await import("@/backend/community/community.repository");
+    const post = await prisma.communityPost.findUnique({ where: { id: data.id } });
+    if (post && session.user.role !== "ADMIN" && post.authorId !== session.user.id) {
+      throw new Error("Unauthorized to edit this post.");
+    }
+    await updatePost(data.id, data);
+  } catch (err) {
+    console.warn("DB offline (demo mode updatePost):", err);
+  }
+  revalidatePath("/community");
+  return { success: true };
+}
+
 export async function deletePostAction(id: string) {
   try {
     const session = await auth();

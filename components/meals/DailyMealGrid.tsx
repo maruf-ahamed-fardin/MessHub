@@ -157,13 +157,19 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
     setNotificationMsg(null);
 
     try {
-      await updateMealAction({
+      const res = await updateMealAction({
         memberId,
         date: dateStr,
         breakfast: current.breakfast,
         lunch: current.lunch,
         dinner: current.dinner,
       });
+
+      if (res && !res.success && res.error) {
+        console.error("Failed to save meal:", res.error);
+        setNotificationMsg(`✕ ${res.error}`);
+        return;
+      }
 
       // Update baseline saved state
       setSavedMealState((prev) => ({
@@ -195,7 +201,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
       });
     } catch (err: any) {
       console.error("Failed to save meal:", err);
-      alert(err.message || "Failed to save meal");
+      setNotificationMsg(t("✕ মিল সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।", "✕ Failed to save meal. Please try again."));
     } finally {
       setSavingMemberId(null);
     }
@@ -216,10 +222,16 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
     }));
 
     try {
-      await saveBulkDailyMealsAction({
+      const res = await saveBulkDailyMealsAction({
         date: dateStr,
         updates,
       });
+
+      if (res && !res.success && res.error) {
+        console.error("Failed to save all meals:", res.error);
+        setNotificationMsg(`✕ ${res.error}`);
+        return;
+      }
 
       // Update saved state for all
       setSavedMealState((prev) => {
@@ -248,7 +260,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
       });
     } catch (err: any) {
       console.error("Failed to save all meals:", err);
-      alert(err.message || "Failed to save meals");
+      setNotificationMsg(t("✕ মিলগুলো সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।", "✕ Failed to save meals. Please try again."));
     } finally {
       setSavingAll(false);
     }
@@ -514,7 +526,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                 size="sm"
                 onClick={handleSaveAllDirty}
                 disabled={savingAll || isPending}
-                className="gap-1.5 h-8 text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-indigo-500/25 animate-pulse cursor-pointer"
+                className="gap-1.5 h-8 text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md shadow-indigo-500/25 hover:scale-[1.02] active:scale-95 transition-transform cursor-pointer"
               >
                 {savingAll ? (
                   <>
@@ -686,7 +698,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                           : wasJustSaved
                           ? "bg-emerald-600 text-white cursor-default"
                           : isDirty
-                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white active:scale-95 cursor-pointer shadow-indigo-500/25 ring-2 ring-indigo-400/50 animate-pulse"
+                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white active:scale-95 cursor-pointer shadow-md shadow-indigo-500/25 ring-2 ring-indigo-400/50 hover:scale-[1.02] transition-all"
                           : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 opacity-70 hover:opacity-100 cursor-pointer"
                       )}
                       title={

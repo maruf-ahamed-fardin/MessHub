@@ -77,6 +77,26 @@ export async function togglePostReaction(data: {
   });
 }
 
+export async function updatePost(
+  id: string,
+  data: {
+    content?: string;
+    type?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+  }
+) {
+  return prisma.communityPost.update({
+    where: { id },
+    data: {
+      ...(data.content !== undefined && { content: data.content }),
+      ...(data.type !== undefined && { type: data.type as any }),
+      ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
+      ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl }),
+    },
+  });
+}
+
 export async function togglePin(id: string) {
   const post = await prisma.communityPost.findUnique({ where: { id } });
   if (!post) throw new Error("Post not found.");

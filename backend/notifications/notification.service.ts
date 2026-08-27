@@ -30,23 +30,24 @@ export async function broadcastNotification(data: {
     const users = await db.user.findMany({ select: { id: true } });
     const notifType = data.type || "GENERAL";
     const relatedType = data.relatedType || "system";
-    const nowIso = new Date().toISOString();
 
     for (const u of users) {
       if (data.excludeUserId && u.id === data.excludeUserId) continue;
-      const notifId = "notif-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
-      await db.$executeRawUnsafe(
-        `INSERT INTO "notifications" ("id", "userId", "title", "message", "type", "relatedType", "relatedId", "isRead", "createdAt")
-         VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
-        notifId,
-        u.id,
-        data.title,
-        data.message,
-        notifType,
-        relatedType,
-        data.relatedId || null,
-        nowIso
-      );
+      try {
+        await db.notification.create({
+          data: {
+            userId: u.id,
+            title: data.title,
+            message: data.message,
+            type: notifType as any,
+            relatedType,
+            relatedId: data.relatedId || null,
+            isRead: false,
+          },
+        });
+      } catch (innerErr) {
+        console.warn("Failed to create single notification:", innerErr);
+      }
     }
   } catch (err) {
     console.warn("Failed to broadcast notification:", err);

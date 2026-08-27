@@ -37,19 +37,21 @@ export function canModify(session: { user: { id: string; role: string } }, owner
  * Check if a user is allowed to modify a member resource belonging to `memberUserId`.
  */
 export function canModifyMember(
-  session: { user: { id: string; role: string; memberId: string | null } },
+  session: { user: { id: string; role: string; memberId?: string | null } },
   targetMemberId: string
 ): boolean {
-  return (
-    session.user.role === "ADMIN" || session.user.memberId === targetMemberId
-  );
+  if (!session?.user) return false;
+  if (session.user.role === "ADMIN") return true;
+  if (session.user.memberId && session.user.memberId === targetMemberId) return true;
+  if (session.user.id && session.user.id === targetMemberId) return true;
+  return false;
 }
 
 /**
  * Throw if the current user cannot modify the given member's data.
  */
 export function assertCanModifyMember(
-  session: { user: { id: string; role: string; memberId: string | null } },
+  session: { user: { id: string; role: string; memberId?: string | null } },
   targetMemberId: string
 ) {
   if (!canModifyMember(session, targetMemberId)) {
