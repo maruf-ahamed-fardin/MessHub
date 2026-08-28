@@ -14,43 +14,6 @@ interface ExpenseBreakdownChartProps {
   totalMembers?: number;
 }
 
-// Convert polar to cartesian coordinates
-function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: centerX + radius * Math.cos(angleInRadians),
-    y: centerY + radius * Math.sin(angleInRadians),
-  };
-}
-
-// Describe a precise SVG Donut Arc Path
-function describeDonutArc(
-  x: number,
-  y: number,
-  outerRadius: number,
-  innerRadius: number,
-  startAngle: number,
-  endAngle: number
-) {
-  const sweep = Math.min(359.99, endAngle - startAngle);
-  const adjustedEnd = startAngle + sweep;
-
-  const startOuter = polarToCartesian(x, y, outerRadius, startAngle);
-  const endOuter = polarToCartesian(x, y, outerRadius, adjustedEnd);
-  const startInner = polarToCartesian(x, y, innerRadius, startAngle);
-  const endInner = polarToCartesian(x, y, innerRadius, adjustedEnd);
-
-  const largeArcFlag = sweep <= 180 ? "0" : "1";
-
-  return [
-    `M ${startOuter.x} ${startOuter.y}`,
-    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${endOuter.x} ${endOuter.y}`,
-    `L ${endInner.x} ${endInner.y}`,
-    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${startInner.x} ${startInner.y}`,
-    "Z",
-  ].join(" ");
-}
-
 export function ExpenseBreakdownChart({
   rent = 24500,
   utilities = 7350,
@@ -106,28 +69,32 @@ export function ExpenseBreakdownChart({
     },
   ];
 
-  const gapAngle = 3.5;
-  let currentAngle = 0;
+  const radius = 68;
+  const circumference = 2 * Math.PI * radius;
+  const activeCategories = rawCategories.filter((c) => c.amount > 0);
+  const gap = activeCategories.length > 1 ? 5 : 0;
 
-  const slices = rawCategories.map((cat, idx) => {
+  let currentOffset = 0;
+  const slices = activeCategories.map((cat, idx) => {
     const fraction = total > 0 ? cat.amount / total : 0;
-    const sweepAngle = Math.max(0, fraction * 360 - gapAngle);
-    const startAngle = currentAngle + gapAngle / 2;
-    const endAngle = startAngle + sweepAngle;
-    currentAngle += fraction * 360;
+    const arcLength = fraction * circumference;
+    const dashLength = Math.max(0, arcLength - gap);
+    const strokeDasharray = `${dashLength} ${circumference}`;
+    const strokeDashoffset = -currentOffset;
+    currentOffset += arcLength;
 
     const percent = Math.round(fraction * 100);
-    const pathData = describeDonutArc(100, 100, 80, 56, startAngle, endAngle);
 
     return {
       ...cat,
-      percent,
-      pathData,
       idx,
+      percent,
+      strokeDasharray,
+      strokeDashoffset,
     };
   });
 
-  const activeCategory = hoveredIdx !== null ? slices[hoveredIdx] : null;
+  const activeCategory = hoveredIdx !== null ? slices.find((s) => s.idx === hoveredIdx) ?? null : null;
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-4">
@@ -162,7 +129,7 @@ export function ExpenseBreakdownChart({
 
             {/* SVG Canvas */}
             <svg
-              className="w-full h-full transform filter drop-shadow-sm transition-transform duration-300"
+              className="w-full h-full overflow-visible"
               viewBox="0 0 200 200"
             >
               <defs>
@@ -178,25 +145,35 @@ export function ExpenseBreakdownChart({
               <circle
                 cx="100"
                 cy="100"
-                r="68"
+                r={radius}
                 stroke="#f3f4f6"
-                strokeWidth="24"
+                strokeWidth="18"
                 className="dark:stroke-slate-800"
-                fill="transparent"
+                fill="none"
               />
 
-              {/* Precise Donut Arcs */}
+              {/* Precise Donut Arcs (Immune to scroll and distortion) */}
               {slices.map((slice) => {
                 const isHovered = hoveredIdx === slice.idx;
                 return (
-                  <path
+                  <circle
                     key={slice.id}
-                    d={slice.pathData}
-                    fill={`url(#${slice.gradientId})`}
-                    className={cn(
-                      "transition-all duration-200 cursor-pointer origin-center",
-                      isHovered ? "opacity-100 filter drop-shadow-md scale-[1.03]" : "opacity-95 hover:opacity-100"
-                    )}
+                    cx="100"
+                    cy="100"
+                    r={radius}
+                    fill="none"
+                    stroke={`url(#${slice.gradientId})`}
+                    strokeWidth={isHovered ? 24 : 18}
+                    strokeDasharray={slice.strokeDasharray}
+                    strokeDashoffset={slice.strokeDashoffset}
+                    strokeLinecap="butt"
+                    className="transition-all duration-200 cursor-pointer"
+                    style={{
+                      transformOrigin: "100px 100px",
+                      transform: "rotate(-90deg)",
+                      filter: isHovered ? "drop-shadow(0 0 8px rgba(99, 102, 241, 0.45))" : undefined,
+                      opacity: hoveredIdx !== null && !isHovered ? 0.55 : 1,
+                    }}
                     onMouseEnter={() => setHoveredIdx(slice.idx)}
                     onMouseLeave={() => setHoveredIdx(null)}
                   />
@@ -221,7 +198,7 @@ export function ExpenseBreakdownChart({
               ) : (
                 <div className="space-y-0.5">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider block">
-                    {t("মোট খরচ", "Total")}
+                    {t("মোট খরচ", "TOTAL")}
                   </span>
                   <span className="text-base font-black text-gray-900 dark:text-slate-100 tracking-tight block">
                     {formatCurrency(total)}

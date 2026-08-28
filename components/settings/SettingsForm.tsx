@@ -217,91 +217,77 @@ export function SettingsForm({ settings }: { settings: any }) {
 
       {/* 2. MAIN CONFIGURATION FORM */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Navigation Category Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-slate-900/90 rounded-2xl border border-gray-200/80 dark:border-slate-800 overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setActiveTab("ai")}
-            className={cn(
-              "flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap",
-              activeTab === "ai"
-                ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-xs border border-gray-200/60 dark:border-slate-700"
-                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
-            )}
-          >
-            <Bot size={14} className="shrink-0" />
-            <span className="truncate">{t("🤖 AI অ্যাসিস্ট্যান্ট", "🤖 AI & Gemini")}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("meals")}
-            className={cn(
-              "flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap",
-              activeTab === "meals"
-                ? "bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-xs border border-gray-200/60 dark:border-slate-700"
-                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
-            )}
-          >
-            <Clock size={14} className="shrink-0" />
-            <span className="truncate">{t("⏱️ মিল কাট-অফ", "⏱️ Meal Rules")}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("finance")}
-            className={cn(
-              "flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap",
-              activeTab === "finance"
-                ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs border border-gray-200/60 dark:border-slate-700"
-                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
-            )}
-          >
-            <DollarSign size={14} className="shrink-0" />
-            <span className="truncate">{t("💳 পেমেন্ট ও MFS", "💳 Payments & MFS")}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("cook")}
-            className={cn(
-              "flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap",
-              activeTab === "cook"
-                ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-xs border border-gray-200/60 dark:border-slate-700"
-                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
-            )}
-          >
-            <ChefHat size={14} className="shrink-0" />
-            <span className="truncate">{t("👨‍🍳 বুয়া ও হাউজ", "👨‍🍳 Cook & House")}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("general")}
-            className={cn(
-              "flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap",
-              activeTab === "general"
-                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-gray-200/60 dark:border-slate-700"
-                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
-            )}
-          >
-            <Building2 size={14} className="shrink-0" />
-            <span className="truncate">{t("মেস প্রোফাইল", "Mess Info")}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("rules")}
-            className={cn(
-              "flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none whitespace-nowrap",
-              activeTab === "rules"
-                ? "bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 shadow-xs border border-gray-200/60 dark:border-slate-700"
-                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
-            )}
-          >
-            <BookOpen size={14} className="shrink-0" />
-            <span className="truncate">{t("নীতিমালা", "Rules")}</span>
-          </button>
+        {/* Navigation Category Tabs (Clean responsive grid on mobile, flex bar on desktop) */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1.5 bg-gray-100 dark:bg-slate-900/90 rounded-2xl border border-gray-200/80 dark:border-slate-800">
+          {[
+            {
+              id: "ai" as const,
+              labelBn: "AI অ্যাসিস্ট্যান্ট",
+              labelEn: "AI & Gemini",
+              icon: Bot,
+              activeClass: "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/60 shadow-xs ring-1 ring-purple-500/20",
+              iconColor: "text-purple-500",
+            },
+            {
+              id: "meals" as const,
+              labelBn: "মিল রুলস",
+              labelEn: "Meal Rules",
+              icon: Clock,
+              activeClass: "bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/60 shadow-xs ring-1 ring-amber-500/20",
+              iconColor: "text-amber-500",
+            },
+            {
+              id: "finance" as const,
+              labelBn: "পেমেন্ট ও MFS",
+              labelEn: "Payments & MFS",
+              icon: DollarSign,
+              activeClass: "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60 shadow-xs ring-1 ring-emerald-500/20",
+              iconColor: "text-emerald-500",
+            },
+            {
+              id: "cook" as const,
+              labelBn: "খালা ও স্টাফ",
+              labelEn: "Cook & House",
+              icon: ChefHat,
+              activeClass: "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-900/60 shadow-xs ring-1 ring-teal-500/20",
+              iconColor: "text-teal-500",
+            },
+            {
+              id: "general" as const,
+              labelBn: "মেস প্রোফাইল",
+              labelEn: "Mess Info",
+              icon: Building2,
+              activeClass: "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/60 shadow-xs ring-1 ring-indigo-500/20",
+              iconColor: "text-indigo-500",
+            },
+            {
+              id: "rules" as const,
+              labelBn: "মেস নীতিমালা",
+              labelEn: "House Rules",
+              icon: BookOpen,
+              activeClass: "bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-900/60 shadow-xs ring-1 ring-orange-500/20",
+              iconColor: "text-orange-500",
+            },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "py-2 sm:py-2.5 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-black flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer select-none text-center border border-transparent active:scale-95",
+                  isActive
+                    ? tab.activeClass
+                    : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:bg-gray-200/50 dark:hover:bg-slate-800/50"
+                )}
+              >
+                <Icon size={15} className={cn("shrink-0", isActive ? tab.iconColor : "opacity-70")} />
+                <span className="truncate leading-tight">{t(tab.labelBn, tab.labelEn)}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB 1: AI ASSISTANT & GEMINI CONFIGURATION */}
