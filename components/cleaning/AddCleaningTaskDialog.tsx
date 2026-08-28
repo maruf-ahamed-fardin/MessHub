@@ -14,6 +14,9 @@ import { usePreferences } from "@/lib/context/PreferencesContext";
 export function AddCleaningTaskDialog({ members }: { members: any[] }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [assignedMemberId, setAssignedMemberId] = useState<string>(members[0]?.id ?? "");
+  const [recurrence, setRecurrence] = useState<string>("");
   const router = useRouter();
   const { t } = usePreferences();
 
@@ -27,28 +30,45 @@ export function AddCleaningTaskDialog({ members }: { members: any[] }) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     const fd = new FormData(e.currentTarget);
+    const resolvedMemberId = assignedMemberId || members[0]?.id || "";
+    if (!resolvedMemberId) {
+      setError(t("অনুগ্রহ করে মেম্বার নির্বাচন করুন", "Please select an assigned member"));
+      setLoading(false);
+      return;
+    }
+
     try {
-      await createCleaningTaskAction({
+      const res = await createCleaningTaskAction({
         title: fd.get("title"),
         location: fd.get("location"),
-        assignedMemberId: fd.get("assignedMemberId"),
-        dueDate: fd.get("dueDate"),
-        recurrence: fd.get("recurrence") || undefined,
-        note: fd.get("note") || undefined,
+        assignedMemberId: resolvedMemberId,
+        dueDate: new Date(fd.get("dueDate") as string),
+        recurrence: recurrence || undefined,
+        note: (fd.get("note") as string) || undefined,
       });
+
+      if (res && !res.success) {
+        setError(res.error || t("টাস্ক তৈরি করা যায়নি", "Failed to create task"));
+        return;
+      }
+
       setOpen(false);
       router.refresh();
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || t("টাস্ক তৈরি করতে সমস্যা হয়েছে", "Failed to create task"));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (val) setError(null); }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5 h-8 text-xs">
+        <Button size="sm" className="gap-1.5 h-8 text-xs font-bold rounded-xl">
           <Plus size={14} /> {t("টাস্ক যুক্ত করুন", "Add Task")}
         </Button>
       </DialogTrigger>
@@ -57,6 +77,11 @@ export function AddCleaningTaskDialog({ members }: { members: any[] }) {
           <DialogTitle>{t("ক্লিনিং টাস্ক যুক্ত করুন", "Add Cleaning Task")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+          {error && (
+            <p className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900">
+              {error}
+            </p>
+          )}
           <div className="space-y-1">
             <Label htmlFor="title">{t("কাজের শিরোনাম *", "Task Title *")}</Label>
             <Input id="title" name="title" placeholder={t("যেমন: বাথরুম পরিষ্কার, ডাইনিং মোছা...", "e.g. Bathroom cleaning, mop floor...")} required />
@@ -74,16 +99,16 @@ export function AddCleaningTaskDialog({ members }: { members: any[] }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>{t("দায়িত্বে *", "Assigned To *")}</Label>
-              <Select name="assignedMemberId">
+              <Select value={assignedMemberId || members[0]?.id || ""} onValueChange={(val) => { if (val) setAssignedMemberId(val); }}>
                 <SelectTrigger><SelectValue placeholder={t("মেম্বার নির্বাচন করুন", "Select member")} /></SelectTrigger>
                 <SelectContent>
-                  {members.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.user.name}</SelectItem>)}
+                  {members.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.user?.name ?? m.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
               <Label>{t("রোটেশন", "Recurrence")}</Label>
-              <Select name="recurrence" defaultValue="">
+              <Select value={recurrence} onValueChange={(val) => setRecurrence(val ?? "")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {recurrenceOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}

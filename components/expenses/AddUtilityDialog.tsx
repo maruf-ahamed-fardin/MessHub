@@ -15,41 +15,58 @@ import { usePreferences } from "@/lib/context/PreferencesContext";
 export function AddUtilityDialog({ month, year }: { month: number; year: number }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [type, setType] = useState<string>("ELECTRICITY");
   const router = useRouter();
   const { t, language } = usePreferences();
   const utilityLabels: Record<string, string> = language === "bn" ? UTILITY_LABELS_BN : UTILITY_LABELS_EN;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     try {
-      await upsertUtilityAction({
-        type: fd.get("type"),
+      const res = await upsertUtilityAction({
+        type: type || "ELECTRICITY",
         amount: Number(fd.get("amount")),
         month,
         year,
         date: new Date(fd.get("date") as string),
         note: (fd.get("note") as string) || undefined,
       });
+
+      if (res && !res.success) {
+        setError(res.error || t("ইউটিলিটি বিল সংরক্ষণ করা যায়নি", "Failed to save utility bill"));
+        return;
+      }
+
       setOpen(false);
       router.refresh();
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || t("ইউটিলিটি বিল সংরক্ষণ করতে সমস্যা হয়েছে", "Failed to save utility bill"));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (val) setError(null); }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5 h-8 text-xs"><Plus size={14} /> {t("বিল যুক্ত করুন", "Add Utility Bill")}</Button>
+        <Button size="sm" className="gap-1.5 h-8 text-xs font-bold rounded-xl"><Plus size={14} /> {t("বিল যুক্ত করুন", "Add Utility Bill")}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{t("ইউটিলিটি বিল যুক্ত করুন", "Add Utility Bill")}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+          {error && (
+            <p className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900">
+              {error}
+            </p>
+          )}
           <div className="space-y-1">
             <Label>{t("বিলের ধরন *", "Utility Type *")}</Label>
-            <Select name="type" defaultValue="ELECTRICITY">
+            <Select value={type} onValueChange={(val) => { if (val) setType(val); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Object.entries(utilityLabels).map(([k, v]) => (

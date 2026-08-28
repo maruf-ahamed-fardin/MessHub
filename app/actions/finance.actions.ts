@@ -261,53 +261,65 @@ export async function createExpenseAction(data: unknown) {
   try {
     await requireAdmin();
     const schema = z.object({
-      title: z.string().min(1),
-      category: z.string(),
-      amount: z.coerce.number().positive(),
+      title: z.string().min(1, "Title is required"),
+      category: z.string().default("OTHER"),
+      amount: z.coerce.number().positive("Amount must be positive"),
       date: z.coerce.date(),
-      paidById: z.string().min(1),
-      sharingMethod: z.string(),
+      paidById: z.string().min(1, "Paid by member is required"),
+      sharingMethod: z.string().default("EQUAL"),
       selectedMemberIds: z.array(z.string()).optional(),
       note: z.string().optional(),
+      receiptUrl: z.string().optional(),
     });
     const validated = schema.parse(data);
-    await createExpense({ ...validated, amount: Number(validated.amount) });
-  } catch (err) {
-    console.warn("DB offline (demo mode createExpense):", err);
+    await createExpense({
+      ...validated,
+      amount: Number(validated.amount),
+      date: new Date(validated.date),
+    });
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createExpenseAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create expense" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }
 
 export async function deleteExpenseAction(id: string) {
   try {
     await requireAdmin();
     await deleteExpense(id);
-  } catch (err) {
-    console.warn("DB offline (demo mode deleteExpense):", err);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deleteExpenseAction:", err);
+    return { success: false, error: err?.message ?? "Failed to delete expense" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }
 
 export async function upsertUtilityAction(data: unknown) {
   try {
     await requireAdmin();
     const schema = z.object({
-      type: z.string(),
-      amount: z.coerce.number().positive(),
-      month: z.number().int(),
-      year: z.number().int(),
+      type: z.string().min(1, "Utility type is required"),
+      amount: z.coerce.number().positive("Amount must be positive"),
+      month: z.coerce.number().int(),
+      year: z.coerce.number().int(),
       date: z.coerce.date(),
       note: z.string().optional(),
     });
     const validated = schema.parse(data);
-    await upsertUtilityBill({ ...validated, amount: Number(validated.amount) });
-  } catch (err) {
-    console.warn("DB offline (demo mode upsertUtility):", err);
+    await upsertUtilityBill({
+      ...validated,
+      amount: Number(validated.amount),
+      date: new Date(validated.date),
+    });
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in upsertUtilityAction:", err);
+    return { success: false, error: err?.message ?? "Failed to save utility bill" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }
 
 export async function createPaymentAction(data: unknown) {
@@ -315,42 +327,54 @@ export async function createPaymentAction(data: unknown) {
     const session = await requireAdmin();
     const recordedById = session.user.id;
     const schema = z.object({
-      memberId: z.string().min(1),
-      amount: z.coerce.number().positive(),
+      memberId: z.string().min(1, "Member is required"),
+      amount: z.coerce.number().positive("Amount must be positive"),
       date: z.coerce.date(),
-      method: z.string(),
+      method: z.string().default("CASH"),
       note: z.string().optional(),
     });
     const validated = schema.parse(data);
-    await createPayment({ ...validated, amount: Number(validated.amount), recordedById, date: new Date(validated.date) });
+    await createPayment({
+      ...validated,
+      amount: Number(validated.amount),
+      recordedById,
+      date: new Date(validated.date),
+    });
 
     // Broadcast notification
-    const db = getPrisma();
-    const member = await db.memberProfile.findUnique({
-      where: { id: validated.memberId },
-      include: { user: { select: { name: true } } },
-    });
-    const memberName = member?.user?.name || "মেম্বার";
-    await notifyAllUsersAboutPayment({
-      memberName,
-      amount: Number(validated.amount),
-      method: validated.method,
-      note: validated.note,
-    });
-  } catch (err) {
-    console.warn("DB offline (demo mode createPayment):", err);
+    try {
+      const db = getPrisma();
+      const member = await db.memberProfile.findUnique({
+        where: { id: validated.memberId },
+        include: { user: { select: { name: true } } },
+      });
+      const memberName = member?.user?.name || "মেম্বার";
+      await notifyAllUsersAboutPayment({
+        memberName,
+        amount: Number(validated.amount),
+        method: validated.method,
+        note: validated.note,
+      });
+    } catch {
+      // Notification non-blocking
+    }
+
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createPaymentAction:", err);
+    return { success: false, error: err?.message ?? "Failed to record payment" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }
 
 export async function deletePaymentAction(id: string) {
   try {
     await requireAdmin();
     await deletePayment(id);
-  } catch (err) {
-    console.warn("DB offline (demo mode deletePayment):", err);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deletePaymentAction:", err);
+    return { success: false, error: err?.message ?? "Failed to delete payment" };
   }
-  revalidateAllFinancialRoutes();
-  return { success: true };
 }

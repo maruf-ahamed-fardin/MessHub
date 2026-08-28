@@ -24,22 +24,24 @@ export async function finalizeSettlementAction(month: number, year: number) {
   try {
     const session = await requireAdmin();
     await finalizeMonthlySettlement(month, year, session.user.id);
-  } catch (err) {
-    console.warn("DB offline (demo mode finalize):", err);
+    revalidatePath("/settlement");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in finalizeSettlementAction:", err);
+    return { success: false, error: err?.message ?? "Failed to finalize settlement" };
   }
-  revalidatePath("/settlement");
-  return { success: true };
 }
 
 export async function reopenSettlementAction(month: number, year: number) {
   try {
     await requireAdmin();
     await reopenMonthlySettlement(month, year);
-  } catch (err) {
-    console.warn("DB offline (demo mode reopen):", err);
+    revalidatePath("/settlement");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in reopenSettlementAction:", err);
+    return { success: false, error: err?.message ?? "Failed to reopen settlement" };
   }
-  revalidatePath("/settlement");
-  return { success: true };
 }
 
 // ---- Members ----
@@ -48,22 +50,24 @@ export async function createMemberAction(data: unknown) {
     await requireAdmin();
     const validated = createMemberSchema.parse(data);
     await createMember(validated);
-  } catch (err) {
-    console.warn("DB offline (demo mode createMember):", err);
+    revalidatePath("/members");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createMemberAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create member" };
   }
-  revalidatePath("/members");
-  return { success: true };
 }
 
 export async function deactivateMemberAction(memberId: string) {
   try {
     await requireAdmin();
     await deactivateMember(memberId);
-  } catch (err) {
-    console.warn("DB offline (demo mode deactivateMember):", err);
+    revalidatePath("/members");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deactivateMemberAction:", err);
+    return { success: false, error: err?.message ?? "Failed to deactivate member" };
   }
-  revalidatePath("/members");
-  return { success: true };
 }
 
 export async function updateMemberDetailsAction(memberId: string, data: {
@@ -85,24 +89,26 @@ export async function updateMemberDetailsAction(memberId: string, data: {
     if (data.seatId) {
       await assignSeat(memberId, data.seatId);
     }
-  } catch (err) {
-    console.warn("DB error in updateMemberDetails:", err);
+    revalidatePath("/members");
+    revalidatePath(`/members/${memberId}`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in updateMemberDetails:", err);
+    return { success: false, error: err?.message ?? "Failed to update member" };
   }
-  revalidatePath("/members");
-  revalidatePath(`/members/${memberId}`);
-  return { success: true };
 }
 
 export async function assignSeatAction(memberId: string, seatId: string) {
   try {
     await requireAdmin();
     await assignSeat(memberId, seatId);
-  } catch (err) {
-    console.warn("DB offline (demo mode assignSeat):", err);
+    revalidatePath("/members");
+    revalidatePath("/rooms");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in assignSeatAction:", err);
+    return { success: false, error: err?.message ?? "Failed to assign seat" };
   }
-  revalidatePath("/members");
-  revalidatePath("/rooms");
-  return { success: true };
 }
 
 // ---- Rooms ----
@@ -110,22 +116,24 @@ export async function createRoomAction(data: { name: string; floor?: string }) {
   try {
     await requireAdmin();
     await createRoom(data);
-  } catch (err) {
-    console.warn("DB offline (demo mode createRoom):", err);
+    revalidatePath("/rooms");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createRoomAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create room" };
   }
-  revalidatePath("/rooms");
-  return { success: true };
 }
 
 export async function createSeatAction(data: { roomId: string; label: string }) {
   try {
     await requireAdmin();
     await createSeat(data);
-  } catch (err) {
-    console.warn("DB offline (demo mode createSeat):", err);
+    revalidatePath("/rooms");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createSeatAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create seat" };
   }
-  revalidatePath("/rooms");
-  return { success: true };
 }
 
 // ---- Community ----
@@ -145,22 +153,24 @@ export async function createPostAction(data: {
     if (user) authorId = user.id;
 
     await createPost({ ...data, authorId });
-  } catch (err) {
-    console.warn("DB offline (demo mode createPost):", err);
+    revalidatePath("/community");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createPostAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create post" };
   }
-  revalidatePath("/community");
-  return { success: true };
 }
 
 export async function togglePinAction(id: string) {
   try {
     await requireAdmin();
     await togglePin(id);
-  } catch (err) {
-    console.warn("DB offline (demo mode togglePin):", err);
+    revalidatePath("/community");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in togglePinAction:", err);
+    return { success: false, error: err?.message ?? "Failed to toggle pin" };
   }
-  revalidatePath("/community");
-  return { success: true };
 }
 
 export async function updatePostAction(data: {
@@ -179,11 +189,12 @@ export async function updatePostAction(data: {
       throw new Error("Unauthorized to edit this post.");
     }
     await updatePost(data.id, data);
-  } catch (err) {
-    console.warn("DB offline (demo mode updatePost):", err);
+    revalidatePath("/community");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in updatePostAction:", err);
+    return { success: false, error: err?.message ?? "Failed to update post" };
   }
-  revalidatePath("/community");
-  return { success: true };
 }
 
 export async function deletePostAction(id: string) {
@@ -197,11 +208,12 @@ export async function deletePostAction(id: string) {
       }
     }
     await deletePost(id);
-  } catch (err) {
-    console.warn("DB offline (demo mode deletePost):", err);
+    revalidatePath("/community");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deletePostAction:", err);
+    return { success: false, error: err?.message ?? "Failed to delete post" };
   }
-  revalidatePath("/community");
-  return { success: true };
 }
 
 export async function addPostCommentAction(data: {
@@ -220,11 +232,12 @@ export async function addPostCommentAction(data: {
 
     const { addPostComment } = await import("@/backend/community/community.repository");
     await addPostComment({ ...data, authorId });
-  } catch (err) {
-    console.warn("DB offline (demo mode addComment):", err);
+    revalidatePath("/community");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in addPostCommentAction:", err);
+    return { success: false, error: err?.message ?? "Failed to add comment" };
   }
-  revalidatePath("/community");
-  return { success: true };
 }
 
 export async function togglePostReactionAction(data: { postId: string; userId: string; emoji: string }) {
@@ -238,11 +251,12 @@ export async function togglePostReactionAction(data: { postId: string; userId: s
 
     const { togglePostReaction } = await import("@/backend/community/community.repository");
     await togglePostReaction({ ...data, userId });
-  } catch (err) {
-    console.warn("DB offline (demo mode toggleReaction):", err);
+    revalidatePath("/community");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in togglePostReactionAction:", err);
+    return { success: false, error: err?.message ?? "Failed to react" };
   }
-  revalidatePath("/community");
-  return { success: true };
 }
 
 import { notifyAllUsersAboutNotice } from "@/backend/notifications/notification.service";
@@ -251,20 +265,25 @@ export async function createNoticeAction(data: { title: string; description: str
   try {
     const session = await requireAdmin();
     await createNotice({ ...data, expiresAt: data.expiresAt ? new Date(data.expiresAt) : undefined });
-    await notifyAllUsersAboutNotice({
-      title: data.title,
-      description: data.description,
-      priority: data.priority,
-      authorName: session.user.name || "Admin",
-    });
-  } catch (err) {
-    console.warn("DB offline (demo mode createNotice):", err);
+    try {
+      await notifyAllUsersAboutNotice({
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        authorName: session.user.name || "Admin",
+      });
+    } catch {
+      // Non-blocking
+    }
+    revalidatePath("/community");
+    revalidatePath("/notices");
+    revalidatePath("/dashboard");
+    revalidatePath("/notifications");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createNoticeAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create notice" };
   }
-  revalidatePath("/community");
-  revalidatePath("/notices");
-  revalidatePath("/dashboard");
-  revalidatePath("/notifications");
-  return { success: true };
 }
 
 // ---- Cleaning ----
@@ -272,9 +291,9 @@ export async function createCleaningTaskAction(data: unknown) {
   try {
     await requireAdmin();
     const schema = z.object({
-      title: z.string().min(1),
-      location: z.string().min(1),
-      assignedMemberId: z.string().min(1),
+      title: z.string().min(1, "Title is required"),
+      location: z.string().min(1, "Location is required"),
+      assignedMemberId: z.string().min(1, "Assigned member is required"),
       dueDate: z.coerce.date(),
       recurrence: z.string().optional(),
       recurrenceInterval: z.coerce.number().optional(),
@@ -282,11 +301,12 @@ export async function createCleaningTaskAction(data: unknown) {
     });
     const validated = schema.parse(data);
     await createCleaningTask({ ...validated, dueDate: new Date(validated.dueDate) });
-  } catch (err) {
-    console.warn("DB offline (demo mode createCleaningTask):", err);
+    revalidatePath("/cleaning");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createCleaningTaskAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create cleaning task" };
   }
-  revalidatePath("/cleaning");
-  return { success: true };
 }
 
 async function getActiveMemberId(session: any): Promise<string> {
@@ -318,13 +338,14 @@ export async function completeCleaningTaskAction(id: string) {
     const session = await auth();
     const memberId = await getActiveMemberId(session);
     await completeCleaningTask(id, memberId);
-  } catch (err) {
-    console.warn("DB offline (demo mode completeCleaningTask):", err);
+    revalidatePath("/cleaning");
+    revalidatePath("/house");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in completeCleaningTaskAction:", err);
+    return { success: false, error: err?.message ?? "Failed to complete cleaning task" };
   }
-  revalidatePath("/cleaning");
-  revalidatePath("/house");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 // ---- Maintenance ----
@@ -333,20 +354,21 @@ export async function createMaintenanceAction(data: unknown) {
     const session = await auth();
     const memberId = await getActiveMemberId(session);
     const schema = z.object({
-      title: z.string().min(1),
+      title: z.string().min(1, "Title is required"),
       description: z.string().optional(),
       location: z.string().optional(),
-      priority: z.string(),
+      priority: z.string().default("MEDIUM"),
       cost: z.coerce.number().optional(),
     });
     const validated = schema.parse(data);
     await createMaintenanceReport({ ...validated, reportedById: memberId });
-  } catch (err) {
-    console.warn("DB offline (demo mode createMaintenance):", err);
+    revalidatePath("/house");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createMaintenanceAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create maintenance report" };
   }
-  revalidatePath("/house");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 export async function updateMaintenanceStatusAction(id: string, status: string, cost?: number, note?: string) {
@@ -361,12 +383,13 @@ export async function updateMaintenanceStatusAction(id: string, status: string, 
         resolvedAt: status === "RESOLVED" ? new Date() : null,
       },
     });
-  } catch (err) {
-    console.warn("DB offline (demo mode updateMaintenanceStatus):", err);
+    revalidatePath("/house");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in updateMaintenanceStatusAction:", err);
+    return { success: false, error: err?.message ?? "Failed to update maintenance report" };
   }
-  revalidatePath("/house");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 // ---- Shopping ----
@@ -375,12 +398,13 @@ export async function addShoppingItemAction(data: { name: string; quantity?: str
     const session = await auth();
     const memberId = await getActiveMemberId(session);
     await createShoppingItem({ ...data, addedById: memberId });
-  } catch (err) {
-    console.warn("DB offline (demo mode addShoppingItem):", err);
+    revalidatePath("/house");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in addShoppingItemAction:", err);
+    return { success: false, error: err?.message ?? "Failed to add shopping item" };
   }
-  revalidatePath("/house");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 export async function purchaseShoppingItemAction(id: string, cost?: number) {
@@ -396,12 +420,13 @@ export async function purchaseShoppingItemAction(id: string, cost?: number) {
         purchasedAt: new Date(),
       },
     });
-  } catch (err) {
-    console.warn("DB offline (demo mode purchaseShoppingItem):", err);
+    revalidatePath("/house");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in purchaseShoppingItemAction:", err);
+    return { success: false, error: err?.message ?? "Failed to mark item purchased" };
   }
-  revalidatePath("/house");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 export async function deleteShoppingItemAction(id: string) {
@@ -411,16 +436,17 @@ export async function deleteShoppingItemAction(id: string) {
     if (session.user.role !== "ADMIN") {
       const item = await prisma.shoppingItem.findUnique({ where: { id } });
       if (item && item.addedById !== session.user.memberId) {
-        throw new Error("Unauthorized to delete this shopping item.");
+        return { success: false, error: "Unauthorized to delete this shopping item." };
       }
     }
     await deleteShoppingItem(id);
-  } catch (err) {
-    console.warn("DB offline (demo mode deleteShoppingItem):", err);
+    revalidatePath("/house");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deleteShoppingItemAction:", err);
+    return { success: false, error: err?.message ?? "Failed to delete shopping item" };
   }
-  revalidatePath("/house");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 // ---- Settings ----
@@ -439,12 +465,13 @@ export async function updateSettingsAction(data: unknown) {
     });
     const validated = schema.parse(data);
     await prisma.messSettings.update({ where: { id: "singleton" }, data: validated });
-  } catch (err) {
-    console.warn("DB offline (demo mode updateSettings):", err);
+    revalidatePath("/settings");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in updateSettingsAction:", err);
+    return { success: false, error: err?.message ?? "Failed to update settings" };
   }
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 // ---- Personal Calendar Schedules & Events ----
@@ -468,11 +495,12 @@ export async function createCalendarEventAction(data: {
       description: data.description || undefined,
       createdById: userId,
     });
-  } catch (err) {
-    console.warn("DB error in createCalendarEventAction:", err);
+    revalidatePath("/calendar");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in createCalendarEventAction:", err);
+    return { success: false, error: err?.message ?? "Failed to create event" };
   }
-  revalidatePath("/calendar");
-  return { success: true };
 }
 
 export async function deleteCalendarEventAction(id: string) {
@@ -481,10 +509,11 @@ export async function deleteCalendarEventAction(id: string) {
     if (!session?.user) throw new Error("Unauthorized");
     const userId = session.user.id;
     await deleteCalendarEvent(id, userId);
-  } catch (err) {
-    console.warn("DB error in deleteCalendarEventAction:", err);
+    revalidatePath("/calendar");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in deleteCalendarEventAction:", err);
+    return { success: false, error: err?.message ?? "Failed to delete event" };
   }
-  revalidatePath("/calendar");
-  return { success: true };
 }
 

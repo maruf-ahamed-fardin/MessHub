@@ -16,6 +16,7 @@ export function AddMaintenanceDialog({ reportedById }: { reportedById: string })
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [priority, setPriority] = useState<string>("MEDIUM");
   const router = useRouter();
   const { t } = usePreferences();
 
@@ -25,25 +26,29 @@ export function AddMaintenanceDialog({ reportedById }: { reportedById: string })
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     try {
-      await createMaintenanceAction({
+      const res = await createMaintenanceAction({
         title: fd.get("title"),
         description: fd.get("description") || undefined,
         location: fd.get("location") || undefined,
-        priority: fd.get("priority"),
+        priority: priority || "MEDIUM",
       });
+      if (res && !res.success) {
+        setError(res.error || t("রিপোর্ট জমা দিতে ব্যর্থ হয়েছে", "Failed to submit report"));
+        return;
+      }
       setOpen(false);
       router.refresh();
     } catch (err: any) {
-      setError(err.message ?? "Failed to submit report");
+      setError(err?.message ?? t("রিপোর্ট জমা দিতে ব্যর্থ হয়েছে", "Failed to submit report"));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => { setOpen(val); if (val) setError(null); }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5 h-8 text-xs">
+        <Button size="sm" className="gap-1.5 h-8 text-xs font-bold rounded-xl">
           <Plus size={14} /> {t("সমস্যা রিপোর্ট করুন", "Report Problem")}
         </Button>
       </DialogTrigger>
@@ -52,6 +57,11 @@ export function AddMaintenanceDialog({ reportedById }: { reportedById: string })
           <DialogTitle>{t("মেরামত ও সমস্যা রিপোর্ট করুন", "Report Maintenance Issue")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 mt-2">
+          {error && (
+            <p className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900">
+              {error}
+            </p>
+          )}
           <div className="space-y-1">
             <Label htmlFor="title">{t("সমস্যার শিরোনাম *", "Issue Title *")}</Label>
             <Input id="title" name="title" placeholder={t("যেমন: পানির কল নষ্ট, লাইট ফিউজ...", "e.g. Broken tap, power issue...")} required />
@@ -63,7 +73,7 @@ export function AddMaintenanceDialog({ reportedById }: { reportedById: string })
             </div>
             <div className="space-y-1">
               <Label>{t("জরুরিতা *", "Priority *")}</Label>
-              <Select name="priority" defaultValue="MEDIUM">
+              <Select value={priority} onValueChange={(val) => { if (val) setPriority(val); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="LOW">🟢 {t("সাধারণ", "Low")}</SelectItem>
@@ -78,7 +88,6 @@ export function AddMaintenanceDialog({ reportedById }: { reportedById: string })
             <Label htmlFor="description">{t("বিবরণ", "Description")}</Label>
             <Textarea id="description" name="description" placeholder={t("সমস্যাটি বিস্তারিত লিখুন...", "Describe the problem in detail...")} className="resize-none" rows={3} />
           </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1" disabled={loading}>
               {t("বাতিল", "Cancel")}

@@ -66,6 +66,11 @@ export function MoneyTransactionHub({
   const [editingUtilityType, setEditingUtilityType] = useState<string>("GAS");
   const [submitting, setSubmitting] = useState(false);
 
+  const [expenseCategory, setExpenseCategory] = useState<string>("HOUSEHOLD");
+  const [expensePaidById, setExpensePaidById] = useState<string>(members[0]?.id ?? "");
+  const [depositMemberId, setDepositMemberId] = useState<string>(members[0]?.id ?? "");
+  const [depositMethod, setDepositMethod] = useState<string>("BKASH");
+
   const memberCount = members.length > 0 ? members.length : 7;
 
   // Utility Bill Definitions & Defaults
@@ -215,11 +220,11 @@ export function MoneyTransactionHub({
     if (!isAdmin) return;
     setSubmitting(true);
     const fd = new FormData(e.currentTarget);
-    const memberId = fd.get("memberId") as string;
+    const memberId = depositMemberId || (fd.get("memberId") as string) || members[0]?.id || "";
     const amount = Number(fd.get("amount")) || 0;
-    const method = fd.get("method") as string;
+    const method = depositMethod || (fd.get("method") as string) || "BKASH";
     const note = (fd.get("note") as string) || undefined;
-    const dateStr = fd.get("date") as string;
+    const dateStr = (fd.get("date") as string) || new Date().toISOString().split("T")[0];
 
     const selectedMember = members.find((m) => m.id === memberId);
     const newPayment = {
@@ -236,13 +241,16 @@ export function MoneyTransactionHub({
     setDepositDialogOpen(false);
 
     try {
-      await createPaymentAction({
+      const res = await createPaymentAction({
         memberId,
         amount,
         method,
         date: new Date(dateStr),
         note,
       });
+      if (res && !res.success) {
+        console.error("Failed to save deposit:", res.error);
+      }
       router.refresh();
     } catch (err) {
       console.error(err);
@@ -259,10 +267,10 @@ export function MoneyTransactionHub({
     const fd = new FormData(e.currentTarget);
     const title = fd.get("title") as string;
     const amount = Number(fd.get("amount")) || 0;
-    const category = (fd.get("category") as string) || "OTHER";
-    const paidById = fd.get("paidById") as string;
+    const category = expenseCategory || (fd.get("category") as string) || "HOUSEHOLD";
+    const paidById = expensePaidById || (fd.get("paidById") as string) || members[0]?.id || "";
     const note = (fd.get("note") as string) || undefined;
-    const dateStr = fd.get("date") as string;
+    const dateStr = (fd.get("date") as string) || new Date().toISOString().split("T")[0];
 
     const selectedPaidBy = members.find((m) => m.id === paidById);
     const newExp = {
@@ -281,7 +289,7 @@ export function MoneyTransactionHub({
     setExpenseDialogOpen(false);
 
     try {
-      await createExpenseAction({
+      const res = await createExpenseAction({
         title,
         amount,
         category,
@@ -290,6 +298,9 @@ export function MoneyTransactionHub({
         date: new Date(dateStr),
         note,
       });
+      if (res && !res.success) {
+        console.error("Failed to save expense:", res.error);
+      }
       router.refresh();
     } catch (err) {
       console.error(err);
@@ -868,7 +879,7 @@ export function MoneyTransactionHub({
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">{t("ক্যাটাগরি", "Category")}</Label>
-                          <Select name="category" defaultValue="HOUSEHOLD">
+                          <Select value={expenseCategory} onValueChange={(val) => { if (val) setExpenseCategory(val); }}>
                             <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="HOUSEHOLD">{t("হাউসহোল্ড", "Household")}</SelectItem>
@@ -882,7 +893,7 @@ export function MoneyTransactionHub({
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <Label className="text-xs">{t("পরিশোধকারী", "Paid By")} *</Label>
-                          <Select name="paidById" defaultValue={members[0]?.id ?? ""}>
+                          <Select value={expensePaidById || members[0]?.id || ""} onValueChange={(val) => { if (val) setExpensePaidById(val); }}>
                             <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {members.map((m) => (
@@ -902,7 +913,7 @@ export function MoneyTransactionHub({
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button type="button" variant="outline" size="sm" onClick={() => setExpenseDialogOpen(false)} className="flex-1 text-xs">{t("বাতিল", "Cancel")}</Button>
-                        <Button type="submit" size="sm" className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs" disabled={submitting}>
+                        <Button type="submit" size="sm" className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold" disabled={submitting}>
                           {submitting ? <Loader2 size={12} className="animate-spin mr-1" /> : null}{t("সংরক্ষণ করুন", "Save")}
                         </Button>
                       </div>
@@ -925,7 +936,7 @@ export function MoneyTransactionHub({
                     <form onSubmit={handleAddDeposit} className="space-y-3 mt-2">
                       <div className="space-y-1">
                         <Label className="text-xs">{t("মেম্বার", "Member")} *</Label>
-                        <Select name="memberId" defaultValue={members[0]?.id ?? ""}>
+                        <Select value={depositMemberId || members[0]?.id || ""} onValueChange={(val) => { if (val) setDepositMemberId(val); }}>
                           <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {members.map((m) => (
@@ -941,7 +952,7 @@ export function MoneyTransactionHub({
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">{t("মাধ্যম", "Method")}</Label>
-                          <Select name="method" defaultValue="BKASH">
+                          <Select value={depositMethod} onValueChange={(val) => { if (val) setDepositMethod(val); }}>
                             <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="BKASH">bKash</SelectItem>
@@ -963,7 +974,7 @@ export function MoneyTransactionHub({
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button type="button" variant="outline" size="sm" onClick={() => setDepositDialogOpen(false)} className="flex-1 text-xs">{t("বাতিল", "Cancel")}</Button>
-                        <Button type="submit" size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs" disabled={submitting}>
+                        <Button type="submit" size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold" disabled={submitting}>
                           {submitting ? <Loader2 size={12} className="animate-spin mr-1" /> : null}{t("সংরক্ষণ করুন", "Save")}
                         </Button>
                       </div>

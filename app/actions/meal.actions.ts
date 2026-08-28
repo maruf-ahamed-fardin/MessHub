@@ -63,17 +63,13 @@ export async function updateMealAction(formData: {
       }
     }
 
-    try {
-      await upsertMeal({
-        memberId: formData.memberId,
-        date: dateObj,
-        breakfast: Boolean(formData.breakfast),
-        lunch: Boolean(formData.lunch),
-        dinner: Boolean(formData.dinner),
-      });
-    } catch (dbErr: any) {
-      console.warn("Direct upsertMeal error (possibly fallback/mock mode):", dbErr);
-    }
+    await upsertMeal({
+      memberId: formData.memberId,
+      date: dateObj,
+      breakfast: Boolean(formData.breakfast),
+      lunch: Boolean(formData.lunch),
+      dinner: Boolean(formData.dinner),
+    });
 
     // Notify all users in the mess about the meal update
     let targetMemberName = "Member";
@@ -93,16 +89,20 @@ export async function updateMealAction(formData: {
     const isSelf = session.user.memberId === formData.memberId || session.user.id === formData.memberId;
     const isAdmin = session.user.role === "ADMIN";
 
-    await notifyAllUsersAboutMealSave({
-      targetMemberName,
-      updaterName,
-      isSelf,
-      isAdmin,
-      date: dateObj,
-      breakfast: formData.breakfast,
-      lunch: formData.lunch,
-      dinner: formData.dinner,
-    });
+    try {
+      await notifyAllUsersAboutMealSave({
+        targetMemberName,
+        updaterName,
+        isSelf,
+        isAdmin,
+        date: dateObj,
+        breakfast: formData.breakfast,
+        lunch: formData.lunch,
+        dinner: formData.dinner,
+      });
+    } catch {
+      // Notification non-blocking
+    }
 
     revalidateAllMealRoutes();
     return { success: true };
@@ -152,24 +152,20 @@ export async function saveBulkDailyMealsAction(data: {
     }
 
     for (const update of data.updates) {
-      try {
-        await upsertMeal({
-          memberId: update.memberId,
-          date: dateObj,
-          breakfast: Boolean(update.breakfast),
-          lunch: Boolean(update.lunch),
-          dinner: Boolean(update.dinner),
-        });
-      } catch (dbErr: any) {
-        console.warn("Direct bulk upsertMeal error for member:", update.memberId, dbErr);
-      }
+      await upsertMeal({
+        memberId: update.memberId,
+        date: dateObj,
+        breakfast: Boolean(update.breakfast),
+        lunch: Boolean(update.lunch),
+        dinner: Boolean(update.dinner),
+      });
     }
 
     const updaterName = session.user.name || (session.user.role === "ADMIN" ? "Admin" : "Member");
-    if (data.updates.length === 1) {
-      const single = data.updates[0];
-      let targetMemberName = "Member";
-      try {
+    try {
+      if (data.updates.length === 1) {
+        const single = data.updates[0];
+        let targetMemberName = "Member";
         const targetMember = await prisma.memberProfile.findUnique({
           where: { id: single.memberId },
           include: { user: { select: { name: true } } },
@@ -177,29 +173,29 @@ export async function saveBulkDailyMealsAction(data: {
         if (targetMember?.user?.name) {
           targetMemberName = targetMember.user.name;
         }
-      } catch {
-        // Ignore
-      }
 
-      await notifyAllUsersAboutMealSave({
-        targetMemberName,
-        updaterName,
-        isSelf: session.user.memberId === single.memberId || session.user.id === single.memberId,
-        isAdmin: session.user.role === "ADMIN",
-        date: dateObj,
-        breakfast: single.breakfast,
-        lunch: single.lunch,
-        dinner: single.dinner,
-      });
-    } else {
-      await notifyAllUsersAboutMealSave({
-        targetMemberName: `${data.updates.length} Members`,
-        updaterName,
-        isSelf: false,
-        isAdmin: session.user.role === "ADMIN",
-        date: dateObj,
-        count: data.updates.length,
-      });
+        await notifyAllUsersAboutMealSave({
+          targetMemberName,
+          updaterName,
+          isSelf: session.user.memberId === single.memberId || session.user.id === single.memberId,
+          isAdmin: session.user.role === "ADMIN",
+          date: dateObj,
+          breakfast: single.breakfast,
+          lunch: single.lunch,
+          dinner: single.dinner,
+        });
+      } else {
+        await notifyAllUsersAboutMealSave({
+          targetMemberName: `${data.updates.length} Members`,
+          updaterName,
+          isSelf: false,
+          isAdmin: session.user.role === "ADMIN",
+          date: dateObj,
+          count: data.updates.length,
+        });
+      }
+    } catch {
+      // Notification non-blocking
     }
 
     revalidateAllMealRoutes();
@@ -239,25 +235,21 @@ export async function toggleMealAction(
       }
     }
 
-    try {
-      const existing = await prisma.meal.findUnique({
-        where: { memberId_date: { memberId, date: d } },
-      });
+    const existing = await prisma.meal.findUnique({
+      where: { memberId_date: { memberId, date: d } },
+    });
 
-      const breakfast = type === "breakfast" ? value : (existing?.breakfast ?? true);
-      const lunch = type === "lunch" ? value : (existing?.lunch ?? true);
-      const dinner = type === "dinner" ? value : (existing?.dinner ?? true);
+    const breakfast = type === "breakfast" ? value : (existing?.breakfast ?? true);
+    const lunch = type === "lunch" ? value : (existing?.lunch ?? true);
+    const dinner = type === "dinner" ? value : (existing?.dinner ?? true);
 
-      await upsertMeal({
-        memberId,
-        date: d,
-        breakfast,
-        lunch,
-        dinner,
-      });
-    } catch (dbErr: any) {
-      console.warn("Direct toggleMealAction error:", dbErr);
-    }
+    await upsertMeal({
+      memberId,
+      date: d,
+      breakfast,
+      lunch,
+      dinner,
+    });
 
     revalidateAllMealRoutes();
     return { success: true };
@@ -299,15 +291,11 @@ export async function createGuestMealAction(data: {
       }
     }
 
-    try {
-      await createGuestMeal({
-        ...data,
-        date: dateObj,
-        addedById: memberId,
-      });
-    } catch (dbErr: any) {
-      console.warn("Direct createGuestMeal error:", dbErr);
-    }
+    await createGuestMeal({
+      ...data,
+      date: dateObj,
+      addedById: memberId,
+    });
 
     let hostName = session.user.name || "মেম্বার";
     try {
@@ -318,17 +306,16 @@ export async function createGuestMealAction(data: {
       if (host?.user?.name) {
         hostName = host.user.name;
       }
+      await notifyAllUsersAboutGuestMeal({
+        hostName,
+        guestName: data.guestName,
+        mealType: data.mealType,
+        quantity: data.quantity,
+        date: dateObj,
+      });
     } catch {
       // Ignore
     }
-
-    await notifyAllUsersAboutGuestMeal({
-      hostName,
-      guestName: data.guestName,
-      mealType: data.mealType,
-      quantity: data.quantity,
-      date: dateObj,
-    });
 
     revalidateAllMealRoutes();
     return { success: true };
@@ -342,20 +329,12 @@ export async function deleteGuestMealAction(id: string) {
   try {
     const session = await requireAuth();
     if (session.user.role !== "ADMIN") {
-      try {
-        const gm = await prisma.guestMeal.findUnique({ where: { id } });
-        if (gm && gm.memberId !== session.user.memberId && gm.addedById !== session.user.memberId) {
-          return { success: false, error: "Unauthorized to delete this guest meal." };
-        }
-      } catch {
-        // Ignore
+      const gm = await prisma.guestMeal.findUnique({ where: { id } });
+      if (gm && gm.memberId !== session.user.memberId && gm.addedById !== session.user.memberId) {
+        return { success: false, error: "Unauthorized to delete this guest meal." };
       }
     }
-    try {
-      await deleteGuestMeal(id);
-    } catch (dbErr: any) {
-      console.warn("deleteGuestMeal error:", dbErr);
-    }
+    await deleteGuestMeal(id);
     revalidateAllMealRoutes();
     return { success: true };
   } catch (err: any) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { cn } from "@/lib/utils/cn";
 import { updateMealAction, saveBulkDailyMealsAction, createGuestMealAction, deleteGuestMealAction } from "@/app/actions/meal.actions";
 import { useRouter } from "next/navigation";
@@ -41,6 +41,8 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
   maxFutureDate.setDate(maxFutureDate.getDate() + 7);
   const isBeyond7Days = checkDate.getTime() > maxFutureDate.getTime();
 
+  const dateStr = new Date(date).toISOString().split("T")[0];
+
   // 1. Build initial mapping from DB props
   const buildInitialMap = () => {
     const map: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
@@ -66,6 +68,22 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
 
   const [guestDialogOpen, setGuestDialogOpen] = useState(false);
   const [addingGuest, setAddingGuest] = useState(false);
+
+  // Restore unsaved draft from localStorage on mount or date change
+  useEffect(() => {
+    try {
+      const draftKey = `messhub_meal_draft_${dateStr}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed && typeof parsed === "object") {
+          setMealState((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch {
+      // Non-blocking
+    }
+  }, [dateStr]);
 
   // Sync state if date prop changes
   const [prevDateStr, setPrevDateStr] = useState(date.toISOString());
@@ -130,7 +148,20 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
   const totalDinner = memberDinner + guestDinner;
   const grandTotal = totalBreakfast + totalLunch + totalDinner;
 
-  const dateStr = new Date(date).toISOString().split("T")[0];
+  // Sync draft to localStorage when dirty
+  useEffect(() => {
+    try {
+      const draftKey = `messhub_meal_draft_${dateStr}`;
+      const hasUnsaved = members.some((m) => isMemberDirty(m.id));
+      if (hasUnsaved) {
+        localStorage.setItem(draftKey, JSON.stringify(mealState));
+      } else {
+        localStorage.removeItem(draftKey);
+      }
+    } catch {
+      // Non-blocking
+    }
+  }, [mealState, savedMealState, dateStr, members]);
 
   // Toggle meal locally in state
   const handleToggle = (memberId: string, field: typeof MEAL_KEYS[number]) => {
@@ -176,6 +207,12 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         ...prev,
         [memberId]: { ...current },
       }));
+
+      try {
+        localStorage.removeItem(`messhub_meal_draft_${dateStr}`);
+      } catch {
+        // Non-blocking
+      }
 
       // Flash success
       setJustSavedIds((prev) => new Set([...prev, memberId]));
@@ -241,6 +278,12 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
         }
         return next;
       });
+
+      try {
+        localStorage.removeItem(`messhub_meal_draft_${dateStr}`);
+      } catch {
+        // Non-blocking
+      }
 
       // Flash success for all saved
       setJustSavedIds(new Set(dirtyMemberIds));
