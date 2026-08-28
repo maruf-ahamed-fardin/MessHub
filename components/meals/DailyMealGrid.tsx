@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import { MealCutoffTimer } from "./MealCutoffTimer";
 
 interface DailyMealGridProps {
   date: Date;
@@ -453,6 +454,9 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
           </button>
         </div>
       )}
+
+      {/* Meal Cutoff Live Countdown Ticker */}
+      <MealCutoffTimer isToday={checkDate.getTime() === today.getTime()} isAdmin={isAdmin} />
 
       {/* 4. Live Meal Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

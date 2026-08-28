@@ -18,6 +18,7 @@ import { toggleMealAction } from "@/app/actions/meal.actions";
 import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/useT";
 import { usePreferences } from "@/lib/context/PreferencesContext";
+import { WhatsAppShareButton } from "./WhatsAppShareButton";
 
 const MealTrendChart = dynamic(
   () => import("./MealTrendChart").then((mod) => mod.MealTrendChart),
@@ -156,29 +157,37 @@ export function ModernDashboard({
 
         {/* Action Pills */}
         <div className="flex items-center gap-2 flex-wrap pt-1 sm:pt-0">
-          <Link
-            href="/meals"
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-all cursor-pointer select-none"
-          >
-            <UtensilsCrossed size={13} className="text-primary" />
-            <span>{T.dashboard.mealBooking}</span>
-          </Link>
-          <Link
-            href="/bazar"
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-950/70 transition-all cursor-pointer select-none"
-          >
-            <ShoppingBasket size={13} className="text-amber-600 dark:text-amber-400" />
-            <span>{T.dashboard.bazarEntry}</span>
-          </Link>
-          <Link
-            href="/payments"
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 text-white hover:bg-gray-800 dark:bg-slate-100 dark:text-gray-900 dark:hover:bg-white shadow-2xs transition-all cursor-pointer select-none"
-          >
-            <CreditCard size={13} />
-            <span>{T.dashboard.moneyTransaction}</span>
-          </Link>
+            <WhatsAppShareButton
+              breakfastCount={todayTotalMeals?.breakfast || 0}
+              lunchCount={todayTotalMeals?.lunch || 0}
+              dinnerCount={todayTotalMeals?.dinner || 0}
+              bazarMemberName={todayBazarBuyer !== "আজকে বাজার শিডিউল নেই" && todayBazarBuyer !== "No bazar scheduled today" ? todayBazarBuyer : null}
+              cleaningMemberName={cleaningAssignee !== "আজকে কোনো টাস্ক নেই" && cleaningAssignee !== "No task assigned" ? cleaningAssignee : null}
+              mealRate={mealRate}
+            />
+            <Link
+              href="/meals"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-all cursor-pointer select-none"
+            >
+              <UtensilsCrossed size={13} className="text-primary" />
+              <span>{T.dashboard.mealBooking}</span>
+            </Link>
+            <Link
+              href="/bazar"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-950/70 transition-all cursor-pointer select-none"
+            >
+              <ShoppingBasket size={13} className="text-amber-600 dark:text-amber-400" />
+              <span>{T.dashboard.bazarEntry}</span>
+            </Link>
+            <Link
+              href="/payments"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-900 text-white hover:bg-gray-800 dark:bg-slate-100 dark:text-gray-900 dark:hover:bg-white shadow-2xs transition-all cursor-pointer select-none"
+            >
+              <CreditCard size={13} />
+              <span>{T.dashboard.moneyTransaction}</span>
+            </Link>
+          </div>
         </div>
-      </div>
 
       {/* 2. Notice Announcement Banner */}
       {urgentNotice && (

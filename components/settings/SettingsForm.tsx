@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { usePreferences } from "@/lib/context/PreferencesContext";
 import { useT } from "@/lib/i18n/useT";
+import { DataBackupSection } from "./DataBackupSection";
 import { PwaInstallButton } from "@/components/shared/PwaInstallButton";
 import { cn } from "@/lib/utils/cn";
+import { Clock, QrCode, Phone } from "lucide-react";
 
 export function SettingsForm({ settings }: { settings: any }) {
   const [loading, setLoading] = useState(false);
@@ -28,6 +30,11 @@ export function SettingsForm({ settings }: { settings: any }) {
   const [defaultSeatRent, setDefaultSeatRent] = useState(settings?.defaultSeatRent ?? 3500);
   const [guestMealPricing, setGuestMealPricing] = useState(settings?.guestMealPricing ?? "DYNAMIC");
   const [guestMealFixedPrice, setGuestMealFixedPrice] = useState(settings?.guestMealFixedPrice ?? 80);
+  const [adminBkashNumber, setAdminBkashNumber] = useState(settings?.adminBkashNumber ?? "");
+  const [adminNagadNumber, setAdminNagadNumber] = useState(settings?.adminNagadNumber ?? "");
+  const [adminRocketNumber, setAdminRocketNumber] = useState(settings?.adminRocketNumber ?? "");
+  const [lunchCutoffTime, setLunchCutoffTime] = useState(settings?.lunchCutoffTime ?? "09:00");
+  const [dinnerCutoffTime, setDinnerCutoffTime] = useState(settings?.dinnerCutoffTime ?? "16:00");
   const [messRules, setMessRules] = useState<string>(
     settings?.messRules ??
       "1. Lock the main door when leaving.\n2. Turn off lights/AC/fans after use.\n3. Keep dining area and kitchen clean after meals."
@@ -50,6 +57,11 @@ export function SettingsForm({ settings }: { settings: any }) {
         guestMealFixedPrice: guestMealPricing === "FIXED" ? Number(guestMealFixedPrice) : undefined,
         guestMealResponsibility: "MEMBER",
         defaultSeatRent: Number(defaultSeatRent),
+        adminBkashNumber: adminBkashNumber || undefined,
+        adminNagadNumber: adminNagadNumber || undefined,
+        adminRocketNumber: adminRocketNumber || undefined,
+        lunchCutoffTime: lunchCutoffTime || "09:00",
+        dinnerCutoffTime: dinnerCutoffTime || "16:00",
         messRules: messRules || undefined,
       });
       setSuccess(true);
@@ -338,6 +350,99 @@ export function SettingsForm({ settings }: { settings: any }) {
                 </div>
               )}
             </div>
+            {/* MFS Payment Details (bKash / Nagad / Rocket) */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/40 space-y-3">
+              <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-300">
+                <QrCode size={15} className="text-indigo-600 dark:text-indigo-400" />
+                <Label className="text-xs font-black">
+                  {language === "bn" ? "মোবাইল ব্যাংকিং ও পেমেন্ট নম্বর (bKash / Nagad / Rocket)" : "Mobile Banking & Payment Numbers"}
+                </Label>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                {language === "bn"
+                  ? "মেম্বাররা যখন বকেয়া পরিশোধ করতে যাবে, তখন তাদের এই নম্বর ও কিউআর কোড দেখানো হবে।"
+                  : "Members will see these numbers and dynamic QR codes when paying dues."}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-pink-600 dark:text-pink-400 flex items-center gap-1">
+                    <span>🌸 bKash No.</span>
+                  </Label>
+                  <Input
+                    value={adminBkashNumber}
+                    onChange={(e) => setAdminBkashNumber(e.target.value)}
+                    placeholder="017XXXXXXXX"
+                    className="h-9 text-xs rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <span>🔥 Nagad No.</span>
+                  </Label>
+                  <Input
+                    value={adminNagadNumber}
+                    onChange={(e) => setAdminNagadNumber(e.target.value)}
+                    placeholder="018XXXXXXXX"
+                    className="h-9 text-xs rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                    <span>🚀 Rocket No.</span>
+                  </Label>
+                  <Input
+                    value={adminRocketNumber}
+                    onChange={(e) => setAdminRocketNumber(e.target.value)}
+                    placeholder="019XXXXXXXX"
+                    className="h-9 text-xs rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Meal Cut-off Auto-lock Timers */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300">
+                <Clock size={15} className="text-amber-600 dark:text-amber-400" />
+                <Label className="text-xs font-black">
+                  {language === "bn" ? "মিল অন/অফ কাট-অফ সময় (Auto-Lock)" : "Meal Booking Cut-off Times"}
+                </Label>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                {language === "bn"
+                  ? "এই নির্দিষ্ট সময়ের পর মেম্বাররা আর নিজে থেকে সেদিনের মিল অন/অফ করতে পারবে না (শুধুমাত্র এডমিন পরিবর্তন করতে পারবে)।"
+                  : "After these hours, members cannot change today's meals on their own."}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-gray-700 dark:text-slate-300">
+                    {language === "bn" ? "☀️ দুপুরের মিল কাট-অফ সময়" : "☀️ Lunch Cut-off Time"}
+                  </Label>
+                  <Input
+                    type="time"
+                    value={lunchCutoffTime}
+                    onChange={(e) => setLunchCutoffTime(e.target.value)}
+                    className="h-9 text-xs rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-gray-700 dark:text-slate-300">
+                    {language === "bn" ? "🌙 রাতের মিল কাট-অফ সময়" : "🌙 Dinner Cut-off Time"}
+                  </Label>
+                  <Input
+                    type="time"
+                    value={dinnerCutoffTime}
+                    onChange={(e) => setDinnerCutoffTime(e.target.value)}
+                    className="h-9 text-xs rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -410,6 +515,9 @@ export function SettingsForm({ settings }: { settings: any }) {
           <span>{T.common.save}</span>
         </Button>
       </form>
+
+      {/* 3. DATABASE BACKUP & SAFETY SECTION */}
+      <DataBackupSection />
     </div>
   );
 }

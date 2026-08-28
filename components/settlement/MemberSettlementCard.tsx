@@ -8,12 +8,21 @@ import { Separator } from "@/components/ui/separator";
 import { usePreferences } from "@/lib/context/PreferencesContext";
 import { Utensils, UserPlus, Zap, Home, Boxes, ArrowUpRight, ArrowDownRight, Check } from "lucide-react";
 
+import { MemberSettlementVoucher } from "./MemberSettlementVoucher";
+import { QuickPaymentModal } from "@/components/payments/QuickPaymentModal";
+
 export function MemberSettlementCard({
   data,
   isCurrentMember = false,
+  month = new Date().getMonth() + 1,
+  year = new Date().getFullYear(),
+  messSettings,
 }: {
   data: MemberSettlementSummary;
   isCurrentMember?: boolean;
+  month?: number;
+  year?: number;
+  messSettings?: any;
 }) {
   const isCredit = data.balance >= 0;
   const isZero = Math.abs(data.balance) < 1;
@@ -27,6 +36,19 @@ export function MemberSettlementCard({
     { label: t("সিট ভাড়া", "Seat Rent"), value: data.seatRent, icon: Home, iconColor: "text-purple-500" },
     { label: t("অন্যান্য খরচ", "Other"), value: data.otherCost, icon: Boxes, iconColor: "text-emerald-500" },
   ];
+
+  const memberPayload = {
+    id: data.memberId,
+    name: data.memberName,
+    totalMeals: data.totalMeals,
+    mealCost: data.foodCost,
+    guestMealCost: data.guestMealCost,
+    sharedExpense: (data.utilityCost || 0) + (data.otherCost || 0),
+    seatRent: data.seatRent,
+    totalCost: data.totalCost,
+    totalDeposited: data.totalPaid,
+    netBalance: data.balance,
+  };
 
   return (
     <div
@@ -101,6 +123,27 @@ export function MemberSettlementCard({
           <span>{t("পরিশোধ / জমা করেছে", "Total Paid / Deposited")}</span>
           <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(data.totalPaid)}</span>
         </div>
+      </div>
+
+      {/* Action Footer Buttons */}
+      <div className="px-4 py-2 bg-gray-50/70 dark:bg-slate-800/60 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-2">
+        <MemberSettlementVoucher
+          member={memberPayload}
+          messSettings={messSettings}
+          month={month}
+          year={year}
+        />
+
+        {!isCredit && !isZero && (
+          <QuickPaymentModal
+            memberId={data.memberId}
+            memberName={data.memberName}
+            dueAmount={Math.abs(data.balance)}
+            adminBkashNumber={messSettings?.adminBkashNumber}
+            adminNagadNumber={messSettings?.adminNagadNumber}
+            adminRocketNumber={messSettings?.adminRocketNumber}
+          />
+        )}
       </div>
 
       {/* Footer Banner */}

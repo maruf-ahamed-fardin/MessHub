@@ -45,6 +45,7 @@ enum ExpenseCategory {
   REPAIR
   FURNITURE
   HOUSEHOLD
+  FEAST
   OTHER
 }
 
@@ -221,6 +222,8 @@ model MemberProfile {
   leftAt     DateTime?
   isActive   Boolean   @default(true)
   seatRent   Float     @default(0)
+  securityDeposit Float @default(0)
+  advanceFund     Float @default(0)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -757,10 +760,32 @@ model MessSettings {
   guestMealResponsibility     GuestMealResponsibility @default(MEMBER)
   defaultSeatRent             Float                   @default(0)
   defaultExpenseSharingMethod SharingMethod           @default(EQUAL)
+  adminBkashNumber            String?
+  adminNagadNumber            String?
+  adminRocketNumber           String?
+  lunchCutoffTime             String?                 @default("09:00")
+  dinnerCutoffTime            String?                 @default("16:00")
   messRules                   String?
   updatedAt                   DateTime                @updatedAt
 
   @@map("mess_settings")
+}
+
+// ============================================================
+// COOK ATTENDANCE
+// ============================================================
+
+model CookAttendance {
+  id         String   @id @default(cuid())
+  date       DateTime @unique
+  status     String   @default("PRESENT") // PRESENT, ABSENT, LEAVE, OVERTIME
+  note       String?
+  deduction  Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
+  @@map("cook_attendances")
 }
 
 // ============================================================

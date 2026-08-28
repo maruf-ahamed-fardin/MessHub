@@ -12,12 +12,18 @@ interface MemberSettlementListProps {
   memberSummaries: MemberSettlementSummary[];
   currentMemberId: string | null;
   isAdmin?: boolean;
+  month?: number;
+  year?: number;
+  messSettings?: any;
 }
 
 export function MemberSettlementList({
   memberSummaries,
   currentMemberId,
   isAdmin = false,
+  month = new Date().getMonth() + 1,
+  year = new Date().getFullYear(),
+  messSettings,
 }: MemberSettlementListProps) {
   const [filter, setFilter] = useState<"all" | "credit" | "due">("all");
   const [search, setSearch] = useState("");
@@ -111,6 +117,9 @@ export function MemberSettlementList({
               key={ms.memberId}
               data={ms}
               isCurrentMember={ms.memberId === currentMemberId}
+              month={month}
+              year={year}
+              messSettings={messSettings}
             />
           ))}
         </div>

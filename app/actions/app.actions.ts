@@ -75,6 +75,8 @@ export async function updateMemberDetailsAction(memberId: string, data: {
   phone?: string;
   isActive?: boolean;
   seatId?: string;
+  securityDeposit?: number;
+  advanceFund?: number;
 }) {
   try {
     await requireAdmin();
@@ -84,6 +86,8 @@ export async function updateMemberDetailsAction(memberId: string, data: {
         seatRent: data.seatRent,
         phone: data.phone,
         isActive: data.isActive,
+        securityDeposit: data.securityDeposit,
+        advanceFund: data.advanceFund,
       },
     });
     if (data.seatId) {
@@ -459,12 +463,17 @@ export async function updateSettingsAction(data: unknown) {
       currency: z.string().max(5),
       guestMealPricing: z.enum(["DYNAMIC", "FIXED"]),
       guestMealFixedPrice: z.coerce.number().optional(),
-      guestMealResponsibility: z.enum(["MEMBER", "GUEST"]),
+      guestMealResponsibility: z.enum(["MEMBER", "GUEST"]).default("MEMBER"),
       defaultSeatRent: z.coerce.number().min(0),
+      adminBkashNumber: z.string().optional().nullable(),
+      adminNagadNumber: z.string().optional().nullable(),
+      adminRocketNumber: z.string().optional().nullable(),
+      lunchCutoffTime: z.string().optional().default("09:00"),
+      dinnerCutoffTime: z.string().optional().default("16:00"),
       messRules: z.string().optional(),
     });
     const validated = schema.parse(data);
-    await prisma.messSettings.update({ where: { id: "singleton" }, data: validated });
+    await prisma.messSettings.update({ where: { id: "singleton" }, data: validated as any });
     revalidatePath("/settings");
     revalidatePath("/dashboard");
     return { success: true };

@@ -107,6 +107,7 @@ export default async function SettlementPage({ searchParams }: SettlementPagePro
   let isFinalized = false;
   let mealAnalytics: any = null;
   let currentMemberId = session?.user.memberId ?? null;
+  let messSettings: any = null;
 
   try {
     if (!currentMemberId && session?.user.id) {
@@ -114,12 +115,14 @@ export default async function SettlementPage({ searchParams }: SettlementPagePro
       currentMemberId = profile?.id ?? null;
     }
 
-    const [dbSummary, existing, analytics] = await Promise.all([
+    const [dbSummary, existing, analytics, dbSettings] = await Promise.all([
       calculateMonthlySettlement(month, year),
       prisma.monthlySettlement.findUnique({ where: { month_year: { month, year } } }),
       getMonthlyMealAnalytics(month, year),
+      prisma.messSettings.findUnique({ where: { id: "singleton" } }),
     ]);
     mealAnalytics = analytics;
+    if (dbSettings) messSettings = dbSettings;
     if (dbSummary.memberSummaries.length > 0) {
       summary = dbSummary;
       isFinalized = existing?.isFinalized ?? false;
@@ -185,6 +188,9 @@ export default async function SettlementPage({ searchParams }: SettlementPagePro
             memberSummaries={summary.memberSummaries}
             currentMemberId={currentMemberId}
             isAdmin={isAdmin}
+            month={month}
+            year={year}
+            messSettings={messSettings}
           />
         </div>
       )}

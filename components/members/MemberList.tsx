@@ -38,10 +38,20 @@ export function MemberList({ members, isAdmin }: MemberListProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{member.user.name}</p>
                   {!member.isActive && <Badge variant="outline" className="text-xs px-1.5 py-0">Inactive</Badge>}
                   {member.user.role === "ADMIN" && <Badge className="text-xs px-1.5 py-0 bg-primary text-primary-foreground font-bold">Admin</Badge>}
+                  {member.securityDeposit > 0 && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800">
+                      জামানত: {formatCurrency(member.securityDeposit)}
+                    </Badge>
+                  )}
+                  {member.advanceFund > 0 && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800">
+                      অগ্রিম: {formatCurrency(member.advanceFund)}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{member.user.email}</p>
               </div>

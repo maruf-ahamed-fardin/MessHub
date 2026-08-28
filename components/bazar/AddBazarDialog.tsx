@@ -6,8 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, ShoppingBasket, UserCheck } from "lucide-react";
+import { Plus, Loader2, Trash2, ShoppingBasket, UserCheck, Camera, Sparkles } from "lucide-react";
 import { createBazarAction } from "@/app/actions/finance.actions";
+import { scanBazarReceiptAction } from "@/app/actions/ai-assistant.actions";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/currency";
 import { usePreferences } from "@/lib/context/PreferencesContext";
@@ -33,10 +34,45 @@ export function AddBazarDialog({
 }: AddBazarDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [items, setItems] = useState([{ productName: "", quantity: "", unitPrice: "", unit: "kg" }]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { t } = usePreferences();
+
+  const handleScanImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanning(true);
+    setError(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result as string;
+        const res = await scanBazarReceiptAction(base64);
+        if (res.success && res.items && res.items.length > 0) {
+          setItems(
+            res.items.map((it) => ({
+              productName: it.productName,
+              quantity: String(it.quantity),
+              unitPrice: String(it.unitPrice),
+              unit: it.unit || "kg",
+            }))
+          );
+        } else {
+          setError(res.error || t("মেমো থেকে ডাটা পড়া যায়নি", "Could not parse memo image"));
+        }
+        setScanning(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || t("মেমো স্ক্যান করতে সমস্যা হয়েছে", "Failed to scan memo"));
+      setScanning(false);
+    }
+    e.target.value = "";
+  };
 
   const currentMember = members.find((m) => m.id === currentMemberId) || members[0];
   const initialBuyerId = currentMember?.id || "";
@@ -176,11 +212,26 @@ export function AddBazarDialog({
 
           {/* Items List */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <Label className="text-xs font-bold">{t("বাজারের আইটেমসমূহ *", "Items *")}</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 text-xs font-bold gap-1 rounded-lg">
-                <Plus size={12} /> {t("আইটেম যোগ করুন", "Add Item")}
-              </Button>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold cursor-pointer hover:bg-purple-100 transition-colors shadow-2xs">
+                  {scanning ? <Loader2 size={12} className="animate-spin text-purple-600" /> : <Camera size={12} className="text-purple-600" />}
+                  <span>{scanning ? t("স্ক্যান হচ্ছে...", "Scanning...") : t("📸 AI মেমো স্ক্যান", "📸 AI Scan Memo")}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    disabled={scanning}
+                    onChange={handleScanImage}
+                    className="sr-only"
+                  />
+                </label>
+
+                <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 text-xs font-bold gap-1 rounded-lg">
+                  <Plus size={12} /> {t("আইটেম যোগ করুন", "Add Item")}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               {items.map((item, i) => (

@@ -33,6 +33,8 @@ export function MemberManageForm({ member, availableSeats }: MemberManageFormPro
         phone: (fd.get("phone") as string) || undefined,
         isActive: fd.get("isActive") === "true",
         seatId: (fd.get("seatId") as string) || undefined,
+        securityDeposit: Number(fd.get("securityDeposit")) || 0,
+        advanceFund: Number(fd.get("advanceFund")) || 0,
       });
       setSuccess(true);
       router.refresh();
@@ -58,6 +60,17 @@ export function MemberManageForm({ member, availableSeats }: MemberManageFormPro
         <div className="space-y-1">
           <Label htmlFor="seatRent">{t("সিট ভাড়া (৳)", "Seat Rent (৳)")}</Label>
           <Input id="seatRent" name="seatRent" type="number" min="0" defaultValue={member.seatRent ?? 3500} required />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label htmlFor="securityDeposit">{t("সিকিউরিটি ডিপোজিট / জামানত (৳)", "Security Deposit (৳)")}</Label>
+          <Input id="securityDeposit" name="securityDeposit" type="number" min="0" defaultValue={member.securityDeposit ?? 0} placeholder="0" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="advanceFund">{t("অগ্রিম ফান্ড ব্যালেন্স (৳)", "Advance Fund (৳)")}</Label>
+          <Input id="advanceFund" name="advanceFund" type="number" min="0" defaultValue={member.advanceFund ?? 0} placeholder="0" />
         </div>
       </div>
 

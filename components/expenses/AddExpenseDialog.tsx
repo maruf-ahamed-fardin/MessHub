@@ -27,6 +27,19 @@ export function AddExpenseDialog({ members }: { members: any[] }) {
   const [category, setCategory] = useState<string>("OTHER");
   const [paidById, setPaidById] = useState<string>(members[0]?.id ?? "");
   const [sharingMethod, setSharingMethod] = useState<string>("EQUAL");
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(members.map((m) => m.id));
+  const [amountVal, setAmountVal] = useState<string>("");
+
+  const isSelectedMembersMode = sharingMethod === "SELECTED_MEMBERS" || category === "FEAST";
+  const numSelected = selectedMemberIds.length;
+  const parsedAmt = parseFloat(amountVal) || 0;
+  const perPersonCost = numSelected > 0 ? (parsedAmt / numSelected).toFixed(2) : "0.00";
+
+  const toggleMemberSelection = (id: string) => {
+    setSelectedMemberIds((prev) =>
+      prev.includes(id) ? (prev.length > 1 ? prev.filter((mId) => mId !== id) : prev) : [...prev, id]
+    );
+  };
 
   const categoryLabels = language === "bn" ? EXPENSE_CATEGORY_LABELS_BN : EXPENSE_CATEGORY_LABELS;
   const sharingLabels = language === "bn" ? SHARING_METHOD_LABELS_BN : SHARING_METHOD_LABELS;
@@ -104,7 +117,17 @@ export function AddExpenseDialog({ members }: { members: any[] }) {
             </div>
             <div className="space-y-1">
               <Label htmlFor="amount">{t("পরিমাণ (৳) *", "Amount (৳) *")}</Label>
-              <Input id="amount" name="amount" type="number" min="0" step="0.01" placeholder="0" required />
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={amountVal}
+                onChange={(e) => setAmountVal(e.target.value)}
+                required
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -133,6 +156,39 @@ export function AddExpenseDialog({ members }: { members: any[] }) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Member Selection for Feast / Selected Members */}
+          {isSelectedMembersMode && (
+            <div className="p-3 bg-amber-50/60 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-800/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  {t("অংশগ্রহণকারী মেম্বার বাছাই করুন:", "Select Participating Members:")}
+                </span>
+                <span className="text-xs font-black text-amber-700 dark:text-amber-300">
+                  {numSelected} জন (জনপ্রতি: ৳{perPersonCost})
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {members.map((m: any) => {
+                  const isSelected = selectedMemberIds.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => toggleMemberSelection(m.id)}
+                      className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-amber-600 border-amber-600 text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300"
+                      }`}
+                    >
+                      {isSelected ? "✓ " : "+ "}{m.user?.name ?? m.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="space-y-1">
             <Label htmlFor="note">{t("নোট (ঐচ্ছিক)", "Note (optional)")}</Label>
             <Input id="note" name="note" placeholder={t("কোনো বিশেষ নোট...", "Optional note...")} />

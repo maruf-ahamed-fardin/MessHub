@@ -11,6 +11,8 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { HouseHub } from "@/components/house/HouseHub";
 import { getServerT } from "@/lib/i18n/serverT";
 
+import { getCookAttendanceStats } from "@/backend/house/cook-attendance.repository";
+
 export const metadata: Metadata = { title: "House & Tasks" };
 
 export default async function HousePage() {
@@ -18,12 +20,13 @@ export default async function HousePage() {
   const isAdmin = session?.user.role === "ADMIN";
   const { month, year } = getCurrentMonthYear();
 
-  const [cleaningTasks, maintenanceReports, shoppingItems, members, monthlyHouseCost] = await Promise.all([
+  const [cleaningTasks, maintenanceReports, shoppingItems, members, monthlyHouseCost, cookStats] = await Promise.all([
     getCleaningTasks(),
     getMaintenanceReports(),
     getShoppingItems(),
     getAllMembers(),
     getMonthlyHouseExpense(month, year),
+    getCookAttendanceStats(month, year),
   ]);
 
   return (
@@ -42,6 +45,7 @@ export default async function HousePage() {
           isAdmin={isAdmin}
           currentMemberId={session?.user.memberId ?? null}
           monthlyHouseCost={monthlyHouseCost}
+          cookStats={cookStats}
         />
       </Suspense>
     </div>

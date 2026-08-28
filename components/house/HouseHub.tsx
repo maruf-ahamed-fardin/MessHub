@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Brush, Wrench, ShoppingCart, CheckCircle2, Plus,
-  Trash2, Check, Loader2, Coins, ListTodo,
+  Trash2, Check, Loader2, Coins, ListTodo, ChefHat,
 } from "lucide-react";
 import {
   completeCleaningTaskAction,
@@ -22,6 +22,7 @@ import {
   purchaseShoppingItemAction,
   deleteShoppingItemAction,
 } from "@/app/actions/app.actions";
+import { CookAttendanceTracker } from "./CookAttendanceTracker";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/currency";
 import { usePreferences } from "@/lib/context/PreferencesContext";
@@ -38,9 +39,10 @@ interface HouseHubProps {
     maintenanceCost: number;
     shoppingCost: number;
   };
+  cookStats?: any;
 }
 
-type TabType = "all" | "cleaning" | "maintenance" | "shopping";
+type TabType = "all" | "cleaning" | "maintenance" | "shopping" | "cook";
 
 export function HouseHub({
   cleaningTasks: initialCleaning,
@@ -49,6 +51,7 @@ export function HouseHub({
   members,
   isAdmin,
   currentMemberId,
+  cookStats,
 }: HouseHubProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -396,6 +399,20 @@ export function HouseHub({
               {pendingShopCount}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("cook")}
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0",
+              activeTab === "cook"
+                ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 shadow-xs"
+                : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
+            )}
+          >
+            <ChefHat size={13} className="text-amber-600 dark:text-amber-400" />
+            <span>{t("বুয়া / খালার হাজিরা", "Cook Attendance")}</span>
+          </button>
         </div>
 
         {/* Action Buttons based on active tab */}
@@ -586,35 +603,41 @@ export function HouseHub({
         </div>
       </div>
 
+      {/* Cook / Maid Attendance Section */}
+      {(activeTab === "all" || activeTab === "cook") && cookStats && (
+        <CookAttendanceTracker initialStats={cookStats} isAdmin={isAdmin} />
+      )}
+
       {/* 3. Unified Single Box for all House Tasks & Items */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
-        {/* Unified Box Header */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shadow-2xs shrink-0">
-              <ListTodo size={16} />
+      {activeTab !== "cook" && (
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
+          {/* Unified Box Header */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shadow-2xs shrink-0">
+                <ListTodo size={16} />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-gray-900 dark:text-slate-100">
+                  {activeTab === "all"
+                    ? t("বাসার সকল টাস্ক ও সমস্যা", "House Tasks & Issues")
+                    : activeTab === "cleaning"
+                    ? t("ক্লিনিং শিডিউল ও দায়িত্ব", "Cleaning Tasks & Schedule")
+                    : activeTab === "maintenance"
+                    ? t("মেরামত ও সমস্যা রিপোর্ট", "Maintenance & Repairs")
+                    : t("শেয়ার্ড শপিং লিস্ট", "Shared Shopping List")}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  {activeTab === "all"
+                    ? t("ক্লিনিং (টিল), মেরামত (অরেঞ্জ) ও শপিং (পার্পল) টাস্কের সমন্বিত তালিকা", "Unified stream with distinct category colors")
+                    : activeTab === "cleaning"
+                    ? t("মেম্বারদের ক্লিনিং দায়িত্ব সম্পন্ন হলে Done চাপুন", "Click Done when a cleaning task is completed")
+                    : activeTab === "maintenance"
+                    ? t("বাসার মেরামত খরচ সরাসরি মেস হিসাবে যুক্ত হবে", "Repair costs are directly linked to shared mess finances")
+                    : t("মালামাল কেনা হলে টিক দিয়ে খরচ লিখুন", "Mark items as purchased with cost to add to mess expenses")}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-sm text-gray-900 dark:text-slate-100">
-                {activeTab === "all"
-                  ? t("বাসার সকল টাস্ক ও সমস্যা", "House Tasks & Issues")
-                  : activeTab === "cleaning"
-                  ? t("ক্লিনিং শিডিউল ও দায়িত্ব", "Cleaning Tasks & Schedule")
-                  : activeTab === "maintenance"
-                  ? t("মেরামত ও সমস্যা রিপোর্ট", "Maintenance & Repairs")
-                  : t("শেয়ার্ড শপিং লিস্ট", "Shared Shopping List")}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-slate-400">
-                {activeTab === "all"
-                  ? t("ক্লিনিং (টিল), মেরামত (অরেঞ্জ) ও শপিং (পার্পল) টাস্কের সমন্বিত তালিকা", "Unified stream with distinct category colors")
-                  : activeTab === "cleaning"
-                  ? t("মেম্বারদের ক্লিনিং দায়িত্ব সম্পন্ন হলে Done চাপুন", "Click Done when a cleaning task is completed")
-                  : activeTab === "maintenance"
-                  ? t("বাসার মেরামত খরচ সরাসরি মেস হিসাবে যুক্ত হবে", "Repair costs are directly linked to shared mess finances")
-                  : t("মালামাল কেনা হলে টিক দিয়ে খরচ লিখুন", "Mark items as purchased with cost to add to mess expenses")}
-              </p>
-            </div>
-          </div>
 
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
             {(activeTab === "all" || activeTab === "cleaning") && (
@@ -909,6 +932,7 @@ export function HouseHub({
           )}
         </div>
       </div>
+    )}
 
       {/* Purchase Item Cost Dialog */}
       <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>

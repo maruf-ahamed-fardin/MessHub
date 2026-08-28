@@ -6,6 +6,7 @@ export const EXPENSE_CATEGORIES = {
   CLEANING: "CLEANING",
   REPAIR: "REPAIR",
   FURNITURE: "FURNITURE",
+  FEAST: "FEAST",
   OTHER: "OTHER",
 } as const;
 
@@ -17,6 +18,7 @@ export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   CLEANING: "Cleaning",
   REPAIR: "Repair",
   FURNITURE: "Furniture",
+  FEAST: "Feast / Party / Event",
   OTHER: "Other",
 };
 export const EXPENSE_CATEGORY_LABELS_EN = EXPENSE_CATEGORY_LABELS;
@@ -29,6 +31,7 @@ export const EXPENSE_CATEGORY_LABELS_BN: Record<string, string> = {
   CLEANING: "ক্লিনিং সামগ্রী",
   REPAIR: "মেরামত খরচ",
   FURNITURE: "আসবাবপত্র",
+  FEAST: "দাওয়াত / ফিস্ট / পার্টি 🎉",
   OTHER: "অন্যান্য",
 };
 
@@ -207,3 +210,14 @@ export const DEFAULT_PRODUCTS = [
   { name: "Fish", unit: "kg" },
   { name: "Lentils", unit: "kg" },
 ];
+
+export const MONTH_NAMES_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+export const MONTH_NAMES_BN = [
+  "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+  "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+];
+
