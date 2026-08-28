@@ -433,7 +433,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
           <button
             type="button"
             onClick={() => setShowHistorySidebar(!showHistorySidebar)}
-            className="p-2 rounded-xl text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-emerald-600 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-indigo-600 transition-colors cursor-pointer"
             title={t("মেনু ও চ্যাট হিস্ট্রি (3-Dash Menu)", "Open Menu & History Drawer")}
             aria-label="Open 3-Dash Menu"
           >
@@ -444,7 +444,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
           <button
             type="button"
             onClick={handleStartNewChat}
-            className="p-2 rounded-xl text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-emerald-600 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-indigo-600 transition-colors cursor-pointer"
             title={t("নতুন চ্যাট শুরু করুন", "New Chat")}
           >
             <SquarePen size={17} />
@@ -452,7 +452,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
 
           {/* Branding Title */}
           <div className="flex items-center gap-2 pl-1">
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center shadow-2xs">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-2xs">
               <GeminiAiIcon size={16} gradient={true} />
             </div>
             <div>
@@ -460,8 +460,8 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                 <span className="font-extrabold text-xs tracking-tight text-gray-900 dark:text-slate-100">
                   MessMate AI
                 </span>
-                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse" />
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1 animate-pulse" />
                   Online
                 </span>
               </div>
@@ -481,7 +481,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             className={cn(
               "p-2 rounded-xl transition-colors cursor-pointer",
               voiceSpeechEnabled
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400"
                 : "text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700"
             )}
             title={voiceSpeechEnabled ? "Voice Enabled" : "Voice Disabled"}
@@ -503,10 +503,9 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
         </div>
       </div>
 
-      {/* 2. ChatGPT-Style 3-Dash Menu Drawer (Personal & Private Per User) */}
+      {/* 2. Slide-over Chat History Sidebar */}
       {showHistorySidebar && (
         <>
-          {/* Backdrop for closing drawer on click/touch outside */}
           <div
             onClick={() => setShowHistorySidebar(false)}
             className="absolute inset-0 bg-black/60 backdrop-blur-2xs z-20 animate-in fade-in duration-150 cursor-pointer"
@@ -517,14 +516,14 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
           {/* Drawer Top Header with User Info */}
           <div className="p-3 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
                 {user?.name ? user.name.charAt(0).toUpperCase() : <User size={14} />}
               </div>
               <div className="min-w-0">
                 <p className="font-bold text-xs truncate text-white">
                   {user?.name || userName || t("মেম্বার", "Member")}
                 </p>
-                <div className="flex items-center gap-1 text-[10px] text-emerald-400">
+                <div className="flex items-center gap-1 text-[10px] text-indigo-400">
                   <Lock size={10} />
                   <span>{t("ব্যক্তিগত ও সুরক্ষিত চ্যাট", "Private & Personal")}</span>
                 </div>
@@ -545,7 +544,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             <Button
               type="button"
               onClick={handleStartNewChat}
-              className="w-full h-9 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold gap-2 shadow-sm rounded-xl cursor-pointer"
+              className="w-full h-9 bg-gradient-to-r from-indigo-600 via-primary to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold gap-2 shadow-sm rounded-xl cursor-pointer"
             >
               <Plus size={15} />
               <span>{t("+ নতুন চ্যাট শুরু করুন", "+ Start New Chat")}</span>
@@ -561,7 +560,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 placeholder={t("আগের চ্যাট খুঁজুন...", "Search chats...")}
-                className="w-full h-7 bg-slate-800/80 border border-slate-700/60 rounded-lg pl-7 pr-2 text-[11px] text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full h-7 bg-slate-800/80 border border-slate-700/60 rounded-lg pl-7 pr-2 text-[11px] text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
@@ -589,12 +588,12 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                   className={cn(
                     "group px-2.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer select-none",
                     isActive
-                      ? "bg-emerald-600/30 text-white border border-emerald-500/40 font-bold"
+                      ? "bg-indigo-600/30 text-white border border-indigo-500/40 font-bold"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0 pr-1">
-                    <MessageSquare size={13} className={isActive ? "text-emerald-400 shrink-0" : "text-slate-500 shrink-0"} />
+                    <MessageSquare size={13} className={isActive ? "text-indigo-400 shrink-0" : "text-slate-500 shrink-0"} />
                     <div className="min-w-0">
                       <p className="truncate text-xs leading-tight">{sess.title}</p>
                       <p className="text-[10px] text-slate-500">{dateStr} • {sess.messages.length} msgs</p>
@@ -633,7 +632,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             </button>
 
             <div className="flex items-center justify-center gap-1 font-semibold text-slate-400 text-[9px] pt-1">
-              <Lock size={10} className="text-emerald-400" />
+              <Lock size={10} className="text-indigo-400" />
               <span>{t("আপনার চ্যাট শুধুমাত্র আপনার অ্যাকাউন্টে সুরক্ষিত।", "Your conversations are 100% private to you.")}</span>
             </div>
           </div>
@@ -646,7 +645,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
         {/* Empty State */}
         {messages.length === 0 && (
           <div className="py-5 px-1 text-center space-y-4 animate-in fade-in">
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-500/15 via-teal-500/15 to-cyan-500/15 dark:from-emerald-500/25 dark:to-teal-500/25 mx-auto flex items-center justify-center shadow-inner">
+            <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-indigo-500/15 via-violet-500/15 to-purple-500/15 dark:from-indigo-500/25 dark:to-violet-500/25 mx-auto flex items-center justify-center shadow-inner">
               <GeminiAiIcon size={30} gradient={true} />
             </div>
 
@@ -673,10 +672,10 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                     key={idx}
                     type="button"
                     onClick={() => handleSend(q.prompt)}
-                    className="p-2.5 rounded-xl border border-gray-100 dark:border-slate-800/80 bg-gray-50/80 dark:bg-slate-800/40 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800/60 text-left transition-all text-xs font-semibold text-gray-700 dark:text-slate-200 group flex items-center justify-between shadow-2xs cursor-pointer active:scale-98"
+                    className="p-2.5 rounded-xl border border-gray-100 dark:border-slate-800/80 bg-gray-50/80 dark:bg-slate-800/40 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-800/60 hover:text-indigo-700 dark:hover:text-indigo-300 text-left transition-all text-xs font-semibold text-gray-700 dark:text-slate-200 group flex items-center justify-between shadow-2xs cursor-pointer active:scale-98"
                   >
                     <span className="truncate pr-1">{q.label}</span>
-                    <ChevronRight size={13} className="text-gray-400 group-hover:text-emerald-600 transition-transform group-hover:translate-x-0.5 shrink-0" />
+                    <ChevronRight size={13} className="text-gray-400 group-hover:text-indigo-600 transition-transform group-hover:translate-x-0.5 shrink-0" />
                   </button>
                 ))}
               </div>
@@ -699,7 +698,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                   "w-7 h-7 rounded-xl flex items-center justify-center shrink-0 shadow-2xs text-xs font-bold",
                   isUser
                     ? "bg-primary text-white"
-                    : "bg-gradient-to-tr from-emerald-600 to-teal-600 text-white"
+                    : "bg-gradient-to-tr from-indigo-600 to-violet-600 text-white"
                 )}
               >
                 {isUser ? <User size={13} /> : <GeminiAiIcon size={14} gradient={true} />}
@@ -751,7 +750,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                         key={i}
                         type="button"
                         onClick={() => handleSend(sq)}
-                        className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs active:scale-95"
+                        className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/50 dark:border-indigo-800 dark:text-indigo-300 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs active:scale-95"
                       >
                         {sq}
                       </button>
@@ -766,11 +765,11 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
         {/* Typing Loading Indicator */}
         {isPending && (
           <div className="flex gap-2.5 items-center text-xs text-gray-400 dark:text-slate-500 animate-in fade-in">
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-2xs">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-2xs">
               <GeminiAiIcon size={14} gradient={true} />
             </div>
             <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800 px-3 py-2 rounded-2xl">
-              <Loader2 size={12} className="animate-spin text-emerald-600" />
+              <Loader2 size={12} className="animate-spin text-indigo-600" />
               <span className="text-[11px] font-medium">{t("MessMate চিন্তা করছে…", "MessMate is thinking…")}</span>
             </div>
           </div>
@@ -792,17 +791,17 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
 
         {/* Floating Attached Image Thumbnail Pill (if image is selected) */}
         {attachedImage && (
-          <div className="flex items-center gap-2 p-1.5 pr-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl w-fit animate-in zoom-in-95 duration-150">
-            <div className="w-8 h-8 rounded-lg overflow-hidden border border-emerald-300 dark:border-emerald-700 shrink-0">
+          <div className="flex items-center gap-2 p-1.5 pr-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl w-fit animate-in zoom-in-95 duration-150">
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-indigo-300 dark:border-indigo-700 shrink-0">
               <img src={attachedImage} alt="Thumbnail" className="w-full h-full object-cover" />
             </div>
-            <div className="text-[11px] font-bold text-emerald-800 dark:text-emerald-200 truncate max-w-[160px]">
+            <div className="text-[11px] font-bold text-indigo-800 dark:text-indigo-200 truncate max-w-[160px]">
               {imageFileName || "memo_photo.jpg"}
             </div>
             <button
               type="button"
               onClick={removeAttachedImage}
-              className="p-1 rounded-full text-emerald-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+              className="p-1 rounded-full text-indigo-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
               title={t("ছবি সরান", "Remove Image")}
             >
               <X size={13} />
@@ -816,7 +815,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             e.preventDefault();
             handleSend();
           }}
-          className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-800/70 border border-gray-200/80 dark:border-slate-700/80 rounded-2xl p-1.5 focus-within:ring-2 focus-within:ring-emerald-500/30 focus-within:border-emerald-500/50 transition-all shadow-2xs"
+          className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-800/70 border border-gray-200/80 dark:border-slate-700/80 rounded-2xl p-1.5 focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500/50 transition-all shadow-2xs"
         >
           {/* Action 1: Upload Image (Gallery / Camera) */}
           <button
@@ -825,8 +824,8 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer",
               attachedImage
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "text-gray-500 dark:text-slate-400 hover:bg-gray-200/70 dark:hover:bg-slate-700/60 hover:text-emerald-600"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-gray-500 dark:text-slate-400 hover:bg-gray-200/70 dark:hover:bg-slate-700/60 hover:text-indigo-600"
             )}
             title={t("মেমোর ছবি দিন (Image Upload)", "Upload Memo/Receipt Image")}
           >
@@ -841,7 +840,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
               "w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer",
               isListening
                 ? "bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30"
-                : "text-gray-500 dark:text-slate-400 hover:bg-gray-200/70 dark:hover:bg-slate-700/60 hover:text-emerald-600"
+                : "text-gray-500 dark:text-slate-400 hover:bg-gray-200/70 dark:hover:bg-slate-700/60 hover:text-indigo-600"
             )}
             title={isListening ? "Listening... (Click to stop)" : "Voice Input (Bangla/English)"}
           >
@@ -853,7 +852,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             <DialogTrigger asChild>
               <button
                 type="button"
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-200/70 dark:hover:bg-slate-700/60 hover:text-emerald-600 transition-colors shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-200/70 dark:hover:bg-slate-700/60 hover:text-indigo-600 transition-colors shrink-0 cursor-pointer"
                 title={t("বাজারের ফর্দ / মেমো পেস্ট করুন", "Paste Memo Text")}
               >
                 <ClipboardList size={16} />
@@ -862,7 +861,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-sm font-bold">
-                  <Receipt size={16} className="text-emerald-600" />
+                  <Receipt size={16} className="text-indigo-600" />
                   <span>{t("বাজারের মেমো / ফর্দ টেক্সট পার্সার", "Bazar Memo Text Parser")}</span>
                 </DialogTitle>
               </DialogHeader>
@@ -887,7 +886,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
                   type="button"
                   onClick={handleProcessMemo}
                   disabled={!memoText.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                 >
                   <GeminiAiIcon size={14} gradient={true} className="mr-1.5" />
                   <span>{t("এআই দিয়ে পার্স ও বাজার তৈরি করুন", "Parse with AI & Prepare Bazar")}</span>
@@ -917,7 +916,7 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
           <button
             type="submit"
             disabled={(!input.trim() && !attachedImage) || isPending}
-            className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white flex items-center justify-center shadow-xs shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
+            className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 via-primary to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white flex items-center justify-center shadow-xs shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
             title={t("পাঠান", "Send")}
           >
             <Send size={13} />

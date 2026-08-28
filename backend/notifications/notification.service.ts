@@ -267,274 +267,39 @@ function getCategoryAndHref(relatedType?: string | null): { category: LiveNotifi
 }
 
 /**
- * Get live notifications for user, combining DB notification records with recent mess events.
+ * Get live notifications for user from persistent DB records (respecting isRead status).
  */
 export async function getLiveNotifications(userId?: string, currentMemberId?: string): Promise<LiveNotificationItem[]> {
   const db = getPrisma();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
-  const [
-    dbNotifications,
-    notices,
-    bazars,
-    payments,
-    expenses,
-    cleaningTasks,
-    householdTasks,
-    guestMeals,
-    posts,
-  ] = await Promise.all([
-    userId
-      ? db.notification.findMany({
-          where: { userId },
-          take: 30,
-          orderBy: { createdAt: "desc" },
-        })
-      : db.notification.findMany({
-          take: 20,
-          orderBy: { createdAt: "desc" },
-        }),
-    db.notice.findMany({
-      take: 5,
+  try {
+    const dbNotifications = await db.notification.findMany({
+      where: userId ? { userId } : undefined,
+      take: 50,
       orderBy: { createdAt: "desc" },
-      include: { author: { select: { name: true } } },
-    }),
-    db.bazar.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { buyerMember: { include: { user: { select: { name: true } } } } },
-    }),
-    db.payment.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { member: { include: { user: { select: { name: true } } } } },
-    }),
-    db.expense.findMany({
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      include: { paidBy: { include: { user: { select: { name: true } } } } },
-    }),
-    db.cleaningTask.findMany({
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      include: { assignedMember: { include: { user: { select: { name: true } } } } },
-    }),
-    db.householdTask.findMany({
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      include: { assignedMember: { include: { user: { select: { name: true } } } } },
-    }),
-    db.guestMeal.findMany({
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      include: { addedBy: { include: { user: { select: { name: true } } } } },
-    }),
-    db.communityPost.findMany({
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      include: { author: { select: { name: true } } },
-    }),
-  ]);
-
-  const items: LiveNotificationItem[] = [];
-  const seenKeys = new Set<string>();
-
-  // 1. First add real DB notifications (these carry true isRead state for the user)
-  for (const n of dbNotifications) {
-    const { category, href } = getCategoryAndHref(n.relatedType);
-    const key = `${n.title}-${n.message}`;
-    seenKeys.add(key);
-
-    items.push({
-      id: n.id,
-      category,
-      title: n.title,
-      desc: n.message,
-      time: formatRelativeDate(n.createdAt),
-      createdAt: n.createdAt,
-      href,
-      type: n.type || "GENERAL",
-      read: n.isRead,
     });
-  }
 
-  // 2. Notices
-  for (const n of notices) {
-    const title = `${n.priority === "URGENT" ? "🚨 জরুরি নোটিশ: " : "📢 নোটিশ: "}${n.title}`;
-    const desc = n.description;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
+    const items: LiveNotificationItem[] = [];
+
+    for (const n of dbNotifications) {
+      const { category, href } = getCategoryAndHref(n.relatedType);
       items.push({
-        id: `notice-${n.id}`,
-        category: "notice",
-        title,
-        desc,
+        id: n.id,
+        category,
+        title: n.title,
+        desc: n.message,
         time: formatRelativeDate(n.createdAt),
         createdAt: n.createdAt,
-        href: "/notices",
-        type: "NEW_NOTICE",
-        read: false,
+        href,
+        type: n.type || "GENERAL",
+        read: n.isRead,
       });
     }
-  }
 
-  // 3. Bazar Entries
-  for (const b of bazars) {
-    const buyer = b.buyerMember?.user?.name ?? "মেম্বার";
-    const title = `🛒 ${buyer} ${formatCurrency(b.totalAmount)} টাকার বাজার করেছেন`;
-    const desc = `তারিখ: ${formatShortDate(b.date)} • আইটেম: ${b.note || "দৈনিক বাজার খরচ"}`;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `bazar-${b.id}`,
-        category: "bazar",
-        title,
-        desc,
-        time: formatRelativeDate(b.createdAt),
-        createdAt: b.createdAt,
-        href: "/bazar",
-        type: "BAZAR",
-        read: false,
-      });
-    }
+    return items;
+  } catch (err) {
+    console.warn("Failed to fetch live notifications from DB:", err);
+    return [];
   }
-
-  // 4. Payments
-  for (const p of payments) {
-    const memberName = p.member?.user?.name ?? "মেম্বার";
-    const title = `💰 ${memberName} ${formatCurrency(p.amount)} টাকা জমা দিয়েছেন`;
-    const desc = `পেমেন্ট মেথড: ${p.method}${p.note ? ` • নোট: ${p.note}` : ""}`;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `pay-${p.id}`,
-        category: "payment",
-        title,
-        desc,
-        time: formatRelativeDate(p.createdAt),
-        createdAt: p.createdAt,
-        href: "/payments",
-        type: "PAYMENT_RECORDED",
-        read: false,
-      });
-    }
-  }
-
-  // 5. Shared Expenses
-  for (const e of expenses) {
-    const payer = e.paidBy?.user?.name ?? "মেম্বার";
-    const title = `📑 নতুন বিল / খরচ: ${e.title} (${formatCurrency(e.amount)})`;
-    const desc = `পরিশোধ করেছেন: ${payer} • ক্যাটাগরি: ${e.category}`;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `exp-${e.id}`,
-        category: "bazar",
-        title,
-        desc,
-        time: formatRelativeDate(e.createdAt),
-        createdAt: e.createdAt,
-        href: "/expenses",
-        type: "EXPENSE",
-        read: false,
-      });
-    }
-  }
-
-  // 6. Cleaning Tasks
-  for (const ct of cleaningTasks) {
-    const assignee = ct.assignedMember?.user?.name ?? "মেম্বার";
-    const title = `🧹 ক্লিনিং ডিউটি: ${ct.title}`;
-    const desc = `দায়িত্বে: ${assignee} • স্ট্যাটাস: ${ct.status === "DONE" ? "সম্পন্ন ✓" : "পেন্ডিং"}`;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `clean-${ct.id}`,
-        category: "duty",
-        title,
-        desc,
-        time: formatRelativeDate(ct.createdAt),
-        createdAt: ct.createdAt,
-        href: "/house",
-        type: "CLEANING_ASSIGNED",
-        read: false,
-      });
-    }
-  }
-
-  // 7. Household Tasks
-  for (const ht of householdTasks) {
-    const assignee = ht.assignedMember?.user?.name ?? "মেম্বার";
-    const title = `🔧 হাউস টাস্ক: ${ht.title}`;
-    const desc = `ক্যাটাগরি: ${ht.category} • দায়িত্বে: ${assignee}`;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `house-${ht.id}`,
-        category: "house",
-        title,
-        desc,
-        time: formatRelativeDate(ht.createdAt),
-        createdAt: ht.createdAt,
-        href: "/house",
-        type: "MAINTENANCE_UPDATED",
-        read: false,
-      });
-    }
-  }
-
-  // 8. Guest Meals
-  for (const gm of guestMeals) {
-    const adder = gm.addedBy?.user?.name ?? "মেম্বার";
-    const title = `🍽️ গেস্ট মিল বুকিং: ${gm.quantity} টি (${gm.mealType})`;
-    const desc = `বুক করেছেন: ${adder} • গেস্টের নাম: ${gm.guestName}`;
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `gm-${gm.id}`,
-        category: "meal",
-        title,
-        desc,
-        time: formatRelativeDate(gm.createdAt),
-        createdAt: gm.createdAt,
-        href: "/meals",
-        type: "GUEST_MEAL_ADDED",
-        read: false,
-      });
-    }
-  }
-
-  // 9. Community Posts
-  for (const po of posts) {
-    const author = po.author?.name ?? "মেম্বার";
-    const title = `💬 ${author} কমিউনিটি ফিডে পোস্ট করেছেন`;
-    const desc = po.content.slice(0, 80) + (po.content.length > 80 ? "..." : "");
-    const key = `${title}-${desc}`;
-    if (!seenKeys.has(key)) {
-      seenKeys.add(key);
-      items.push({
-        id: `post-${po.id}`,
-        category: "community",
-        title,
-        desc,
-        time: formatRelativeDate(po.createdAt),
-        createdAt: po.createdAt,
-        href: "/community",
-        type: "POST",
-        read: false,
-      });
-    }
-  }
-
-  // Sort by most recent createdAt date descending
-  return items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 

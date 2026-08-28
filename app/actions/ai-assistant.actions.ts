@@ -571,17 +571,81 @@ Output your response as pure JSON in this exact structure:
   }
 
   // =========================================================================
-  // 2. INTENT: UPDATE / TOGGLE DAILY MEALS (মিল চালু বা বন্ধ)
+  // 2. INTENT: ADD GUEST MEAL (গেস্ট মিল বুকিং - Evaluated First)
+  // =========================================================================
+  const isGuestIntent =
+    lower.includes("guest") ||
+    lower.includes("গেস্ট") ||
+    lower.includes("মেহমান") ||
+    lower.includes("অতিথি") ||
+    (lower.includes("বুক") && (lower.includes("বন্ধু") || lower.includes("ভাই") || lower.includes("কাজিন")));
+
+  if (isGuestIntent) {
+    let targetDateStr = todayStr;
+    let targetDateLabel = "আজকে";
+    if (lower.includes("কালকে") || lower.includes("আগামীকাল") || lower.includes("tomorrow")) {
+      targetDateStr = tomorrowStr;
+      targetDateLabel = "আগামীকাল";
+    }
+
+    let mealType: "BREAKFAST" | "LUNCH" | "DINNER" = "LUNCH";
+    if (lower.includes("সকাল") || lower.includes("breakfast") || lower.includes("নাস্তা")) {
+      mealType = "BREAKFAST";
+    } else if (lower.includes("রাত") || lower.includes("dinner") || lower.includes("ডিনার")) {
+      mealType = "DINNER";
+    }
+
+    // Match Bengali numbers (১, ২, ৩...) or English numbers (1, 2, 3...)
+    const bnNumMap: Record<string, string> = { "১": "1", "২": "2", "৩": "3", "৪": "4", "৫": "5", "৬": "6", "৭": "7", "৮": "8", "৯": "9", "০": "0" };
+    const normalizedText = text.replace(/[১২৩৪৫৬৭৮৯০]/g, (char) => bnNumMap[char] || char);
+    const numMatch = normalizedText.match(/(\d+)\s*(?:টা|টি|জন)?/);
+    const quantity = numMatch ? Math.max(1, Number(numMatch[1])) : 1;
+
+    let guestName = "গেস্ট";
+    if (lower.includes("বন্ধু") || lower.includes("friend")) guestName = "বন্ধু (Friend)";
+    else if (lower.includes("ভাই") || lower.includes("brother")) guestName = "ভাই (Brother)";
+    else if (lower.includes("কাজিন") || lower.includes("cousin")) guestName = "কাজিন (Cousin)";
+    else if (lower.includes("আত্মীয়") || lower.includes("relatives")) guestName = "আত্মীয় (Relative)";
+
+    const defaultMemberId = context.userMemberId || (context.activeMembers[0]?.id ?? "m1");
+
+    return {
+      success: true,
+      modelName: activeModelName,
+      replyText: `I have prepared a Guest Meal booking for ${quantity} guest(s) on ${targetDateLabel} (${targetDateStr}) for ${mealType}. Click below to confirm.`,
+      replyBengali: `আমি ${targetDateLabel} (${targetDateStr}) তারিখের (${mealType === "BREAKFAST" ? "সকালের" : mealType === "LUNCH" ? "দুপুরের" : "রাতের"}) ${quantity}টি গেস্ট মিল বুকিং প্রস্তুত করেছি (${guestName})। কনফার্ম করতে নিচের বাটনে চাপুন।`,
+      actionCard: {
+        type: "GUEST_MEAL_CONFIRM",
+        data: {
+          date: targetDateStr,
+          memberId: defaultMemberId,
+          memberName: context.userMemberName,
+          guestName,
+          mealType,
+          quantity,
+          note: `Booked via MessMate AI for ${guestName}`,
+        },
+      },
+      suggestedQuestions: [
+        "আজকে মোট মিল কতটি?",
+        "বর্তমান মিল রেট কত?",
+      ],
+    };
+  }
+
+  // =========================================================================
+  // 3. INTENT: UPDATE / TOGGLE DAILY MEALS (নিজের মিল চালু বা বন্ধ)
   // =========================================================================
   const isMealIntent =
-    lower.includes("meal") ||
-    lower.includes("মিল") ||
-    lower.includes("lunch") ||
-    lower.includes("দুপুর") ||
-    lower.includes("dinner") ||
-    lower.includes("রাত") ||
-    lower.includes("breakfast") ||
-    lower.includes("সকাল");
+    !isGuestIntent &&
+    (lower.includes("meal") ||
+      lower.includes("মিল") ||
+      lower.includes("lunch") ||
+      lower.includes("দুপুর") ||
+      lower.includes("dinner") ||
+      lower.includes("রাত") ||
+      lower.includes("breakfast") ||
+      lower.includes("সকাল"));
 
   const hasMealActionKeywords =
     lower.includes("off") ||
@@ -656,62 +720,6 @@ Output your response as pure JSON in this exact structure:
         "আজকের মিল চেক করো",
         "বর্তমান মিল রেট কত?",
         "আমার ব্যালেন্স কত আছে?",
-      ],
-    };
-  }
-
-  // =========================================================================
-  // 3. INTENT: ADD GUEST MEAL (গেস্ট মিল বুকিং)
-  // =========================================================================
-  const isGuestIntent =
-    lower.includes("guest") ||
-    lower.includes("গেস্ট") ||
-    lower.includes("মেহমান") ||
-    lower.includes("অতিথি");
-
-  if (isGuestIntent) {
-    let targetDateStr = todayStr;
-    if (lower.includes("কালকে") || lower.includes("আগামীকাল") || lower.includes("tomorrow")) {
-      targetDateStr = tomorrowStr;
-    }
-
-    let mealType: "BREAKFAST" | "LUNCH" | "DINNER" = "LUNCH";
-    if (lower.includes("সকাল") || lower.includes("breakfast")) {
-      mealType = "BREAKFAST";
-    } else if (lower.includes("রাত") || lower.includes("dinner")) {
-      mealType = "DINNER";
-    }
-
-    const numMatch = text.match(/(\d+)/);
-    const quantity = numMatch ? Math.max(1, Number(numMatch[1])) : 1;
-
-    let guestName = "গেস্ট / বন্ধু";
-    if (lower.includes("বন্ধু") || lower.includes("friend")) guestName = "বন্ধু (Friend)";
-    else if (lower.includes("ভাই") || lower.includes("brother")) guestName = "ভাই (Brother)";
-    else if (lower.includes("কাজিন") || lower.includes("cousin")) guestName = "কাজিন (Cousin)";
-
-    const defaultMemberId = context.userMemberId || (context.activeMembers[0]?.id ?? "m1");
-
-    return {
-      success: true,
-      modelName: activeModelName,
-      replyText: `I have prepared a Guest Meal booking for ${quantity} guest(s) on ${targetDateStr} (${mealType}). Click below to confirm and broadcast to all members.`,
-      replyBengali: `আমি ${targetDateStr} তারিখের (${mealType === "BREAKFAST" ? "সকালের" : mealType === "LUNCH" ? "দুপুরের" : "রাতের"}) ${quantity}টি গেস্ট মিল বুকিং প্রস্তুত করেছি। কনফার্ম করতে নিচের বাটনে ক্লিক করুন।`,
-      actionCard: {
-        type: "GUEST_MEAL_CONFIRM",
-        data: {
-          date: targetDateStr,
-          memberId: defaultMemberId,
-          memberName: context.userMemberName,
-          guestName,
-          mealType,
-          quantity,
-          note: `Booked via MessMate AI for ${guestName}`,
-        },
-      },
-      suggestedQuestions: [
-        "আজকে মোট মিল কতটি?",
-        "বর্তমান মিল রেট কত?",
       ],
     };
   }
