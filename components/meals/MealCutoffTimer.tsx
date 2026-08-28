@@ -5,6 +5,7 @@ import { Clock, Lock, AlertTriangle, ShieldCheck } from "lucide-react";
 import { usePreferences } from "@/lib/context/PreferencesContext";
 
 interface MealCutoffTimerProps {
+  breakfastCutoff?: string; // e.g. "07:00"
   lunchCutoff?: string; // e.g. "09:00"
   dinnerCutoff?: string; // e.g. "16:00"
   isToday?: boolean;
@@ -12,13 +13,14 @@ interface MealCutoffTimerProps {
 }
 
 export function MealCutoffTimer({
+  breakfastCutoff = "07:00",
   lunchCutoff = "09:00",
   dinnerCutoff = "16:00",
   isToday = true,
   isAdmin = false,
 }: MealCutoffTimerProps) {
   const { t } = usePreferences();
-  const [timeLeft, setTimeLeft] = useState<{ status: "LUNCH_ACTIVE" | "DINNER_ACTIVE" | "ALL_LOCKED"; text: string } | null>(null);
+  const [timeLeft, setTimeLeft] = useState<{ status: "BREAKFAST_ACTIVE" | "LUNCH_ACTIVE" | "DINNER_ACTIVE" | "ALL_LOCKED"; text: string } | null>(null);
 
   useEffect(() => {
     if (!isToday) {
@@ -30,13 +32,24 @@ export function MealCutoffTimer({
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
+      const [bH, bM] = breakfastCutoff.split(":").map(Number);
+      const breakfastCutoffMinutes = bH * 60 + bM;
+
       const [lH, lM] = lunchCutoff.split(":").map(Number);
       const lunchCutoffMinutes = lH * 60 + lM;
 
       const [dH, dM] = dinnerCutoff.split(":").map(Number);
       const dinnerCutoffMinutes = dH * 60 + dM;
 
-      if (currentMinutes < lunchCutoffMinutes) {
+      if (currentMinutes < breakfastCutoffMinutes) {
+        const diff = breakfastCutoffMinutes - currentMinutes;
+        const hours = Math.floor(diff / 60);
+        const mins = diff % 60;
+        setTimeLeft({
+          status: "BREAKFAST_ACTIVE",
+          text: hours > 0 ? `${hours}h ${mins}m` : `${mins}m`,
+        });
+      } else if (currentMinutes < lunchCutoffMinutes) {
         const diff = lunchCutoffMinutes - currentMinutes;
         const hours = Math.floor(diff / 60);
         const mins = diff % 60;
@@ -63,12 +76,25 @@ export function MealCutoffTimer({
     checkTimer();
     const interval = setInterval(checkTimer, 30000);
     return () => clearInterval(interval);
-  }, [lunchCutoff, dinnerCutoff, isToday]);
+  }, [breakfastCutoff, lunchCutoff, dinnerCutoff, isToday]);
 
   if (!isToday || !timeLeft) return null;
 
   return (
     <div className="flex items-center gap-2 text-xs font-bold">
+      {timeLeft.status === "BREAKFAST_ACTIVE" && (
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-500/10 text-orange-700 dark:text-orange-300 border border-orange-500/20">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+          </span>
+          <Clock size={13} className="text-orange-600 dark:text-orange-400" />
+          <span>
+            {t(`☕ সকাল নাস্তা লক: ${timeLeft.text}`, `☕ Breakfast lock in: ${timeLeft.text}`)}
+          </span>
+        </div>
+      )}
+
       {timeLeft.status === "LUNCH_ACTIVE" && (
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
           <span className="relative flex h-2 w-2">

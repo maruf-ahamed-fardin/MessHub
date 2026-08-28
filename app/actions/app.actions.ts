@@ -459,23 +459,43 @@ export async function updateSettingsAction(data: unknown) {
     await requireAdmin();
     const schema = z.object({
       messName: z.string().min(1).max(100),
-      address: z.string().optional(),
-      currency: z.string().max(5),
-      guestMealPricing: z.enum(["DYNAMIC", "FIXED"]),
-      guestMealFixedPrice: z.coerce.number().optional(),
+      address: z.string().optional().nullable(),
+      currency: z.string().max(5).default("৳"),
+      guestMealPricing: z.enum(["DYNAMIC", "FIXED"]).default("DYNAMIC"),
+      guestMealFixedPrice: z.coerce.number().optional().nullable(),
       guestMealResponsibility: z.enum(["MEMBER", "GUEST"]).default("MEMBER"),
-      defaultSeatRent: z.coerce.number().min(0),
+      defaultSeatRent: z.coerce.number().min(0).default(3500),
+      defaultFixedUtility: z.coerce.number().min(0).default(500),
       adminBkashNumber: z.string().optional().nullable(),
       adminNagadNumber: z.string().optional().nullable(),
       adminRocketNumber: z.string().optional().nullable(),
+      breakfastCutoffTime: z.string().optional().default("07:00"),
       lunchCutoffTime: z.string().optional().default("09:00"),
       dinnerCutoffTime: z.string().optional().default("16:00"),
-      messRules: z.string().optional(),
+      mealAutoLock: z.boolean().optional().default(true),
+      allowGuestMealForMembers: z.boolean().optional().default(true),
+      maxBookingDaysAhead: z.coerce.number().min(1).max(30).default(7),
+      cookMonthlySalary: z.coerce.number().min(0).default(2500),
+      cookDailyDeduction: z.coerce.number().min(0).default(100),
+      geminiApiKey: z.string().optional().nullable(),
+      aiEnabled: z.boolean().optional().default(true),
+      aiModel: z.string().optional().default("gemini-2.0-flash"),
+      aiSystemInstruction: z.string().optional().nullable(),
+      aiTemperature: z.coerce.number().min(0).max(1).default(0.7),
+      aiAutoAction: z.boolean().optional().default(false),
+      whatsappTemplate: z.string().optional().nullable(),
+      messRules: z.string().optional().nullable(),
     });
     const validated = schema.parse(data);
-    await prisma.messSettings.update({ where: { id: "singleton" }, data: validated as any });
+    await prisma.messSettings.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton", ...validated } as any,
+      update: validated as any,
+    });
     revalidatePath("/settings");
     revalidatePath("/dashboard");
+    revalidatePath("/meals");
+    revalidatePath("/house");
     return { success: true };
   } catch (err: any) {
     console.error("Error in updateSettingsAction:", err);

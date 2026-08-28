@@ -160,6 +160,161 @@ async function fetchMessLiveContext(userId?: string, memberId?: string) {
 }
 
 /**
+ * Resolve AI configuration from Database Settings or Environment Variables
+ */
+export async function resolveGeminiSettings() {
+  const db = getPrisma();
+  let dbSettings: any = null;
+  try {
+    dbSettings = await db.messSettings.findUnique({ where: { id: "singleton" } });
+  } catch (e) {
+    console.warn("Could not load settings for AI:", e);
+  }
+
+  const apiKey = (dbSettings?.geminiApiKey?.trim() || process.env.GEMINI_API_KEY?.trim() || "");
+  const aiEnabled = dbSettings?.aiEnabled ?? true;
+  const preferredModel = dbSettings?.aiModel?.trim() || "gemini-2.0-flash";
+  const systemInstruction = dbSettings?.aiSystemInstruction?.trim() || "";
+  const temperature = typeof dbSettings?.aiTemperature === "number" ? dbSettings.aiTemperature : 0.7;
+
+  return {
+    apiKey,
+    aiEnabled,
+    preferredModel,
+    systemInstruction,
+    temperature,
+    hasApiKey: !!apiKey,
+  };
+}
+
+/**
+ * Live Server Action to test Gemini API Key connectivity
+ */
+export async function testGeminiApiKeyAction(apiKey?: string, modelName: string = "gemini-2.0-flash") {
+  const resolved = await resolveGeminiSettings();
+  const key = apiKey?.trim() || resolved.apiKey;
+  if (!key) {
+    return {
+      success: false,
+      error: "কোনো Gemini API Key পাওয়া যায়নি। অনুগ্রহ করে আপনার Google AI Studio API Key বসিয়ে সেভ বা টেস্ট করুন।",
+    };
+  }
+
+  const candidateModels = [modelName, "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+  const tried: string[] = [];
+  let lastError = "";
+
+  for (const model of candidateModels) {
+    if (!model || tried.includes(model)) continue;
+    tried.push(model);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "Ping test. Respond with OK." }] }],
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "OK";
+        return {
+          success: true,
+          message: `✓ সংযোগ সফল! Google Gemini (${model}) সফলভাবে কানেক্টেড।`,
+          model,
+          sample: text.trim(),
+        };
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        const errMsg = errJson?.error?.message || res.statusText || `HTTP ${res.status}`;
+        lastError = `${model}: ${errMsg}`;
+      }
+    } catch (err: any) {
+      lastError = err?.message || "Network timeout / connection error";
+    }
+  }
+
+  return {
+    success: false,
+    error: `API Key টেস্ট ব্যর্থ হয়েছে: ${lastError}`,
+  };
+}
+
+/**
+ * Execute a multimodal / text generation prompt across candidate Gemini models
+ */
+async function callGeminiAPI(
+  parts: Array<any>,
+  systemPrompt?: string,
+  temperature: number = 0.7
+): Promise<{ success: boolean; text?: string; model?: string; error?: string }> {
+  const settings = await resolveGeminiSettings();
+  if (!settings.hasApiKey) {
+    return { success: false, error: "Missing Gemini API Key" };
+  }
+
+  const candidateModels = [
+    settings.preferredModel,
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+  ];
+  const tried: string[] = [];
+
+  for (const model of candidateModels) {
+    if (!model || tried.includes(model)) continue;
+    tried.push(model);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.apiKey}`;
+      const payload: any = {
+        contents: [{ role: "user", parts }],
+        generationConfig: {
+          temperature,
+        },
+      };
+      if (systemPrompt) {
+        payload.systemInstruction = {
+          parts: [{ text: systemPrompt }],
+        };
+      }
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          return { success: true, text, model };
+        }
+      }
+    } catch (e) {
+      console.warn(`Gemini call error on model ${model}:`, e);
+    }
+  }
+
+  return { success: false, error: "All Gemini model candidates failed" };
+}
+
+/**
  * Main Server Action to process AI Assistant queries
  */
 export async function processAIAssistantQueryAction(
@@ -172,7 +327,20 @@ export async function processAIAssistantQueryAction(
   const rawMemberId = session?.user?.memberId;
   const userName = session?.user?.name || "বন্ধু";
 
-  const context = await fetchMessLiveContext(rawUserId, rawMemberId ?? undefined);
+  const [context, aiSettings] = await Promise.all([
+    fetchMessLiveContext(rawUserId, rawMemberId ?? undefined),
+    resolveGeminiSettings(),
+  ]);
+
+  if (!aiSettings.aiEnabled) {
+    return {
+      success: true,
+      modelName: "AI Paused",
+      replyText: "AI Assistant is currently disabled by the Mess Admin in Settings.",
+      replyBengali: "মেস এডমিন সেটিংস পেজ থেকে AI অ্যাসিস্ট্যান্ট অপশনটি সাময়িকভাবে বন্ধ রেখেছেন।",
+    };
+  }
+
   const text = (prompt || (imageBase64 ? "বাজার মেমো ছবি বিশ্লেষণ করো" : "")).trim();
   const lower = text.toLowerCase();
 
@@ -181,7 +349,9 @@ export async function processAIAssistantQueryAction(
   const tomorrowObj = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1));
   const tomorrowStr = tomorrowObj.toISOString().split("T")[0];
 
-  const activeModelName = process.env.GEMINI_API_KEY ? "Gemini 2.0 Flash (Vision)" : "MessHub Smart NLU Engine";
+  const activeModelName = aiSettings.hasApiKey
+    ? `Google Gemini (${aiSettings.preferredModel})`
+    : "MessHub Smart NLU Engine";
   const defaultBuyerId = context.userMemberId || (context.activeMembers[0]?.id ?? "m1");
   const defaultBuyerName = context.userMemberName || (context.activeMembers[0]?.name ?? "মেম্বার");
 
@@ -190,7 +360,7 @@ export async function processAIAssistantQueryAction(
   // =========================================================================
   if (imageBase64) {
     // If Gemini Vision is available, run multimodal extraction
-    if (process.env.GEMINI_API_KEY) {
+    if (aiSettings.hasApiKey) {
       try {
         const mimeType = imageBase64.startsWith("data:image/png") ? "image/png" : "image/jpeg";
         const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
@@ -206,34 +376,17 @@ Output your response as pure JSON in this exact structure:
   ]
 }`;
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    { text: visionPrompt },
-                    {
-                      inline_data: {
-                        mime_type: mimeType,
-                        data: cleanBase64,
-                      },
-                    },
-                  ],
-                },
-              ],
-            }),
-          }
+        const apiResult = await callGeminiAPI(
+          [
+            { text: visionPrompt },
+            { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+          ],
+          aiSettings.systemInstruction,
+          aiSettings.temperature
         );
 
-        if (response.ok) {
-          const data = await response.json();
-          const rawResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          const jsonMatch = rawResponseText.match(/\{[\s\S]*\}/);
+        if (apiResult.success && apiResult.text) {
+          const jsonMatch = apiResult.text.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
             const parsedItems = Array.isArray(parsed.items) && parsed.items.length > 0
@@ -249,7 +402,7 @@ Output your response as pure JSON in this exact structure:
 
             return {
               success: true,
-              modelName: "Google Gemini 2.0 Flash Vision",
+              modelName: `Google Gemini (${apiResult.model})`,
               replyText: `I have scanned and parsed the bazar memo from your image (Total ৳${total}). Please review the items below and click "Confirm & Save Bazar".`,
               replyBengali: `আমি আপনার মেমোর ছবি স্ক্যান করে ৳${total} টাকার বাজারের ফর্দ বের করেছি। নিচের কার্ডে বিস্তারিত দেখে "🛒 নিশ্চিত করুন ও বাজার সেভ করুন" বাটনে ক্লিক করুন।`,
               actionCard: {
@@ -681,9 +834,9 @@ Output your response as pure JSON in this exact structure:
   // =========================================================================
   // 6. DEFAULT / GENERAL ASSISTANCE (সাধারণ সাহায্য ও গাইড / Gemini LLM Fallback)
   // =========================================================================
-  if (process.env.GEMINI_API_KEY) {
+  if (aiSettings.hasApiKey) {
     try {
-      const systemPrompt = `You are MessMate AI, the intelligent, friendly mess management assistant for MessHub.
+      const defaultInstruction = `You are MessMate AI, the intelligent, friendly mess management assistant for MessHub.
 User Name: ${userName}
 Live Context:
 - Month/Year: ${context.month}/${context.year}
@@ -691,40 +844,27 @@ Live Context:
 - Total Food Expense: ৳${context.totalFoodExpense}
 - Total Meals: ${context.totalMeals}
 - User's deposit: ৳${context.userStats.deposit}, meals: ${context.userStats.totalMeals}, balance: ৳${context.userStats.balance}
+${aiSettings.systemInstruction ? `Admin Custom Instructions:\n${aiSettings.systemInstruction}` : ""}
 Answer concisely, supportively and warmly in polite Bengali (or English if prompted in English).`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: `${systemPrompt}\n\nUser Question: ${text}` }],
-              },
-            ],
-          }),
-        }
+      const apiResult = await callGeminiAPI(
+        [{ text: text }],
+        defaultInstruction,
+        aiSettings.temperature
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        const genText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (genText) {
-          return {
-            success: true,
-            modelName: "Google Gemini 2.0 Flash",
-            replyText: genText,
-            replyBengali: genText,
-            suggestedQuestions: [
-              "🛒 ৫০০ টাকার বাজার যোগ করো",
-              "🍽️ কালকে দুপুরের মিল বন্ধ করো",
-              "📊 বর্তমান মিল রেট কত?",
-            ],
-          };
-        }
+      if (apiResult.success && apiResult.text) {
+        return {
+          success: true,
+          modelName: `Google Gemini (${apiResult.model})`,
+          replyText: apiResult.text,
+          replyBengali: apiResult.text,
+          suggestedQuestions: [
+            "🛒 ৫০০ টাকার বাজার যোগ করো",
+            "🍽️ কালকে দুপুরের মিল বন্ধ করো",
+            "📊 বর্তমান মিল রেট কত?",
+          ],
+        };
       }
     } catch (llmErr) {
       console.warn("Gemini LLM call failed, falling back to built-in response:", llmErr);
@@ -773,7 +913,8 @@ export async function scanBazarReceiptAction(imageBase64: string): Promise<{
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
     const mimeType = imageBase64.startsWith("data:image/png") ? "image/png" : "image/jpeg";
 
-    if (process.env.GEMINI_API_KEY) {
+    const aiSettings = await resolveGeminiSettings();
+    if (aiSettings.hasApiKey) {
       try {
         const prompt = `You are an expert grocery / bazar memo parser in Bangladesh.
 Analyze this receipt/memo and extract all items with item name in Bengali or English, quantity, unit (kg, gm, litre, pcs, etc.), and unit price or total price.
@@ -785,29 +926,17 @@ Return PURE JSON only:
   ]
 }`;
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    { text: prompt },
-                    { inline_data: { mime_type: mimeType, data: cleanBase64 } },
-                  ],
-                },
-              ],
-            }),
-          }
+        const apiResult = await callGeminiAPI(
+          [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+          ],
+          aiSettings.systemInstruction,
+          0.2
         );
 
-        if (response.ok) {
-          const data = await response.json();
-          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (apiResult.success && apiResult.text) {
+          const jsonMatch = apiResult.text.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
             const items = (parsed.items || []).map((it: any) => ({

@@ -759,12 +759,26 @@ model MessSettings {
   guestMealFixedPrice         Float?
   guestMealResponsibility     GuestMealResponsibility @default(MEMBER)
   defaultSeatRent             Float                   @default(0)
+  defaultFixedUtility         Float                   @default(500)
   defaultExpenseSharingMethod SharingMethod           @default(EQUAL)
   adminBkashNumber            String?
   adminNagadNumber            String?
   adminRocketNumber           String?
+  breakfastCutoffTime         String?                 @default("07:00")
   lunchCutoffTime             String?                 @default("09:00")
   dinnerCutoffTime            String?                 @default("16:00")
+  mealAutoLock                Boolean                 @default(true)
+  allowGuestMealForMembers    Boolean                 @default(true)
+  maxBookingDaysAhead         Int                     @default(7)
+  cookMonthlySalary           Float                   @default(2500)
+  cookDailyDeduction          Float                   @default(100)
+  geminiApiKey                String?
+  aiEnabled                   Boolean                 @default(true)
+  aiModel                     String?                 @default("gemini-2.0-flash")
+  aiSystemInstruction         String?
+  aiTemperature               Float?                  @default(0.7)
+  aiAutoAction                Boolean                 @default(false)
+  whatsappTemplate            String?
   messRules                   String?
   updatedAt                   DateTime                @updatedAt
 

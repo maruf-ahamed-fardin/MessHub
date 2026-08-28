@@ -23,11 +23,12 @@ interface DailyMealGridProps {
   isAdmin: boolean;
   month: number;
   year: number;
+  messSettings?: any;
 }
 
 const MEAL_KEYS = ["breakfast", "lunch", "dinner"] as const;
 
-export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberId, isAdmin }: DailyMealGridProps) {
+export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberId, isAdmin, messSettings }: DailyMealGridProps) {
   const router = useRouter();
   const { t, language } = usePreferences();
   const [isPending, startTransition] = useTransition();
@@ -38,9 +39,11 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
   checkDate.setHours(0, 0, 0, 0);
   const isPastDate = checkDate.getTime() < today.getTime();
 
+  const bookingWindowDays = messSettings?.maxBookingDaysAhead ?? 7;
   const maxFutureDate = new Date(today);
-  maxFutureDate.setDate(maxFutureDate.getDate() + 7);
-  const isBeyond7Days = checkDate.getTime() > maxFutureDate.getTime();
+  maxFutureDate.setDate(maxFutureDate.getDate() + bookingWindowDays);
+  const isBeyondBookingWindow = checkDate.getTime() > maxFutureDate.getTime();
+  const isBeyond7Days = isBeyondBookingWindow;
 
   const dateStr = new Date(date).toISOString().split("T")[0];
 
@@ -456,7 +459,13 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
       )}
 
       {/* Meal Cutoff Live Countdown Ticker */}
-      <MealCutoffTimer isToday={checkDate.getTime() === today.getTime()} isAdmin={isAdmin} />
+      <MealCutoffTimer
+        breakfastCutoff={messSettings?.breakfastCutoffTime || "07:00"}
+        lunchCutoff={messSettings?.lunchCutoffTime || "09:00"}
+        dinnerCutoff={messSettings?.dinnerCutoffTime || "16:00"}
+        isToday={checkDate.getTime() === today.getTime()}
+        isAdmin={isAdmin}
+      />
 
       {/* 4. Live Meal Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

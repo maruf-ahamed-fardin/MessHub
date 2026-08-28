@@ -21,6 +21,8 @@ const MealBookingSheet = dynamic(
   { ssr: true }
 );
 
+import { getPrisma } from "@/lib/db/prisma";
+
 export const metadata: Metadata = { title: "Meals & Rate Engine" };
 
 interface MealsPageProps {
@@ -49,12 +51,13 @@ export default async function MealsPage({ searchParams }: MealsPageProps) {
   const selectedYear = selectedDate.getUTCFullYear();
   const isAdmin = session?.user.role === "ADMIN";
 
-  const [calendarData, members, dayMeals, dayGuestMeals, analytics] = await Promise.all([
+  const [calendarData, members, dayMeals, dayGuestMeals, analytics, messSettings] = await Promise.all([
     getMealsCalendar(selectedMonth, selectedYear),
     getAllMembers(),
     getAllMealsForDate(selectedDate),
     getGuestMealsForDate(selectedDate),
     getMonthlyMealAnalytics(selectedMonth, selectedYear),
+    getPrisma().messSettings.findUnique({ where: { id: "singleton" } }).catch(() => null),
   ]);
 
   return (
@@ -87,6 +90,7 @@ export default async function MealsPage({ searchParams }: MealsPageProps) {
         isAdmin={isAdmin}
         month={selectedMonth}
         year={selectedYear}
+        messSettings={messSettings}
       />
 
       {/* Comprehensive Monthly Meal Rate & Member Breakdown Sheet */}

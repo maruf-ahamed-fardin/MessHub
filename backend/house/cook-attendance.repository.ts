@@ -41,7 +41,22 @@ export async function upsertCookAttendance(
   });
 }
 
-export async function getCookAttendanceStats(month: number, year: number, baseSalary: number = 2500) {
+export async function getCookAttendanceStats(month: number, year: number, customSalary?: number) {
+  const db = getPrisma();
+  let baseSalary = customSalary;
+  let dailyDeduction = 100;
+
+  if (baseSalary === undefined) {
+    try {
+      const settings = await db.messSettings.findUnique({ where: { id: "singleton" } });
+      if (settings?.cookMonthlySalary) baseSalary = settings.cookMonthlySalary;
+      if (settings?.cookDailyDeduction) dailyDeduction = settings.cookDailyDeduction;
+    } catch {
+      // fallback
+    }
+  }
+  if (baseSalary === undefined) baseSalary = 2500;
+
   const records = await getCookAttendancesForMonth(month, year);
   const totalDaysInMonth = new Date(year, month, 0).getDate();
 
@@ -51,13 +66,13 @@ export async function getCookAttendanceStats(month: number, year: number, baseSa
   let overtimeCount = 0;
   let totalDeduction = 0;
 
-  const perDayRate = baseSalary / totalDaysInMonth;
+  const perDayRate = dailyDeduction || (baseSalary / totalDaysInMonth);
 
   for (const r of records) {
     if (r.status === "PRESENT") presentCount++;
     else if (r.status === "ABSENT") {
       absentCount++;
-      totalDeduction += r.deduction || perDayRate;
+      totalDeduction += r.deduction > 0 ? r.deduction : perDayRate;
     } else if (r.status === "LEAVE") leaveCount++;
     else if (r.status === "OVERTIME") overtimeCount++;
   }
