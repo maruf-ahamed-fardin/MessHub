@@ -9,28 +9,30 @@ import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Notices" };
 
+const DEFAULT_NOTICES = [
+  {
+    id: "n1",
+    title: "Mess Meeting Tonight at 9:00 PM",
+    description: "Monthly meal calculation and settlement discussion in the dining area. Everyone must attend.",
+    priority: "IMPORTANT",
+    createdAt: new Date("2026-08-26T12:00:00.000Z"),
+    author: { name: "Admin" },
+  },
+  {
+    id: "n2",
+    title: "Water Tank Cleaning Tomorrow Morning",
+    description: "Water supply will be temporarily paused from 8:00 AM to 11:00 AM. Please store necessary water beforehand.",
+    priority: "NORMAL",
+    createdAt: new Date("2026-08-25T12:00:00.000Z"),
+    author: { name: "Admin" },
+  }
+];
+
 export default async function NoticesPage() {
   const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
 
-  let notices: any[] = [
-    {
-      id: "n1",
-      title: "Mess Meeting Tonight at 9:00 PM",
-      description: "Monthly meal calculation and settlement discussion in the dining area. Everyone must attend.",
-      priority: "IMPORTANT",
-      createdAt: new Date(),
-      author: { name: "Admin" },
-    },
-    {
-      id: "n2",
-      title: "Water Tank Cleaning Tomorrow Morning",
-      description: "Water supply will be temporarily paused from 8:00 AM to 11:00 AM. Please store necessary water beforehand.",
-      priority: "NORMAL",
-      createdAt: new Date(Date.now() - 86400000),
-      author: { name: "Admin" },
-    }
-  ];
+  let notices: any[] = DEFAULT_NOTICES;
 
   try {
     const dbNotices = await getActiveNotices();

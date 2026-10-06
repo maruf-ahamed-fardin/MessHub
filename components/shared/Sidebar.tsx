@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils/cn";
 import {
-  LayoutDashboard, Users, BedDouble, UtensilsCrossed,
+  LayoutDashboard, BedDouble, UtensilsCrossed,
   ShoppingBasket, Receipt, CreditCard, BarChart3,
   Brush, Bell, Calendar, MessageSquare, Megaphone,
   Settings, LogOut, ChevronRight,
@@ -24,34 +24,36 @@ export function Sidebar({ className }: SidebarProps) {
   const T = useT();
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  const loadUnreadCount = async () => {
-    try {
-      const summary = await getNotificationSummaryAction();
-      setUnreadCount(summary.unreadCount);
-    } catch (err) {
-      console.warn("Failed to load unread count:", err);
-    }
-  };
-
   useEffect(() => {
-    loadUnreadCount();
-    const interval = setInterval(loadUnreadCount, 25000);
-    const handleFocus = () => loadUnreadCount();
+    let active = true;
+
+    const fetchSummary = async () => {
+      try {
+        const summary = await getNotificationSummaryAction();
+        if (active) {
+          setUnreadCount(summary.unreadCount);
+        }
+      } catch (err) {
+        console.warn("Failed to load unread count:", err);
+      }
+    };
+
+    void fetchSummary();
+    const interval = setInterval(fetchSummary, 25000);
+    const handleFocus = () => {
+      void fetchSummary();
+    };
     window.addEventListener("focus", handleFocus);
 
     return () => {
+      active = false;
       clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
-  useEffect(() => {
-    if (pathname === "/notifications") {
-      setUnreadCount(0);
-    }
-  }, [pathname]);
-
-  const notifBadge = unreadCount > 99 ? "99+" : unreadCount > 0 ? String(unreadCount) : undefined;
+  const effectiveCount = pathname === "/notifications" ? 0 : unreadCount;
+  const notifBadge = effectiveCount > 99 ? "99+" : effectiveCount > 0 ? String(effectiveCount) : undefined;
 
   const NAV_SECTIONS = [
     {

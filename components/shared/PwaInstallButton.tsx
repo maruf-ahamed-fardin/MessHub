@@ -19,18 +19,20 @@ export function PwaInstallButton({ variant = "topbar", className }: PwaInstallBu
   const { t } = usePreferences();
 
   useEffect(() => {
-    // Check if already in standalone PWA mode
-    if (
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true
-    ) {
-      setIsInstalled(true);
-    }
+    queueMicrotask(() => {
+      // Check if already in standalone PWA mode
+      if (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as unknown as { standalone?: boolean }).standalone === true
+      ) {
+        setIsInstalled(true);
+      }
 
-    // Detect iOS
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(isIosDevice);
+      // Detect iOS
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+      setIsIOS(isIosDevice);
+    });
 
     // Listen for PWA install prompt
     const handleBeforeInstallPrompt = (e: Event) => {

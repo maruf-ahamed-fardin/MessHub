@@ -35,24 +35,26 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 
   // Load preferences from localStorage on mount
   useEffect(() => {
-    try {
-      const savedTheme = localStorage.getItem("messhub_theme") as Theme | null;
-      if (savedTheme === "dark" || savedTheme === "light") {
-        setThemeState(savedTheme);
-        applyTheme(savedTheme);
-      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        setThemeState("dark");
-        applyTheme("dark");
-      }
+    queueMicrotask(() => {
+      try {
+        const savedTheme = localStorage.getItem("messhub_theme") as Theme | null;
+        if (savedTheme === "dark" || savedTheme === "light") {
+          setThemeState(savedTheme);
+          applyTheme(savedTheme);
+        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          setThemeState("dark");
+          applyTheme("dark");
+        }
 
-      const savedLang = localStorage.getItem("messhub_lang") as Language | null;
-      if (savedLang === "bn" || savedLang === "en") {
-        setLanguageState(savedLang);
-        document.cookie = `messhub_lang=${savedLang}; path=/; max-age=31536000; SameSite=Lax`;
+        const savedLang = localStorage.getItem("messhub_lang") as Language | null;
+        if (savedLang === "bn" || savedLang === "en") {
+          setLanguageState(savedLang);
+          document.cookie = `messhub_lang=${savedLang}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+      } catch {
+        // Ignore localStorage errors
       }
-    } catch {
-      // Ignore localStorage errors
-    }
+    });
   }, []);
 
   const setTheme = (newTheme: Theme) => {
@@ -116,7 +118,7 @@ export function usePreferences() {
       setTheme: () => {},
       toggleLanguage: () => {},
       setLanguage: () => {},
-      t: (bn: string, en: string) => bn,
+      t: (bn: string, _en: string) => bn,
     };
   }
   return context;

@@ -32,14 +32,6 @@ export function VoiceRecorder({
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Start recording on mount
-  useEffect(() => {
-    startRecording();
-    return () => {
-      stopAndCleanup();
-    };
-  }, []);
-
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -104,6 +96,14 @@ export function VoiceRecorder({
       } catch {}
     }
   };
+
+  // Start recording on mount
+  useEffect(() => {
+    void startRecording();
+    return () => {
+      stopAndCleanup();
+    };
+  }, []);
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
