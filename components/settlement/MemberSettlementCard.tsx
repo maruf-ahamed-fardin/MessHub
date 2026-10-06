@@ -10,6 +10,7 @@ import { Utensils, UserPlus, Zap, Home, Boxes, ArrowUpRight, ArrowDownRight, Che
 
 import { MemberSettlementVoucher } from "./MemberSettlementVoucher";
 import { QuickPaymentModal } from "@/components/payments/QuickPaymentModal";
+import { WhatsAppReminderButton } from "./WhatsAppReminderButton";
 
 export function MemberSettlementCard({
   data,
@@ -135,14 +136,25 @@ export function MemberSettlementCard({
         />
 
         {!isCredit && !isZero && (
-          <QuickPaymentModal
-            memberId={data.memberId}
-            memberName={data.memberName}
-            dueAmount={Math.abs(data.balance)}
-            adminBkashNumber={messSettings?.adminBkashNumber}
-            adminNagadNumber={messSettings?.adminNagadNumber}
-            adminRocketNumber={messSettings?.adminRocketNumber}
-          />
+          <div className="flex items-center gap-1.5">
+            <WhatsAppReminderButton
+              memberName={data.memberName}
+              dueAmount={Math.abs(data.balance)}
+              month={month}
+              year={year}
+              adminBkash={messSettings?.adminBkashNumber}
+              adminNagad={messSettings?.adminNagadNumber}
+              messName={messSettings?.messName}
+            />
+            <QuickPaymentModal
+              memberId={data.memberId}
+              memberName={data.memberName}
+              dueAmount={Math.abs(data.balance)}
+              adminBkashNumber={messSettings?.adminBkashNumber}
+              adminNagadNumber={messSettings?.adminNagadNumber}
+              adminRocketNumber={messSettings?.adminRocketNumber}
+            />
+          </div>
         )}
       </div>
 

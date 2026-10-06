@@ -185,6 +185,16 @@ export function BazarScheduleSection({
 
   const dateLocale = language === "bn" ? "bn-BD" : "en-US";
 
+  const sendWhatsAppDutyReminder = (schedule: any) => {
+    const memberName = schedule?.member?.user?.name ?? "মেম্বার";
+    const dateFormatted = new Date(schedule?.date).toLocaleDateString(dateLocale, { weekday: "long", day: "numeric", month: "long" });
+    const msg = language === "bn"
+      ? `📢 মেস বাজার রিমাইন্ডার!\n\nআসসালামু আলাইকুম ${memberName},\n${dateFormatted} তারিখে মেসের বাজার দায়িত্ব আপনার। অনুগ্রহ করে সময়মতো মেসের বাজার সম্পন্ন করুন এবং মেমো আপলোড করুন।\n\nধন্যবাদ!`
+      : `📢 Mess Bazar Reminder!\n\nHello ${memberName},\nYou are scheduled for mess bazar duty on ${dateFormatted}. Please complete the bazar on time and upload the receipt.\n\nThank you!`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-4 shadow-xs space-y-4">
       {/* 1. Header with Admin Schedule Control & Quick Swap Action */}
@@ -254,6 +264,16 @@ export function BazarScheduleSection({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => sendWhatsAppDutyReminder(todaySchedule)}
+                className="h-7 px-2 text-[11px] font-bold border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl gap-1 cursor-pointer"
+                title={t("WhatsApp এ বাজার নোটিফিকেশন পাঠান", "Send WhatsApp reminder")}
+              >
+                <MessageSquare size={11} className="text-emerald-600 dark:text-emerald-400" />
+              </Button>
               <Button
                 type="button"
                 size="sm"
@@ -369,7 +389,7 @@ export function BazarScheduleSection({
                   {req.reason && (
                     <div className="flex items-start gap-1.5 text-[11px] text-amber-900 dark:text-amber-200 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/40 px-2.5 py-1.5 rounded-xl">
                       <MessageSquare size={12} className="shrink-0 mt-0.5 text-amber-600" />
-                      <span className="font-medium italic">"{req.reason}"</span>
+                      <span className="font-medium italic">&ldquo;{req.reason}&rdquo;</span>
                     </div>
                   )}
                 </div>
