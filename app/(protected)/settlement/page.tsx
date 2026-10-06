@@ -11,6 +11,7 @@ import { MemberSettlementList } from "@/components/settlement/MemberSettlementLi
 import { SettlementMonthSelector } from "@/components/settlement/SettlementMonthSelector";
 import { FinalizationControls } from "@/components/settlement/FinalizationControls";
 import { MonthlyMealAnalyticsSheet } from "@/components/meals/MonthlyMealAnalyticsSheet";
+import { MonthlyReportExportModal } from "@/components/settlement/MonthlyReportExportModal";
 import { SettlementSummary } from "@/types";
 import { getServerT } from "@/lib/i18n/serverT";
 
@@ -147,6 +148,12 @@ export default async function SettlementPage({ searchParams }: SettlementPagePro
         action={
           <div className="flex items-center gap-2 flex-wrap">
             <SettlementMonthSelector selectedMonth={month} selectedYear={year} />
+            <MonthlyReportExportModal
+              summary={summary}
+              month={month}
+              year={year}
+              messSettings={messSettings}
+            />
             {isAdmin && (
               <FinalizationControls month={month} year={year} isFinalized={isFinalized} />
             )}

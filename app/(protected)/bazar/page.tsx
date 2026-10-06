@@ -9,6 +9,7 @@ import { AddBazarDialog } from "@/components/bazar/AddBazarDialog";
 import { BazarScheduleSection } from "@/components/bazar/BazarScheduleSection";
 import { BazarExplorer } from "@/components/bazar/BazarExplorer";
 import { SettlementMonthSelector } from "@/components/settlement/SettlementMonthSelector";
+import { BazarExportButton } from "@/components/bazar/BazarExportButton";
 import { toNumber } from "@/backend/services/meal-calculation.service";
 import { formatCurrency } from "@/lib/utils/currency";
 import { getServerT } from "@/lib/i18n/serverT";
@@ -53,11 +54,18 @@ export default async function BazarPage({ searchParams }: BazarPageProps) {
             : `${formatMonthYear(month, year)} - এর সংরক্ষিত বাজার খরচ: ${formatCurrency(totalAmount)}`
         }
         action={
-          <SettlementMonthSelector
-            selectedMonth={month}
-            selectedYear={year}
-            baseUrl="/bazar"
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <SettlementMonthSelector
+              selectedMonth={month}
+              selectedYear={year}
+              baseUrl="/bazar"
+            />
+            <BazarExportButton
+              bazars={bazarList}
+              month={month}
+              year={year}
+            />
+          </div>
         }
       />
 
