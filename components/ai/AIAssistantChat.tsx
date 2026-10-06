@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useTransition } from "react";
+import Image from "next/image";
 import {
   Menu,
   SquarePen,
@@ -452,8 +453,14 @@ export function AIAssistantChat({ onClose, user, userName }: AIAssistantChatProp
 
           {/* Branding Title */}
           <div className="flex items-center gap-2 pl-1">
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-2xs">
-              <GeminiAiIcon size={16} gradient={true} />
+            <div className="w-7 h-7 rounded-xl overflow-hidden flex items-center justify-center shadow-2xs shrink-0">
+              <Image
+                src="/icons/icon-192.png"
+                alt="MessHub"
+                width={28}
+                height={28}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <div className="flex items-center gap-1.5 leading-tight">

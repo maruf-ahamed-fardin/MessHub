@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { X } from "lucide-react";
 import { AIAssistantChat } from "./AIAssistantChat";
-import { GeminiAiIcon } from "./GeminiAiIcon";
 import { cn } from "@/lib/utils/cn";
 import { usePreferences } from "@/lib/context/PreferencesContext";
 
@@ -45,24 +45,31 @@ export function AIAssistantWidget({ user }: AIAssistantWidgetProps) {
           type="button"
           onClick={() => (isOpen ? setIsOpen(false) : handleOpen())}
           className={cn(
-            "group relative flex items-center justify-center rounded-full w-12 h-12 md:w-14 md:h-14 transition-all duration-300 shadow-[0_4px_24px_rgba(99,102,241,0.45)] hover:shadow-[0_8px_32px_rgba(139,92,246,0.65)] cursor-pointer active:scale-95 border border-indigo-200/40 dark:border-indigo-400/30",
+            "group relative flex items-center justify-center rounded-2xl w-12 h-12 md:w-14 md:h-14 transition-all duration-300 shadow-[0_4px_24px_rgba(99,102,241,0.45)] hover:shadow-[0_8px_32px_rgba(139,92,246,0.65)] cursor-pointer active:scale-95 border border-indigo-200/40 dark:border-indigo-400/30 overflow-hidden",
             isOpen
               ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rotate-90"
-              : "bg-gradient-to-tr from-indigo-600 via-primary to-violet-600 dark:from-indigo-600 dark:via-purple-600 dark:to-violet-700 text-white hover:scale-110"
+              : "bg-gradient-to-tr from-indigo-600 via-primary to-violet-600 hover:scale-110"
           )}
           aria-label={t("MessMate AI Assistant খুলুন", "Open MessMate AI Assistant")}
         >
           {/* Layer 1: Ambient Pulsing Outer Glow Aura (Deep Indigo & Violet) */}
-          <span className="absolute -inset-2 rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 opacity-40 blur-md animate-pulse -z-20 transition-opacity" />
+          <span className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 opacity-40 blur-md animate-pulse -z-20 transition-opacity" />
 
           {/* Layer 2: Tight Shimmer Border Glow */}
-          <span className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-indigo-400 via-violet-400 to-fuchsia-400 opacity-60 blur-[2px] group-hover:opacity-100 transition duration-300 -z-10 animate-pulse" />
+          <span className="absolute -inset-0.5 rounded-2xl bg-gradient-to-tr from-indigo-400 via-violet-400 to-fuchsia-400 opacity-60 blur-[2px] group-hover:opacity-100 transition duration-300 -z-10 animate-pulse" />
 
           {isOpen ? (
-            <X size={22} className="rotate-0 transition-transform" />
+            <X size={24} className="rotate-0 transition-transform" />
           ) : (
-            <div className="relative flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-              <GeminiAiIcon size={26} gradient={true} className="animate-pulse drop-shadow-[0_0_12px_rgba(168,85,247,0.9)]" />
+            <div className="relative w-full h-full p-1.5 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+              <Image
+                src="/icons/icon-192.png"
+                alt="MessHub Logo"
+                width={56}
+                height={56}
+                className="w-full h-full object-contain rounded-xl select-none pointer-events-none drop-shadow-md"
+                priority
+              />
             </div>
           )}
 
