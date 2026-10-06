@@ -633,8 +633,8 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
           </div>
         )}
 
-        {/* Table Column Headers */}
-        <div className="grid grid-cols-[1fr_repeat(3,65px)_85px] sm:grid-cols-[1fr_repeat(3,95px)_110px] border-b border-gray-100 dark:border-slate-800 px-4 py-2.5 bg-gray-50/40 dark:bg-slate-800/30 text-xs font-bold text-gray-500 dark:text-slate-400">
+        {/* Desktop Table Column Headers */}
+        <div className="hidden sm:grid sm:grid-cols-[1fr_repeat(3,95px)_110px] border-b border-gray-100 dark:border-slate-800 px-4 py-2.5 bg-gray-50/40 dark:bg-slate-800/30 text-xs font-bold text-gray-500 dark:text-slate-400">
           <span>{t("মেম্বার", "Member")}</span>
           <span className="text-center">{t("☀️ সকাল", "☀️ Breakfast")}</span>
           <span className="text-center">{t("🍽️ দুপুর", "🍽️ Lunch")}</span>
@@ -642,7 +642,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
           <span className="text-center">{t("সেভ / অবস্থা", "Save / Status")}</span>
         </div>
 
-        {/* Members List Rows */}
+        {/* Members List Rows (Responsive: Desktop Table + Mobile Touch Cards) */}
         <div className="divide-y divide-gray-100 dark:divide-slate-800">
           {members.map((member) => {
             const state = mealState[member.id] ?? { breakfast: true, lunch: true, dinner: true };
@@ -663,7 +663,7 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
               <div
                 key={member.id}
                 className={cn(
-                  "grid grid-cols-[1fr_repeat(3,65px)_85px] sm:grid-cols-[1fr_repeat(3,95px)_110px] items-center px-4 py-3 transition-colors",
+                  "transition-colors",
                   isSelf
                     ? "bg-primary/5 dark:bg-primary/10"
                     : isDirty
@@ -671,131 +671,221 @@ export function DailyMealGrid({ date, members, meals, guestMeals, currentMemberI
                     : "hover:bg-gray-50/50 dark:hover:bg-slate-800/40"
                 )}
               >
-                {/* 1. Member Profile Cell */}
-                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-1 sm:pr-2">
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback
-                      className={cn(
-                        "text-xs font-bold",
-                        isSelf
-                          ? "bg-primary text-white shadow-xs"
-                          : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300"
-                      )}
-                    >
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate flex items-center gap-1.5">
-                      <span>{member.user?.name ?? member.name}</span>
-                      {isSelf && (
-                        <span className="text-[9px] font-black bg-primary/20 text-primary px-1.5 py-0.2 rounded-md shrink-0">
-                          {t("আপনি", "You")}
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-[10px] sm:text-[11px] text-gray-400 dark:text-slate-500 truncate">
-                      {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সক্রিয় মেম্বার", "Active Member")}
-                    </p>
+                {/* --- A. DESKTOP / TABLET ROW (sm:grid) --- */}
+                <div className="hidden sm:grid sm:grid-cols-[1fr_repeat(3,95px)_110px] items-center px-4 py-3">
+                  {/* 1. Member Profile Cell */}
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback
+                        className={cn(
+                          "text-xs font-bold",
+                          isSelf
+                            ? "bg-primary text-white shadow-xs"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300"
+                        )}
+                      >
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                        <span>{member.user?.name ?? member.name}</span>
+                        {isSelf && (
+                          <span className="text-[9px] font-black bg-primary/20 text-primary px-1.5 py-0.2 rounded-md shrink-0">
+                            {t("আপনি", "You")}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[10px] sm:text-[11px] text-gray-400 dark:text-slate-500 truncate">
+                        {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সক্রিয় মেম্বার", "Active Member")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 2. Desktop Meal Toggles */}
+                  {MEAL_KEYS.map((field) => {
+                    const on = state[field];
+                    return (
+                      <div key={field} className="flex justify-center px-1">
+                        <button
+                          type="button"
+                          disabled={!canEditThisMember || isSaving || savingAll}
+                          onClick={() => handleToggle(member.id, field)}
+                          className={cn(
+                            "w-20 h-7 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 select-none shadow-2xs",
+                            canEditThisMember
+                              ? "active:scale-95 cursor-pointer"
+                              : "opacity-40 cursor-not-allowed",
+                            on
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
+                              : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300"
+                          )}
+                          title={on ? t("মিল বন্ধ করতে চাপুন", "Click to turn OFF") : t("মিল চালু করতে চাপুন", "Click to turn ON")}
+                        >
+                          <span>{on ? t("চালু", "ON") : t("বন্ধ", "OFF")}</span>
+                          <span className="text-[10px]">{on ? "✓" : "✕"}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* 3. Desktop Save Button */}
+                  <div className="flex justify-center pl-2">
+                    {canEditThisMember ? (
+                      <button
+                        type="button"
+                        disabled={isSaving || savingAll || (!isDirty && !wasJustSaved)}
+                        onClick={() => handleSaveMember(member.id)}
+                        className={cn(
+                          "w-full max-w-[95px] h-7 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 select-none shadow-2xs",
+                          isSaving
+                            ? "bg-indigo-600 text-white opacity-80 cursor-wait"
+                            : wasJustSaved
+                            ? "bg-emerald-600 text-white cursor-default"
+                            : isDirty
+                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white active:scale-95 cursor-pointer shadow-md shadow-indigo-500/25 ring-2 ring-indigo-400/50 hover:scale-[1.02] transition-all"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 opacity-70 hover:opacity-100 cursor-pointer"
+                        )}
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 size={11} className="animate-spin" />
+                            <span className="text-[10px]">{t("সেভ…", "Saving…")}</span>
+                          </>
+                        ) : wasJustSaved ? (
+                          <>
+                            <Check size={12} strokeWidth={3} />
+                            <span className="text-[10px]">{t("সেভ্ড ✓", "Saved ✓")}</span>
+                          </>
+                        ) : isDirty ? (
+                          <>
+                            <Save size={12} />
+                            <span className="text-[10px]">{t("সেভ করুন", "Save")}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={11} className="text-emerald-500" />
+                            <span className="text-[10px]">{t("সেভ করা", "Saved")}</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/40 border border-gray-200/60 dark:border-slate-800 px-2 py-1 rounded-lg select-none">
+                        <Lock size={10} className="shrink-0" />
+                        <span>{t("লকড", "Locked")}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* 2. Meal Toggles (Breakfast, Lunch, Dinner) */}
-                {MEAL_KEYS.map((field) => {
-                  const on = state[field];
+                {/* --- B. MOBILE TOUCH CARD (sm:hidden) --- */}
+                <div className="sm:hidden p-3.5 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar className="h-9 w-9 shrink-0">
+                        <AvatarFallback
+                          className={cn(
+                            "text-xs font-bold",
+                            isSelf
+                              ? "bg-indigo-600 text-white shadow-xs"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300"
+                          )}
+                        >
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                          <span>{member.user?.name ?? member.name}</span>
+                          {isSelf && (
+                            <span className="text-[9px] font-black bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.2 rounded-md shrink-0">
+                              {t("আপনি", "You")}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500 truncate">
+                          {member.seat ? `${member.seat.room?.name ?? "Room"} (${member.seat.label})` : t("সক্রিয় মেম্বার", "Active")}
+                        </p>
+                      </div>
+                    </div>
 
-                  return (
-                    <div key={field} className="flex justify-center px-0.5 sm:px-1">
+                    {/* Mobile Save Button */}
+                    {canEditThisMember ? (
                       <button
                         type="button"
-                        disabled={!canEditThisMember || isSaving || savingAll}
-                        onClick={() => handleToggle(member.id, field)}
+                        disabled={isSaving || savingAll || (!isDirty && !wasJustSaved)}
+                        onClick={() => handleSaveMember(member.id)}
                         className={cn(
-                          "w-14 sm:w-20 h-7 rounded-full text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-0.5 sm:gap-1 select-none shadow-2xs",
-                          canEditThisMember
-                            ? "active:scale-95 cursor-pointer"
-                            : "opacity-40 cursor-not-allowed",
-                          on
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
-                            : "bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300"
+                          "h-8 px-3 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shrink-0 select-none",
+                          isSaving
+                            ? "bg-indigo-600 text-white opacity-80"
+                            : wasJustSaved
+                            ? "bg-emerald-600 text-white"
+                            : isDirty
+                            ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm ring-1 ring-indigo-400/50 active:scale-95"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700"
                         )}
-                        title={
-                          !canEditThisMember
-                            ? isPastDate
-                              ? t("অতীতের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Past meals can only be edited by Admin")
-                              : isBeyond7Days
-                              ? t("ভবিষ্যতের সর্বোচ্চ ৭ দিন পর্যন্ত মিল পরিবর্তন করা যাবে", "Meals can only be edited up to 7 days ahead")
-                              : !isSelf
-                              ? t("অন্য সদস্যের মিল শুধুমাত্র Admin পরিবর্তন করতে পারবেন", "Only Admin can edit another member's meal")
-                              : t("অনুমতি নেই", "No permission")
-                            : on
-                            ? t("মিল বন্ধ করতে চাপুন (সেভ করতে ভুলবেন না)", "Click to turn OFF (remember to save)")
-                            : t("মিল চালু করতে চাপুন (সেভ করতে ভুলবেন না)", "Click to turn ON (remember to save)")
-                        }
                       >
-                        <span>{on ? t("চালু", "ON") : t("বন্ধ", "OFF")}</span>
-                        <span className="text-[10px]">{on ? "✓" : "✕"}</span>
+                        {isSaving ? (
+                          <>
+                            <Loader2 size={11} className="animate-spin" />
+                            <span>{t("সেভ…", "Saving…")}</span>
+                          </>
+                        ) : wasJustSaved ? (
+                          <>
+                            <Check size={12} strokeWidth={3} />
+                            <span>{t("সেভ্ড ✓", "Saved ✓")}</span>
+                          </>
+                        ) : isDirty ? (
+                          <>
+                            <Save size={12} />
+                            <span>{t("সেভ", "Save")}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={11} className="text-emerald-500" />
+                            <span>{t("ওকে", "OK")}</span>
+                          </>
+                        )}
                       </button>
-                    </div>
-                  );
-                })}
+                    ) : (
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/40 border border-gray-200/60 dark:border-slate-800 px-2 py-1 rounded-lg">
+                        <Lock size={10} />
+                        <span>{t("লকড", "Locked")}</span>
+                      </div>
+                    )}
+                  </div>
 
-                {/* 3. Dedicated Save / Status Button */}
-                <div className="flex justify-center pl-1 sm:pl-2">
-                  {canEditThisMember ? (
-                    <button
-                      type="button"
-                      disabled={isSaving || savingAll || (!isDirty && !wasJustSaved)}
-                      onClick={() => handleSaveMember(member.id)}
-                      className={cn(
-                        "w-full max-w-[95px] h-7 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 select-none shadow-2xs",
-                        isSaving
-                          ? "bg-indigo-600 text-white opacity-80 cursor-wait"
-                          : wasJustSaved
-                          ? "bg-emerald-600 text-white cursor-default"
-                          : isDirty
-                          ? "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white active:scale-95 cursor-pointer shadow-md shadow-indigo-500/25 ring-2 ring-indigo-400/50 hover:scale-[1.02] transition-all"
-                          : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 opacity-70 hover:opacity-100 cursor-pointer"
-                      )}
-                      title={
-                        isDirty
-                          ? t("পরিবর্তন সেভ করুন ও সবাইকে নোটিফিকেশন পাঠান", "Save changes & broadcast notification")
-                          : wasJustSaved
-                          ? t("সফলভাবে সেভ হয়েছে", "Saved successfully")
-                          : t("মিল সেভ করা আছে (পুনরায় সেভ করতে পারেন)", "Saved (click to re-save)")
-                      }
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 size={11} className="animate-spin" />
-                          <span className="text-[10px]">{t("সেভ…", "Saving…")}</span>
-                        </>
-                      ) : wasJustSaved ? (
-                        <>
-                          <Check size={12} strokeWidth={3} />
-                          <span className="text-[10px]">{t("সেভ্ড ✓", "Saved ✓")}</span>
-                        </>
-                      ) : isDirty ? (
-                        <>
-                          <Save size={12} />
-                          <span className="text-[10px]">{t("সেভ করুন", "Save")}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check size={11} className="text-emerald-500" />
-                          <span className="text-[10px]">{t("সেভ করা", "Saved")}</span>
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <div
-                      className="flex items-center justify-center gap-1 text-[10px] font-semibold text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-800/40 border border-gray-200/60 dark:border-slate-800 px-2 py-1 rounded-lg select-none"
-                      title={t("শুধুমাত্র মেম্বার নিজে অথবা Admin পরিবর্তন ও সেভ করতে পারেন", "Only member themselves or Admin can change & save")}
-                    >
-                      <Lock size={10} className="shrink-0" />
-                      <span>{t("লকড", "Locked")}</span>
-                    </div>
-                  )}
+                  {/* 3 Large Touch Toggle Buttons on Mobile */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: "breakfast" as const, label: t("☀️ সকাল", "☀️ Morning") },
+                      { key: "lunch" as const, label: t("🍽️ দুপুর", "🍽️ Lunch") },
+                      { key: "dinner" as const, label: t("🌙 রাত", "🌙 Dinner") },
+                    ].map(({ key, label }) => {
+                      const on = state[key];
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          disabled={!canEditThisMember || isSaving || savingAll}
+                          onClick={() => handleToggle(member.id, key)}
+                          className={cn(
+                            "h-10 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 select-none active:scale-95 border",
+                            canEditThisMember ? "cursor-pointer" : "opacity-40 cursor-not-allowed",
+                            on
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
+                              : "bg-rose-50/80 hover:bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300"
+                          )}
+                        >
+                          <span className="text-[11px] leading-none">{label}</span>
+                          <span className="text-[10px] font-extrabold uppercase">
+                            {on ? t("অন ✓", "ON ✓") : t("অফ ✕", "OFF ✕")}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );

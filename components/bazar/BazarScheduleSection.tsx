@@ -286,7 +286,7 @@ export function BazarScheduleSection({
 
       {/* 2. Active Swap Requests Banner / Feed */}
       {pendingSwaps && pendingSwaps.length > 0 && (
-        <div className="space-y-2.5 bg-gradient-to-br from-indigo-50/80 to-blue-50/60 dark:from-indigo-950/40 dark:to-blue-950/30 border border-indigo-200 dark:border-indigo-900/70 rounded-3xl p-3.5 shadow-xs">
+        <div className="space-y-2.5 bg-gradient-to-br from-indigo-50/80 to-blue-50/60 dark:from-indigo-950/40 dark:to-blue-950/30 border border-indigo-300 dark:border-indigo-800 rounded-3xl p-3.5 shadow-xs animate-reactbits-border-glow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center">

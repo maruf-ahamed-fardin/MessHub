@@ -541,7 +541,7 @@ export function BazarExplorer({
               const percent = totalFilteredExpense > 0 ? ((prod.totalCost / totalFilteredExpense) * 100).toFixed(1) : "0";
               return (
                 <div key={prod.name} className="px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition-colors space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-[10px] shrink-0">
                         {idx + 1}
@@ -554,7 +554,7 @@ export function BazarExplorer({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                       <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
                         {prod.totalQuantity.toFixed(prod.totalQuantity % 1 === 0 ? 0 : 2)} {prod.unit}
                       </span>
@@ -635,17 +635,19 @@ export function BazarExplorer({
                     bazar.items.map((item: any) => (
                       <div
                         key={item.id}
-                        className="py-1.5 flex items-center justify-between text-xs first:pt-0 last:pb-0"
+                        className="py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs first:pt-0 last:pb-0"
                       >
-                        <span className="font-semibold text-gray-800 dark:text-slate-200">{item.productName}</span>
-                        <div className="flex items-center gap-3 text-gray-500 dark:text-slate-400 font-medium">
+                        <span className="font-semibold text-gray-800 dark:text-slate-200 truncate">
+                          {item.productName}
+                        </span>
+                        <div className="flex items-center justify-between sm:justify-end gap-2.5 text-gray-500 dark:text-slate-400 font-medium">
                           <span className="text-[11px] bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                             {Number(item.quantity)} {item.unit}
                           </span>
                           <span className="text-[11px] text-gray-400 dark:text-slate-500">
                             @ {formatCurrency(Number(item.unitPrice))}
                           </span>
-                          <span className="font-bold text-gray-900 dark:text-slate-100 w-16 text-right">
+                          <span className="font-bold text-gray-900 dark:text-slate-100 text-right min-w-16">
                             {formatCurrency(Number(item.totalPrice))}
                           </span>
                         </div>

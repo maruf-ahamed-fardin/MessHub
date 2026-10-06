@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { updateProfileAction } from "@/app/actions/profile.actions";
+import { SpotlightCard } from "@/components/ui/ReactBitsSpotlightCard";
+import { CountUpNumber } from "@/components/ui/ReactBitsCountUp";
 
 export interface PersonalBalanceSheetProps {
   member: {
@@ -442,7 +444,7 @@ export function PersonalBalanceSheet({
               {t("বর্তমান ব্যালেন্স", "Current Balance")} · {monthLabel}
             </p>
             <p className="text-2xl font-black text-white mt-0.5">
-              {isCredit ? "+" : ""}{formatCurrency(balance)}
+              <CountUpNumber value={Math.abs(balance)} prefix={isCredit ? "+৳" : "-৳"} />
             </p>
           </div>
           <div className={cn(
@@ -460,8 +462,11 @@ export function PersonalBalanceSheet({
       {/* ══════════════════════════════════════════════════
           QUICK STAT PILLARS
       ══════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <SpotlightCard
+          className="p-3.5 shadow-2xs"
+          spotlightColor="rgba(16, 185, 129, 0.12)"
+        >
           <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2">
             <ArrowDownLeft size={18} />
           </div>
@@ -469,11 +474,14 @@ export function PersonalBalanceSheet({
             {t("মোট জমা", "Total Paid")}
           </p>
           <p className="text-base font-black text-gray-900 dark:text-slate-100 mt-0.5 truncate">
-            {formatCurrency(totalPaid)}
+            <CountUpNumber value={totalPaid} prefix="৳" />
           </p>
-        </div>
+        </SpotlightCard>
 
-        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs">
+        <SpotlightCard
+          className="p-3.5 shadow-2xs"
+          spotlightColor="rgba(244, 63, 94, 0.12)"
+        >
           <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-2">
             <ArrowUpRight size={18} />
           </div>
@@ -481,11 +489,14 @@ export function PersonalBalanceSheet({
             {t("মোট খরচ", "Total Cost")}
           </p>
           <p className="text-base font-black text-gray-900 dark:text-slate-100 mt-0.5 truncate">
-            {formatCurrency(totalCost)}
+            <CountUpNumber value={totalCost} prefix="৳" />
           </p>
-        </div>
+        </SpotlightCard>
 
-        <div className="bg-white dark:bg-slate-900 border border-gray-200/90 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs">
+        <SpotlightCard
+          className="p-3.5 shadow-2xs"
+          spotlightColor="rgba(245, 158, 11, 0.12)"
+        >
           <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2">
             <UtensilsCrossed size={18} />
           </div>
@@ -493,12 +504,12 @@ export function PersonalBalanceSheet({
             {t("মোট মিল", "Total Meals")}
           </p>
           <p className="text-base font-black text-gray-900 dark:text-slate-100 mt-0.5">
-            {totalMeals}
+            <CountUpNumber value={totalMeals} />
             <span className="text-[10px] font-normal text-gray-400 ml-1">
               @ {formatCurrency(mealRate)}
             </span>
           </p>
-        </div>
+        </SpotlightCard>
       </div>
 
       {/* ══════════════════════════════════════════════════
