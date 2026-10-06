@@ -5,6 +5,7 @@ import { getAllMembers } from "@/backend/members/member.repository";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { RoomsAndMembersHub } from "@/components/members/RoomsAndMembersHub";
 import { getServerT } from "@/lib/i18n/serverT";
+import { prisma } from "@/lib/db/prisma";
 
 export const metadata: Metadata = { title: "Rooms & Members" };
 
@@ -12,10 +13,11 @@ export default async function RoomsPage() {
   const [session, T] = await Promise.all([auth(), getServerT()]);
   const isAdmin = session?.user.role === "ADMIN";
 
-  const [members, rooms, availableSeats] = await Promise.all([
+  const [members, rooms, availableSeats, messSettings] = await Promise.all([
     getAllMembers(true),
     getAllRooms(),
     getAvailableSeats(),
+    prisma.messSettings.findUnique({ where: { id: "singleton" } }).catch(() => null),
   ]);
 
   return (
@@ -29,6 +31,7 @@ export default async function RoomsPage() {
         rooms={rooms}
         availableSeats={availableSeats}
         isAdmin={isAdmin}
+        inviteCode={messSettings?.inviteCode || "MESSHUB2026"}
       />
     </div>
   );

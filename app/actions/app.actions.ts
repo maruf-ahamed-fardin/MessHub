@@ -485,6 +485,7 @@ export async function updateSettingsAction(data: unknown) {
       aiAutoAction: z.boolean().optional().default(false),
       whatsappTemplate: z.string().optional().nullable(),
       messRules: z.string().optional().nullable(),
+      inviteCode: z.string().optional().nullable(),
     });
     const validated = schema.parse(data);
     const updateData: any = { ...validated };
