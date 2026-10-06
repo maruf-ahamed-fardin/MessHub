@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth/config";
 import { getPayments } from "@/backend/payments/payment.repository";
+import { getPendingPaymentRequests } from "@/backend/payments/payment-request.repository";
 import { getExpenses, getUtilityBills } from "@/backend/expenses/expense.repository";
 import { getBazarList } from "@/backend/bazar/bazar.repository";
 import { getAllMembers } from "@/backend/members/member.repository";
@@ -8,6 +9,9 @@ import { getCurrentMonthYear, formatMonthYear } from "@/lib/utils/date";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MoneyTransactionHub } from "@/components/payments/MoneyTransactionHub";
 import { SettlementMonthSelector } from "@/components/settlement/SettlementMonthSelector";
+import { SubmitDepositDialog } from "@/components/payments/SubmitDepositDialog";
+import { PendingPaymentRequestsCard } from "@/components/payments/PendingPaymentRequestsCard";
+import { prisma } from "@/lib/db/prisma";
 import { getServerT } from "@/lib/i18n/serverT";
 
 export const metadata: Metadata = { title: "Money Transaction" };
@@ -29,12 +33,14 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const year = rawParams.year ? parseInt(rawParams.year, 10) : currYear;
   const isCurrentMonth = month === currMonth && year === currYear;
 
-  const [payments, expenses, bazars, members, utilityBills] = await Promise.all([
+  const [payments, expenses, bazars, members, utilityBills, pendingRequests, messSettings] = await Promise.all([
     getPayments(undefined, month, year),
     getExpenses(month, year),
     getBazarList(month, year),
     getAllMembers(),
     getUtilityBills(month, year),
+    isAdmin ? getPendingPaymentRequests() : Promise.resolve([]),
+    prisma.messSettings.findUnique({ where: { id: "singleton" } }).catch(() => null),
   ]);
 
   return (
@@ -47,13 +53,27 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             : `${formatMonthYear(month, year)} - এর সংরক্ষিত লেনদেন ও মেস ফান্ড রেকর্ড`
         }
         action={
-          <SettlementMonthSelector
-            selectedMonth={month}
-            selectedYear={year}
-            baseUrl="/payments"
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <SettlementMonthSelector
+              selectedMonth={month}
+              selectedYear={year}
+              baseUrl="/payments"
+            />
+            <SubmitDepositDialog
+              adminBkashNumber={messSettings?.adminBkashNumber}
+              adminNagadNumber={messSettings?.adminNagadNumber}
+              adminRocketNumber={messSettings?.adminRocketNumber}
+            />
+          </div>
         }
       />
+
+      {isAdmin && pendingRequests.length > 0 && (
+        <PendingPaymentRequestsCard
+          requests={pendingRequests}
+          isAdmin={isAdmin}
+        />
+      )}
 
       <MoneyTransactionHub
         payments={payments}

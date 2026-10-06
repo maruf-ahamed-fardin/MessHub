@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/useT";
 import { usePreferences } from "@/lib/context/PreferencesContext";
 import { WhatsAppShareButton } from "./WhatsAppShareButton";
+import { SubmitDepositDialog } from "@/components/payments/SubmitDepositDialog";
 import { SpotlightCard } from "@/components/ui/ReactBitsSpotlightCard";
 import { CountUpNumber } from "@/components/ui/ReactBitsCountUp";
 import { ShinyBadge } from "@/components/ui/ReactBitsShinyBadge";
@@ -174,6 +175,7 @@ export function ModernDashboard({
               cleaningMemberName={cleaningAssignee !== "আজকে কোনো টাস্ক নেই" && cleaningAssignee !== "No task assigned" ? cleaningAssignee : null}
               mealRate={mealRate}
             />
+            <SubmitDepositDialog memberId={memberProfile?.id} />
             <Link
               href="/meals"
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-indigo-500/40 shadow-2xs active:scale-95 transition-all"

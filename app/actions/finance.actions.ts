@@ -378,3 +378,73 @@ export async function deletePaymentAction(id: string) {
     return { success: false, error: err?.message ?? "Failed to delete payment" };
   }
 }
+
+export async function submitPaymentRequestAction(data: {
+  amount: number;
+  method: "BKASH" | "NAGAD" | "ROCKET" | "BANK_TRANSFER" | "CASH" | "OTHER";
+  trxId?: string;
+  senderPhone?: string;
+  note?: string;
+  memberId?: string;
+}) {
+  try {
+    const session = await requireAuth();
+    const db = getPrisma();
+    let memberId = data.memberId;
+
+    if (!memberId && session.user.id) {
+      const profile = await db.memberProfile.findUnique({ where: { userId: session.user.id } });
+      memberId = profile?.id;
+    }
+
+    if (!memberId) {
+      return { success: false, error: "Member profile not found for this user." };
+    }
+
+    if (!data.amount || data.amount <= 0) {
+      return { success: false, error: "Please enter a valid amount." };
+    }
+
+    const { createPaymentRequest } = await import("@/backend/payments/payment-request.repository");
+    await createPaymentRequest({
+      memberId,
+      amount: Number(data.amount),
+      method: data.method as any,
+      trxId: data.trxId,
+      senderPhone: data.senderPhone,
+      note: data.note,
+    });
+
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in submitPaymentRequestAction:", err);
+    return { success: false, error: err?.message ?? "Failed to submit deposit request" };
+  }
+}
+
+export async function approvePaymentRequestAction(requestId: string) {
+  try {
+    const session = await requireAdmin();
+    const { approvePaymentRequest } = await import("@/backend/payments/payment-request.repository");
+    await approvePaymentRequest(requestId, session.user.id);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in approvePaymentRequestAction:", err);
+    return { success: false, error: err?.message ?? "Failed to approve payment request" };
+  }
+}
+
+export async function rejectPaymentRequestAction(requestId: string, reason?: string) {
+  try {
+    const session = await requireAdmin();
+    const { rejectPaymentRequest } = await import("@/backend/payments/payment-request.repository");
+    await rejectPaymentRequest(requestId, session.user.id, reason);
+    revalidateAllFinancialRoutes();
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in rejectPaymentRequestAction:", err);
+    return { success: false, error: err?.message ?? "Failed to reject payment request" };
+  }
+}

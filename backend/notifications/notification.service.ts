@@ -55,6 +55,38 @@ export async function broadcastNotification(data: {
 }
 
 /**
+ * Create a targeted notification for a single user.
+ */
+export async function createNotification(data: {
+  userId: string;
+  title: string;
+  message: string;
+  type?: "GENERAL" | "BALANCE_REMINDER" | "NEW_NOTICE" | "CLEANING_ASSIGNED" | "GUEST_MEAL_ADDED" | "MAINTENANCE_UPDATED" | "PAYMENT_RECORDED" | "SETTLEMENT_FINALIZED";
+  relatedType?: string;
+  relatedId?: string;
+}) {
+  try {
+    const db = getPrisma();
+    return await db.notification.create({
+      data: {
+        userId: data.userId,
+        title: data.title,
+        message: data.message,
+        type: (data.type || "GENERAL") as any,
+        relatedType: data.relatedType || "system",
+        relatedId: data.relatedId || null,
+        isRead: false,
+      },
+    });
+  } catch (err) {
+    console.warn("Failed to create user notification:", err);
+    return null;
+  }
+}
+
+export const createUserNotification = createNotification;
+
+/**
  * Broadcast Bazar Swap notification
  */
 export async function notifyAllUsersAboutBazarSwap(data: {
