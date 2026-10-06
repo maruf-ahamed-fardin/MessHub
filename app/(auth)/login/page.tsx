@@ -152,14 +152,23 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* Direct Instant Enter Button */}
-            <div className="mb-6">
+            {/* Direct Instant Enter & Self Registration */}
+            <div className="mb-6 space-y-2.5">
+              <Link
+                href="/join"
+                className="group relative flex items-center justify-center gap-2 w-full h-11 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/50 transition-all duration-200 active:scale-[0.99]"
+              >
+                <Users2 size={15} className="text-emerald-400" />
+                <span>মেস ইনভাইট কোড দিয়ে জয়েন করুন (Join Mess)</span>
+                <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform text-emerald-400" />
+              </Link>
+
               <Link
                 href="/dashboard"
-                className="group relative flex items-center justify-center gap-2 w-full h-11 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 hover:border-indigo-500/40 transition-all duration-200 active:scale-[0.99]"
+                className="group relative flex items-center justify-center gap-2 w-full h-10 px-4 rounded-xl text-xs sm:text-sm font-medium bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 hover:border-indigo-500/40 transition-all duration-200 active:scale-[0.99]"
               >
                 <span>অ্যাপ সরাসরি প্রিভিউ করুন (Explore Dashboard)</span>
-                <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-slate-400" />
               </Link>
             </div>
 

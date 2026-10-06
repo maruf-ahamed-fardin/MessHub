@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -264,10 +265,21 @@ export function LoginForm() {
         </button>
       </div>
 
-      {/* Bottom helper info */}
-      <p className="text-center text-[11px] text-slate-500 dark:text-slate-400 pt-1">
-        💡 আপনি সরাসরি উপরের বাটনে ১-ক্লিক করে পূর্ণ ফিচার টেস্ট করতে পারেন।
-      </p>
+      {/* Bottom helper info & registration link */}
+      <div className="text-center space-y-2 pt-1">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          💡 আপনি সরাসরি উপরের বাটনে ১-ক্লিক করে পূর্ণ ফিচার টেস্ট করতে পারেন।
+        </p>
+        <p className="text-xs text-slate-300 dark:text-slate-300">
+          নতুন সদস্য?{" "}
+          <Link
+            href="/join"
+            className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-4 transition-colors"
+          >
+            ইনভাইট কোড দিয়ে রেজিস্টার করুন (Join Mess)
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
