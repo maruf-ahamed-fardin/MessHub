@@ -44,6 +44,8 @@ export function SettingsForm({ settings }: { settings: any }) {
   const [messName, setMessName] = useState(settings?.messName ?? "MessHub Flat 4B");
   const [address, setAddress] = useState(settings?.address ?? "House 12, Road 4, Dhanmondi, Dhaka");
   const [currency, setCurrency] = useState(settings?.currency ?? "৳");
+  const [inviteCode, setInviteCode] = useState(settings?.inviteCode ?? "MESSHUB2026");
+  const [copiedInvite, setCopiedInvite] = useState(false);
 
   // Financial & MFS
   const [defaultSeatRent, setDefaultSeatRent] = useState(settings?.defaultSeatRent ?? 3500);
@@ -122,6 +124,7 @@ export function SettingsForm({ settings }: { settings: any }) {
         aiTemperature: Number(aiTemperature),
         aiAutoAction,
         messRules: messRules || undefined,
+        inviteCode: inviteCode || undefined,
       });
       setSuccess(true);
       router.refresh();
@@ -814,6 +817,53 @@ export function SettingsForm({ settings }: { settings: any }) {
                 placeholder="House 12, Road 4, Dhanmondi, Dhaka"
                 className="h-10 text-xs rounded-xl dark:bg-slate-800 dark:border-slate-700"
               />
+            </div>
+
+            {/* Mess Member Invite Code */}
+            <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-xs font-black text-indigo-950 dark:text-indigo-200">
+                    {t("মেস ইনভাইট কোড (Member Invite Code)", "Mess Member Invite Code")}
+                  </Label>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {t(
+                      "নতুন মেম্বাররা এই কোড দিয়ে সরাসরি মেসে অ্যাকাউন্ট তৈরি করতে পারবে (/join পেজ থেকে)।",
+                      "New members can join and self-register into the mess using this code via /join."
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Input
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  placeholder="MESSHUB2026"
+                  className="h-10 text-xs font-mono font-bold tracking-wider uppercase rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const origin = typeof window !== "undefined" ? window.location.origin : "";
+                    const link = `${origin}/join?code=${encodeURIComponent(inviteCode)}`;
+                    navigator.clipboard.writeText(link);
+                    setCopiedInvite(true);
+                    setTimeout(() => setCopiedInvite(false), 2000);
+                  }}
+                  className="h-10 px-3 text-xs font-semibold rounded-xl shrink-0 gap-1.5 cursor-pointer"
+                >
+                  {copiedInvite ? (
+                    <>
+                      <Check size={14} className="text-emerald-500" />
+                      <span>{t("লিংক কপি হয়েছে!", "Copied Link!")}</span>
+                    </>
+                  ) : (
+                    <span>{t("লিংক কপি করুন", "Copy Link")}</span>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         )}

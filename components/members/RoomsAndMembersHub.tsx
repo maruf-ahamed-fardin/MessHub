@@ -6,6 +6,7 @@ import {
   Users, BedDouble, DoorOpen, CheckCircle2,
 } from "lucide-react";
 import { AddMemberDialog } from "@/components/members/AddMemberDialog";
+import { MessInviteCard } from "@/components/members/MessInviteCard";
 import { RoomGrid } from "@/components/members/RoomGrid";
 import { MemberList } from "@/components/members/MemberList";
 import { usePreferences } from "@/lib/context/PreferencesContext";
@@ -15,6 +16,7 @@ interface RoomsAndMembersHubProps {
   rooms: any[];
   availableSeats: any[];
   isAdmin: boolean;
+  inviteCode?: string;
 }
 
 export function RoomsAndMembersHub({
@@ -22,6 +24,7 @@ export function RoomsAndMembersHub({
   rooms,
   availableSeats,
   isAdmin,
+  inviteCode,
 }: RoomsAndMembersHubProps) {
   const [activeTab, setActiveTab] = useState<"rooms" | "members">("rooms");
   const { t } = usePreferences();
@@ -133,11 +136,10 @@ export function RoomsAndMembersHub({
         </div>
 
         {/* Action Buttons */}
-        {isAdmin && (
-          <div className="flex items-center gap-2">
-            <AddMemberDialog rooms={rooms} />
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <MessInviteCard inviteCode={inviteCode} />
+          {isAdmin && <AddMemberDialog rooms={rooms} />}
+        </div>
       </div>
 
       {/* 3. Tab 1: Rooms & Seats Grid */}
