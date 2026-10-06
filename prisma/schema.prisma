@@ -64,6 +64,12 @@ enum PaymentMethod {
   OTHER
 }
 
+enum PaymentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum UtilityType {
   RENT
   ELECTRICITY
@@ -235,6 +241,7 @@ model MemberProfile {
   meals             Meal[]
   guestMeals        GuestMeal[]
   payments          Payment[]
+  paymentRequests   PaymentRequest[]
   memberSettlements MemberSettlement[]
 
   // House
@@ -499,6 +506,28 @@ model Payment {
   @@index([date])
   @@index([date, memberId])
   @@map("payments")
+}
+
+model PaymentRequest {
+  id              String               @id @default(cuid())
+  memberId        String
+  amount          Float
+  method          PaymentMethod        @default(BKASH)
+  trxId           String?
+  senderPhone     String?
+  note            String?
+  status          PaymentRequestStatus @default(PENDING)
+  rejectionReason String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  member          MemberProfile        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([status])
+  @@map("payment_requests")
 }
 
 // ============================================================
@@ -780,6 +809,7 @@ model MessSettings {
   aiAutoAction                Boolean                 @default(false)
   whatsappTemplate            String?
   messRules                   String?
+  inviteCode                  String?                 @default("MESSHUB2026")
   updatedAt                   DateTime                @updatedAt
 
   @@map("mess_settings")
