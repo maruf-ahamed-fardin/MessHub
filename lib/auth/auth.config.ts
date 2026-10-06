@@ -19,8 +19,29 @@ export const authConfig = {
     signIn: "/login",
   },
   callbacks: {
-    authorized() {
-      // Auth bypassed temporarily as requested
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnLoginPage = nextUrl.pathname.startsWith("/login");
+      const isPublic =
+        isOnLoginPage ||
+        nextUrl.pathname.startsWith("/_next") ||
+        nextUrl.pathname.startsWith("/api/auth") ||
+        nextUrl.pathname.startsWith("/favicon.ico") ||
+        nextUrl.pathname.startsWith("/icons") ||
+        nextUrl.pathname.startsWith("/sw.js") ||
+        nextUrl.pathname.startsWith("/manifest");
+
+      if (isOnLoginPage) {
+        if (isLoggedIn) {
+          return Response.redirect(new URL("/dashboard", nextUrl));
+        }
+        return true;
+      }
+
+      if (!isLoggedIn && !isPublic) {
+        return false;
+      }
+
       return true;
     },
     async jwt({ token, user }) {

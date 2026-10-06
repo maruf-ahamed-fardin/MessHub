@@ -102,11 +102,14 @@ export async function exportDatabaseBackupAction(): Promise<{ success: boolean; 
       db.cookAttendance.findMany(),
     ]);
 
+    const sanitizedSettings = messSettings ? { ...messSettings, geminiApiKey: undefined } : null;
+    const sanitizedUsers = users.map((u) => ({ ...u, password: "[PROTECTED]" }));
+
     const payload: DatabaseBackupPayload = {
       version: "1.0.0",
       exportedAt: new Date().toISOString(),
-      messSettings,
-      users,
+      messSettings: sanitizedSettings,
+      users: sanitizedUsers,
       memberProfiles,
       rooms,
       seats,
@@ -183,6 +186,8 @@ export async function importDatabaseBackupAction(payload: DatabaseBackupPayload)
 
     // 3. Users & Profiles
     for (const u of payload.users) {
+      const existingUser = await db.user.findUnique({ where: { id: u.id } });
+      const passwordToUse = (u.password && u.password !== "[PROTECTED]") ? u.password : existingUser?.password;
       await db.user.upsert({
         where: { id: u.id },
         create: {
@@ -190,7 +195,7 @@ export async function importDatabaseBackupAction(payload: DatabaseBackupPayload)
           name: u.name,
           email: u.email,
           image: u.image,
-          password: u.password,
+          password: passwordToUse ?? "$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
           role: u.role,
         },
         update: {
@@ -198,6 +203,7 @@ export async function importDatabaseBackupAction(payload: DatabaseBackupPayload)
           email: u.email,
           image: u.image,
           role: u.role,
+          ...(passwordToUse ? { password: passwordToUse } : {}),
         },
       });
     }

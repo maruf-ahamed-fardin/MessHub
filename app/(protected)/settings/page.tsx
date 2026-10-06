@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth/config";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SettingsForm } from "@/components/settings/SettingsForm";
@@ -9,6 +10,10 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const [session, T] = await Promise.all([auth(), getServerT()]);
+
+  if (session?.user?.role !== "ADMIN") {
+    redirect("/dashboard");
+  }
 
   let settings: any = {
     messName: "MessHub Flat 4B",
@@ -23,7 +28,12 @@ export default async function SettingsPage() {
 
   try {
     const dbSettings = await prisma.messSettings.findUnique({ where: { id: "singleton" } });
-    if (dbSettings) settings = dbSettings;
+    if (dbSettings) {
+      settings = {
+        ...dbSettings,
+        geminiApiKey: dbSettings.geminiApiKey ? "••••••••••••••••" : "",
+      };
+    }
   } catch {}
 
   return (

@@ -487,10 +487,14 @@ export async function updateSettingsAction(data: unknown) {
       messRules: z.string().optional().nullable(),
     });
     const validated = schema.parse(data);
+    const updateData: any = { ...validated };
+    if (updateData.geminiApiKey && updateData.geminiApiKey.startsWith("••••")) {
+      delete updateData.geminiApiKey;
+    }
     await prisma.messSettings.upsert({
       where: { id: "singleton" },
-      create: { id: "singleton", ...validated } as any,
-      update: validated as any,
+      create: { id: "singleton", ...updateData } as any,
+      update: updateData as any,
     });
     revalidatePath("/settings");
     revalidatePath("/dashboard");

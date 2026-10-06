@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth/config";
-import { DEFAULT_MOCK_SESSION } from "@/lib/auth/auth.config";
+import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { OfflineIndicator } from "@/components/shared/OfflineIndicator";
@@ -7,7 +7,10 @@ import { TopBar } from "@/components/shared/TopBar";
 import { AIAssistantWidget } from "@/components/ai/AIAssistantWidget";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const session = (await auth()) ?? DEFAULT_MOCK_SESSION;
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
 
   return (
     <div className="flex h-dvh overflow-hidden bg-[hsl(var(--background))]">

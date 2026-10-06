@@ -20,7 +20,17 @@ export const getMemberById = cache(async (id: string) => {
   return prisma.memberProfile.findUnique({
     where: { id },
     include: {
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       seat: { include: { room: true } },
     },
   });
@@ -30,7 +40,17 @@ export const getMemberByUserId = cache(async (userId: string) => {
   return prisma.memberProfile.findUnique({
     where: { userId },
     include: {
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       seat: { include: { room: true } },
     },
   });
