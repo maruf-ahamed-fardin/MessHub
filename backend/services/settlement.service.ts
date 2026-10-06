@@ -38,6 +38,7 @@ export async function calculateMonthlySettlement(
     utilityBills,
     expenses,
     houseExpenses,
+    messSettings,
   ] = await Promise.all([
     prisma.memberProfile.findMany({
       where: { isActive: true },
@@ -71,6 +72,9 @@ export async function calculateMonthlySettlement(
       select: { amount: true, sharingMethod: true, selectedMemberIds: true },
     }),
     getMonthlyHouseExpense(month, year),
+    prisma.messSettings.findUnique({
+      where: { id: "singleton" },
+    }),
   ]);
 
   const activeCount = members.length || 1;
@@ -152,11 +156,16 @@ export async function calculateMonthlySettlement(
   }
 
   // 6. Member summaries
+  const guestPricePerMeal =
+    messSettings?.guestMealPricing === "FIXED" && messSettings.guestMealFixedPrice
+      ? toNumber(messSettings.guestMealFixedPrice)
+      : mealRate;
+
   const memberSummaries = members.map((member: (typeof members)[number]) => {
     const totalMeals = memberMealCountMap[member.id] || 0;
     const foodCost = roundMoney(totalMeals * mealRate);
     const guestCount = memberGuestMap[member.id] || 0;
-    const guestMealCost = roundMoney(guestCount * mealRate);
+    const guestMealCost = roundMoney(guestCount * guestPricePerMeal);
     const seatRent = toNumber(member.seatRent);
     const utilityCost = utilityPerMember;
     const otherCost = roundMoney(memberExpenseMap[member.id] || 0);

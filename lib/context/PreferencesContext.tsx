@@ -23,6 +23,16 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [language, setLanguageState] = useState<Language>("bn");
   const router = useRouter();
 
+  const applyTheme = (newTheme: Theme) => {
+    if (typeof document !== "undefined") {
+      if (newTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  };
+
   // Load preferences from localStorage on mount
   useEffect(() => {
     try {
@@ -44,16 +54,6 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       // Ignore localStorage errors
     }
   }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    if (typeof document !== "undefined") {
-      if (newTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
-  };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

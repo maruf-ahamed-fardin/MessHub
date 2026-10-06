@@ -34,22 +34,22 @@ function getDbConfig() {
 
   let localFilePath = envDbUrl.startsWith("file:")
     ? envDbUrl.replace(/^file:/, "")
-    : path.resolve(process.cwd(), "prisma/dev.db");
+    : path.resolve(/*turbopackIgnore: true*/ process.cwd(), "prisma/dev.db");
 
   if (!path.isAbsolute(localFilePath)) {
-    localFilePath = path.resolve(process.cwd(), localFilePath);
+    localFilePath = path.resolve(/*turbopackIgnore: true*/ process.cwd(), localFilePath);
   }
 
   if (isServerless) {
     const tmpDir = "/tmp";
     const tmpDbPath = path.join(tmpDir, "dev.db");
     try {
-      if (!fs.existsSync(tmpDbPath)) {
-        if (fs.existsSync(localFilePath)) {
+      if (!fs.existsSync(/*turbopackIgnore: true*/ tmpDbPath)) {
+        if (fs.existsSync(/*turbopackIgnore: true*/ localFilePath)) {
           fs.copyFileSync(localFilePath, tmpDbPath);
         } else {
-          const altPath = path.resolve(process.cwd(), "prisma/dev.db");
-          if (fs.existsSync(altPath)) {
+          const altPath = path.resolve(/*turbopackIgnore: true*/ process.cwd(), "prisma/dev.db");
+          if (fs.existsSync(/*turbopackIgnore: true*/ altPath)) {
             fs.copyFileSync(altPath, tmpDbPath);
           }
         }
